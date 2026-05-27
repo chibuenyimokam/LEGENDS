@@ -91,7 +91,7 @@ namespace LegendPay.Controllers
         public IActionResult VerifyEmail()
         {
             //to pass the email stored in TempData to the view using ViewBag
-            ViewBag.Email = TempData["VerifiactionEmail"];
+            ViewBag.Email = TempData["VerificationEmail"];
             return View();
         }
 
