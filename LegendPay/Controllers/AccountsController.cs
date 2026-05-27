@@ -66,7 +66,7 @@ namespace LegendPay.Controllers
                     await _emailService.SendOtpEmailAsync(account.Email, otp);
 
                     //store email in session for verification page
-                    TempData["VerifiactionEmail"] = account.Email; //to store the email in TempData so that it can be accessed in the verification page
+                    TempData["VerificationEmail"] = account.Email; //to store the email in TempData so that it can be accessed in the verification page
 
                     return RedirectToAction("VerifyEmail"); //redirect to the email verification page after successful sign-up
 
