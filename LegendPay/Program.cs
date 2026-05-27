@@ -1,3 +1,8 @@
+using LegendPay.Models;
+using LegendPay.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
+
 namespace LegendPay
 {
     public class Program
@@ -6,8 +11,17 @@ namespace LegendPay
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("default")));
+            
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            builder.Services.AddScoped<EmailService>();
+            builder.Services.AddSession();
+
+            //cookie authentication
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
+
 
             var app = builder.Build();
 
@@ -22,7 +36,10 @@ namespace LegendPay
             app.UseHttpsRedirection();
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
+            app.UseSession();
+
 
             app.MapStaticAssets();
             app.MapControllerRoute(
