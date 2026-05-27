@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace LegendPay.Models
+namespace LegendPay.Models.Data.Tables
 {
     [Index(nameof(Email), IsUnique = true)]
-    [Index(nameof(UserName), IsUnique = true)]
+    [Index(nameof(PhoneNumber), IsUnique = true)]
     public class UserAccount
     {
         [Key]
@@ -22,13 +22,24 @@ namespace LegendPay.Models
         //[DataType(DataType.EmailAddress)]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "Username is required.")]
-        [MaxLength(20, ErrorMessage = "Username cannot exceed 20 characters.")]
-        public string UserName { get; set; }
+        //[Required(ErrorMessage = "Username is required.")]
+        //[MaxLength(20, ErrorMessage = "Username cannot exceed 20 characters.")]
+        //public string UserName { get; set; }
         
         [Required(ErrorMessage = "Password is required.")]
         //[DataType(DataType.Password)]
         [MaxLength(20, ErrorMessage = "Password cannot exceed 20 characters.")]
+        [StringLength(20, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 20 characters.")]
         public string Password { get; set; }
+
+
+        [Required(ErrorMessage = "Phone number is required.")]
+        [MaxLength(15, ErrorMessage = "Phone number cannot exceed 15 characters.")]
+        public string PhoneNumber { get; set; }
+
+        public string? OtpCode { get; set; }
+        public DateTime? OtpExpiration { get; set; }
+        public bool IsEmailVerified { get; set; } = false;
+
     }
 }
