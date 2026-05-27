@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using LegendPay.Models.Data.Tables;
+using Microsoft.EntityFrameworkCore;
 
 namespace LegendPay.Models
 {
@@ -7,6 +8,13 @@ namespace LegendPay.Models
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
 
+        }
+
+        public DbSet<UserAccount> UserAccounts { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
         }
     }
 }
