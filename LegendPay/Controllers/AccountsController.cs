@@ -91,20 +91,30 @@ namespace LegendPay.Controllers
         public IActionResult VerifyEmail()
         {
             //to pass the email stored in TempData to the view using ViewBag
-            ViewBag.Email = TempData["VerifiactionEmail"];
-            return View();
+            var email = TempData["VerificationEmail"] as string; //to retrieve the email from TempData
+            
+            if (string.IsNullOrEmpty(email))
+            {
+                //safety net: if they refresh or navigate here manually without an email, send them away
+                return RedirectToAction("SignUp");
+            }
+            var model = new VerifyEmailViewModel { Email = email }; //to create a new instance of the VerifyEmailViewModel and set the Email property to the email retrieved from TempData
+            return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> VerifyEmail(string email, string otp)
-        { 
-            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email); //find the user by email
+        public async Task<IActionResult> VerifyEmail(VerifyEmailViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
 
-            if (user == null || user.OtpCode != otp || user.OtpExpiration < DateTime.UtcNow)
+            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == model.Email); //find the user by email
+
+            if (user == null || user.OtpCode != model.OtpCode || user.OtpExpiration < DateTime.UtcNow)
             {
-                ViewBag.Email = email; //to pass the email back to the view in case of an error
+                //ViewBag.Email = email; //to pass the email back to the view in case of an error
                 ModelState.AddModelError("", "Invalid or expired OTP");
-                return View();
+                return View(model); // so the email is never lost and the user can try again without having to re-enter their email address
             }
 
             //mark as verified
