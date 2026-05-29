@@ -28,8 +28,10 @@
             </p>
 
             <div class="btn-row">
-                <button class="btn btn-primary">Get Started</button>
-                <button class="btn btn-outline">Log in</button>
+                <!-- <button class="btn btn-primary">Get Started</button>-->
+                <a asp-controller="Accounts" asp-action="SignUp" class="btn btn-primary">Get Started</a>
+                <!--<button class="btn btn-outline">Log in</button>-->
+                <a asp-controller="Accounts" asp-action="Login" class="btn btn-outline">Log in</a>
             </div>
 
             <div class="features">
@@ -61,7 +63,8 @@
 
             <p class="footer-note">
                 By continuing, you agree to LegendPay's
-                <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+                <a href="#">Terms of Service</a> and <!-- <a href="#">Privacy Policy</a>-->.
+                <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a>
             </p>
         </div>
 
