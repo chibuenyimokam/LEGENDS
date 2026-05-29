@@ -1,0 +1,76 @@
+﻿@model LegendPay.Models.ViewModels.VerifyEmailViewModel
+
+@{
+    ViewData["Title"] = "Verify Email";
+}
+
+<h1>Verify Email</h1>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-5">
+        <div class="card shadow border-0 p-4">
+            <div class="card-body text-center">
+
+                <div class="mb-3 text-primary">
+                    <i class="bi bi-shield-check" style="font-size: 3rem;"></i>
+                </div>
+                <h3 class="card-title fw-bold mb-2">Verify Your Email</h3>
+                <p class="text-muted small">
+                    We sent a 6-digit verification code to <br />
+                    <strong class="text-dark">@Model.Email</strong>
+                </p>
+
+                <hr class="my-4 text-muted" />
+
+                <form asp-controller="Accounts" asp-action="VerifyEmail" method="post" autocomplete="off">
+
+                    @* <input type="hidden" name="email" value="@ViewBag.Email" /> *@
+                    <input type="hidden" asp-for="Email" />
+
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3 text-start"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="OtpCode" class="form-label text-start d-block small fw-semibold">Enter OTP Code</label>
+
+                        <input asp-for="OtpCode"
+                               class="form-control form-control-lg text-center fw-bold letter-spacing-otp"
+                               placeholder="000000"
+                               maxlength="6"
+                               required
+                               autofocus />
+
+                        <span asp-validation-for="OtpCode" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Verify & Activate</button>
+                    </div>
+                </form>
+
+                <div class="mt-4 text-center">
+                    <p class="small text-muted mb-0">
+                        Didn't get the code? <a asp-action="SignUp" class="text-decoration-none">Start over</a>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <style>
+        .letter-spacing-otp {
+            letter-spacing: 0.5rem;
+            font-size: 1.75rem;
+        }
+        .letter-spacing-otp::placeholder {
+            letter-spacing: normal;
+            font-size: 1.1rem;
+        }
+    </style>
+}
