@@ -127,6 +127,13 @@ body::before {
 }
 
 .btn {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn {
   flex: 1;
   height: 56px;
   border-radius: var(--radius);
