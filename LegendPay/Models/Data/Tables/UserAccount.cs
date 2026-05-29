@@ -28,8 +28,7 @@ namespace LegendPay.Models.Data.Tables
         
         [Required(ErrorMessage = "Password is required.")]
         //[DataType(DataType.Password)]
-        [MaxLength(20, ErrorMessage = "Password cannot exceed 20 characters.")]
-        [StringLength(20, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 20 characters.")]
+        [MaxLength(100)]
         public string Password { get; set; }
 
 
