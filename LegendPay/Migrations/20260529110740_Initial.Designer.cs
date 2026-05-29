@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LegendPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260529071133_Initial")]
+    [Migration("20260529110740_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -59,8 +59,8 @@ namespace LegendPay.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
