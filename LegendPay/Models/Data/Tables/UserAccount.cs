@@ -8,7 +8,7 @@ namespace LegendPay.Models.Data.Tables
     public class UserAccount
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         [Required(ErrorMessage = "First name is required.")]
         [MaxLength(50, ErrorMessage = "First name cannot exceed 50 characters.")]
         public string FirstName { get; set; }
@@ -25,10 +25,15 @@ namespace LegendPay.Models.Data.Tables
         //[Required(ErrorMessage = "Username is required.")]
         //[MaxLength(20, ErrorMessage = "Username cannot exceed 20 characters.")]
         //public string UserName { get; set; }
-        
+
+        /* [Required(ErrorMessage = "Password is required.")]
+         //[DataType(DataType.Password)]
+         [MaxLength(20, ErrorMessage = "Password cannot exceed 20 characters.")]
+         [StringLength(20, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 20 characters.")]
+         public string Password { get; set; }
+        */
         [Required(ErrorMessage = "Password is required.")]
-        //[DataType(DataType.Password)]
-        [MaxLength(100)]
+        [MaxLength(256, ErrorMessage = "Password cannot exceed 256 characters.")]
         public string Password { get; set; }
 
 
@@ -39,6 +44,19 @@ namespace LegendPay.Models.Data.Tables
         public string? OtpCode { get; set; }
         public DateTime? OtpExpiration { get; set; }
         public bool IsEmailVerified { get; set; } = false;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Navigation Properties
+        public Wallet Wallet { get; set; }
+        public LegendPoint LegendPoint { get; set; }
+        public ICollection<Bill>? Bills { get; set; }
+        public ICollection<Receipt>? Receipts { get; set; }
+        public ICollection<Notification>? Notifications { get; set; }
+        public ICollection<Subscription>? Subscriptions { get; set; }
+        public ICollection<Beneficiary>? Beneficiaries { get; set; }
+        public ICollection<ScheduledPayment>? ScheduledPayments { get; set; }
+        public ICollection<SupportChat>? SupportChats { get; set; }
 
     }
 }
