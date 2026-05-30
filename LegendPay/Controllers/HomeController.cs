@@ -16,6 +16,11 @@ namespace LegendPay.Controllers
             return View();
         }
 
+        public IActionResult Onboarding()
+        {
+            return View();
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

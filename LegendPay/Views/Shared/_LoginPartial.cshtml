@@ -1,11 +1,12 @@
-﻿@if (Context.User.Identity.Name != null){
+﻿@if (ViewBag.FullName != null)
+{
     <form asp-controller="Account" asp-action="LogOut" method="post" id="logoutForm" class="navbar-right">
         <ul>
              <li>
-                Hello @Context.User.Identity.Name!
+                Hello @ViewBag.FullName!
                 </li>
                 <li>
-                    <button type="submit" class="btn btn-link nav-link text-dark">Logout</button>
+                    <button class="btn btn-link nav-link text-dark" asp-controller="Accounts" asp-action="LogOut" type="submit">Logout</button>
                     </li>
         </ul>
        
