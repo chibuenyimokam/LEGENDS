@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "Onboarding";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LegendPay — Your Financial Life, Perfectly Orchestrated</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/onboarding.css" />
+</head>
+<body>
+
+    <div class="phone">
+
+        <div class="hero">
+            <img src="~/screenicon/Section - Hero Band.svg" alt="Hero image" />
+        </div>
+
+        <div class="content">
+            <h1 class="headline">Your Financial Life,<br />Perfectly Orchestrated</h1>
+            <p class="subline">
+                Consolidate your utility bills, manage your digital wallet, and earn
+                exclusive rewards all in one secure, high-velocity platform.
+            </p>
+
+            <div class="btn-row">
+                <!-- <button class="btn btn-primary">Get Started</button>-->
+                <a asp-controller="Accounts" asp-action="SignUp" class="btn btn-primary">Get Started</a>
+                <!--<button class="btn btn-outline">Log in</button>-->
+                <a asp-controller="Accounts" asp-action="Login" class="btn btn-outline">Log in</a>
+            </div>
+
+            <div class="features">
+                <div class="feat">
+                    <div class="feat-icon purple">
+                        <img src="~/screenicon/Instant bills.svg" alt="Instant Bills" />
+                    </div>
+                    <span class="feat-label">Instant Bills</span>
+                </div>
+                <div class="feat">
+                    <div class="feat-icon blue">
+                        <img src="~/screenicon/secure wallet.png" alt="Secure Wallet" />
+                    </div>
+                    <span class="feat-label">Secure Wallet</span>
+                </div>
+                <div class="feat">
+                    <div class="feat-icon teal">
+                        <img src="~/screenicon/Daily Rewards.svg" alt="Daily Rewards" />
+                    </div>
+                    <span class="feat-label">Daily Rewards</span>
+                </div>
+            </div>
+
+            <div class="dots">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+
+            <p class="footer-note">
+                By continuing, you agree to LegendPay's
+                <a href="#">Terms of Service</a> and <!-- <a href="#">Privacy Policy</a>-->.
+                <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a>
+            </p>
+        </div>
+
+    </div>
+
+    <script src="~/js/script.js"></script>
+</body>
+</html>
