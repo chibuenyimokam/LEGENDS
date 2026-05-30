@@ -159,14 +159,15 @@ namespace LegendPay.Controllers
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.Name, user.Email),
-                        new Claim("Name", user.FirstName),
-                        new Claim(ClaimTypes.Role, "User") // You can add more claims as needed
+                        new Claim(ClaimTypes.GivenName, user.FirstName), // Standard First Name claim
+                        new Claim(ClaimTypes.Surname, user.LastName),    // Standard Last Name claim
+                        new Claim(ClaimTypes.Role, "User")// You can add more claims as needed
                     };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity)); //logins user and creates an authentication cookie
 
-                    return RedirectToAction("SecurePage"); //securepage is the home page for authenticated users
+                    return RedirectToAction("HomePage"); //securepage is the home page for authenticated users
                 }
                 else
                 {
@@ -184,9 +185,12 @@ namespace LegendPay.Controllers
 
         //only authenticated users can access this page
         [Authorize]
-        public IActionResult SecurePage() //basically home page for authenticated users
+        public IActionResult HomePage() //basically home page for authenticated users
         {
-            ViewBag.Name = HttpContext.User.Identity.Name; //to get the name of the authenticated user and pass it to the view using ViewBag
+            var firstname = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value; //to get the name of the authenticated user and pass it to the view using ViewBag
+            var lastname = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Surname)?.Value; //to get the last name of the authenticated user and pass it to the view using ViewBag
+
+            ViewBag.FullName = $"{firstname} {lastname}"; //to combine the first name and last name and pass it to the view as FullName
             return View();
         }
     }

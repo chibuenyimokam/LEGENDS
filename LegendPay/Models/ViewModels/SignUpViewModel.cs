@@ -4,7 +4,7 @@ namespace LegendPay.Models.ViewModels
 {
     public class SignUpViewModel
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required(ErrorMessage = "First name is required.")]
         [MaxLength(50, ErrorMessage = "First name cannot exceed 50 characters.")]
         public string FirstName { get; set; }
@@ -24,6 +24,12 @@ namespace LegendPay.Models.ViewModels
         [MaxLength(15, ErrorMessage = "Phone number cannot exceed 15 characters.")]
         public string PhoneNumber { get; set; }
 
+        /*[Required(ErrorMessage = "Password is required.")]
+        [DataType(DataType.Password)]
+        [MaxLength(20, ErrorMessage = "Password cannot exceed 20 characters.")]
+        [StringLength(20, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 20 characters.")]
+        public string Password { get; set; }
+        */
         [Required(ErrorMessage = "Password is required.")]
         [DataType(DataType.Password)]
         [StringLength(20, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 20 characters.")]
