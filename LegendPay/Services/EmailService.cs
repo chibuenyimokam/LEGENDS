@@ -1,9 +1,10 @@
-﻿using SendGrid;
+﻿using LegendPay.Interfaces;
+using SendGrid;
 using SendGrid.Helpers.Mail;
 
 namespace LegendPay.Services
 {
-    public class EmailService
+    public class EmailService : IEmailService
     {
         private readonly IConfiguration _config;
 
@@ -30,7 +31,15 @@ namespace LegendPay.Services
                     If you did not request this, please ignore this email.</p>"
             };
             msg.AddTo(new EmailAddress(toEmail));
-            await client.SendEmailAsync(msg);
+            //await client.SendEmailAsync(msg);
+            var response = await client.SendEmailAsync(msg);
+
+            // breakpoint to inspect response during runtime
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Body.ReadAsStringAsync();
+                throw new Exception($"SendGrid failed with status {response.StatusCode}. Details: {body}");
+            }
         }
     }
 }
