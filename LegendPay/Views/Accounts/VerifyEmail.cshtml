@@ -4,57 +4,59 @@
     ViewData["Title"] = "Verify Email";
 }
 
-<h1>Verify Email</h1>
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 75vh;">
-    <div class="col-md-5">
-        <div class="card shadow border-0 p-4">
-            <div class="card-body text-center">
+<link rel="stylesheet" href="~/css/verify-email.css" asp-append-version="true" />
 
-                <div class="mb-3 text-primary">
-                    <i class="bi bi-shield-check" style="font-size: 3rem;"></i>
-                </div>
-                <h3 class="card-title fw-bold mb-2">Verify Your Email</h3>
-                <p class="text-muted small">
-                    We sent a 6-digit verification code to <br />
-                    <strong class="text-dark">@Model.Email</strong>
-                </p>
+<div class="verification-wrapper">
+    <div class="verification-card">
 
-                <hr class="my-4 text-muted" />
+        <h2 class="verification-title">Verify your email</h2>
+        <p class="verification-subtitle">
+            We sent a 6-digit code to your email <br />
+            <span class="user-email">@Model.Email</span>
+        </p>
 
-                <form asp-controller="Accounts" asp-action="VerifyEmail" method="post" autocomplete="off">
+        <form asp-controller="Accounts" asp-action="VerifyEmail" method="post" autocomplete="off" id="otpForm">
+            <input type="hidden" asp-for="Email" />
+            <input type="hidden" asp-for="OtpCode" id="hiddenOtpCode" />
 
-                    @* <input type="hidden" name="email" value="@ViewBag.Email" /> *@
-                    <input type="hidden" asp-for="Email" />
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3 text-start"></div>
 
+            <div class="otp-box-container">
+                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required autofocus />
+                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
+                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
+                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
+                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
+                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
+            </div>
 
-                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3 text-start"></div>
+            <div class="text-center mb-3">
+                <span asp-validation-for="OtpCode" class="text-danger small"></span>
+            </div>
 
-                    <div class="mb-4">
-                        <label asp-for="OtpCode" class="form-label text-start d-block small fw-semibold">Enter OTP Code</label>
+            <button type="submit" class="btn-verify">
+                Verify <span class="arrow-icon">&rarr;</span>
+            </button>
+        </form>
 
-                        <input asp-for="OtpCode"
-                               class="form-control form-control-lg text-center fw-bold letter-spacing-otp"
-                               placeholder="000000"
-                               maxlength="6"
-                               required
-                               autofocus />
-
-                        <span asp-validation-for="OtpCode" class="text-danger small"></span>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">Verify & Activate</button>
-                    </div>
-                </form>
-
-                <div class="mt-4 text-center">
-                    <p class="small text-muted mb-0">
-                        Didn't get the code? <a asp-action="SignUp" class="text-decoration-none">Start over</a>
-                    </p>
-                </div>
-
+        <div class="timer-badge-container">
+            <div class="timer-badge">
+                <i class="bi bi-alarm-fill me-1"></i> Resend in <span id="countdown">&nbsp;00:58</span>
             </div>
         </div>
+
+        <div class="resend-container">
+            <p class="resend-text">
+                Didn't receive the code? <a asp-action="ResendOtp" asp-route-email="@Model.Email" id="resendLink" class="resend-link disabled-link">Resend</a>
+            </p>
+        </div>
+        @if (Context.Request.Query["resent"] == "true")
+        {
+            <div class="text-center mt-2">
+                <span class="text-success small fw-medium">A new OTP code has been sent successfully!</span>
+            </div>
+        }
+
     </div>
 </div>
 
@@ -62,15 +64,5 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-
-    <style>
-        .letter-spacing-otp {
-            letter-spacing: 0.5rem;
-            font-size: 1.75rem;
-        }
-        .letter-spacing-otp::placeholder {
-            letter-spacing: normal;
-            font-size: 1.1rem;
-        }
-    </style>
+    <script src="~/js/verify-email.js" asp-append-version="true"></script>
 }
