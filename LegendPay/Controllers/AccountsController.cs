@@ -1,9 +1,8 @@
-﻿using LegendPay.Models;
+﻿using LegendPay.Interfaces;
+using LegendPay.Models.Data;
 using LegendPay.Models.Data.Tables;
 using LegendPay.Models.ViewModels;
 using LegendPay.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,17 +13,24 @@ namespace LegendPay.Controllers
 {
     public class AccountsController : Controller
     {
-        //the refenrence to the database context
+        // References to the database context and injected services
         private readonly AppDbContext _context;
-        private readonly EmailService _emailService;
+        private readonly IEmailService _emailService;
+        private readonly IOtpService _otpService;
+        private readonly IAuthService _authService;
 
-        //constructor to inject the database context into the controller
-        //constructor dependency injection to get an instance of AppDbContext (the db context object)
-        public AccountsController(AppDbContext appDBcontext, EmailService emailService)
+        // Constructor dependency injection to get instances of all required services
+        public AccountsController(AppDbContext context,
+                IEmailService emailService,
+                IOtpService otpService,
+                IAuthService authService)
         {
-            _context = appDBcontext; 
+            _context = context;
             _emailService = emailService;
+            _otpService = otpService;
+            _authService = authService;
         }
+
         public IActionResult Index()
         {
             return View();
@@ -36,69 +42,56 @@ namespace LegendPay.Controllers
         }
 
         [HttpPost]
-         public async Task<IActionResult> SignUp(SignUpViewModel model)
+        public async Task<IActionResult> SignUp(SignUpViewModel model)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                // Process the sign-up data (e.g., save to database)
-                // Redirect to a success page or display a success message
-                //return RedirectToAction("Index", "Home");
                 UserAccount account = new UserAccount();
 
-                    account.FirstName = model.FirstName;
-                    account.LastName = model.LastName;
-                    account.Email = model.Email;
-                    account.Password = BCrypt.Net.BCrypt.HashPassword(model.Password);
-                    account.PhoneNumber = model.PhoneNumber;
+                account.FirstName = model.FirstName;
+                account.LastName = model.LastName;
+                account.Email = model.Email;
+                account.Password = _authService.HashPassword(model.Password); // delegate password hashing to AuthService
+                account.PhoneNumber = model.PhoneNumber;
 
-                // Generate OTP code and set expiration time
-                var otp = new Random().Next(100000, 999999).ToString(); // Generate a 6-digit OTP
-                account.OtpCode = otp;
-                account.OtpExpiration = DateTime.UtcNow.AddMinutes(10); // OTP expires in 10 minutes
-                account.IsEmailVerified = false; // Set email verification status to false
+                // Generate OTP and configure expiration/verification state via OtpService
+                var otp = _otpService.GenerateOtp();
+                _otpService.ConfigureUserOtp(account, otp);
 
                 try
                 {
-                    _context.UserAccounts.Add(account); //to add the new account to the database context
-                    await _context.SaveChangesAsync(); // so that the changes are saved to the database
+                    _context.UserAccounts.Add(account); // add the new account to the database context
+                    await _context.SaveChangesAsync(); // save changes to the database
 
-                    //send otp to user's email
+                    // Send OTP to the user's email via EmailService
                     await _emailService.SendOtpEmailAsync(account.Email, otp);
 
-                    //store email in session for verification page
-                    TempData["VerificationEmail"] = account.Email; //to store the email in TempData so that it can be accessed in the verification page
+                    // Store email in TempData so the verification page can access it
+                    TempData["VerificationEmail"] = account.Email;
 
-                    return RedirectToAction("VerifyEmail"); //redirect to the email verification page after successful sign-up
-
-                    //ModelState.Clear(); // Clear the form data after successful submission
-                    //ViewBag.Message = $"Account for {account.FirstName} {account.LastName} has been created successfully. Please login";
-
-
+                    return RedirectToAction("VerifyEmail"); // redirect to the email verification page
                 }
                 catch (DbUpdateException)
                 {
                     ModelState.AddModelError("", "Email already exists");
-
                     return View(model);
                 }
-                
-                //return View();
             }
             return View(model);
-         }
+        }
 
 
         public IActionResult VerifyEmail()
         {
-            //to pass the email stored in TempData to the view using ViewBag
-            var email = TempData["VerificationEmail"] as string; //to retrieve the email from TempData
-            
+            var email = TempData["VerificationEmail"] as string; // retrieve the email stored during sign-up or login
+
             if (string.IsNullOrEmpty(email))
             {
-                //safety net: if they refresh or navigate here manually without an email, send them away
+                // Safety net: if they refresh or navigate here manually without an email, redirect away
                 return RedirectToAction("SignUp");
             }
-            var model = new VerifyEmailViewModel { Email = email }; //to create a new instance of the VerifyEmailViewModel and set the Email property to the email retrieved from TempData
+
+            var model = new VerifyEmailViewModel { Email = email }; // pre-populate the model with the email
             return View(model);
         }
 
@@ -108,23 +101,52 @@ namespace LegendPay.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == model.Email); //find the user by email
+            // Delegate OTP validation (lookup, comparison, expiry check, and DB update) to OtpService
+            var isValid = await _otpService.ValidateUserOtpAsync(model.Email, model.OtpCode);
 
-            if (user == null || user.OtpCode != model.OtpCode || user.OtpExpiration < DateTime.UtcNow)
+            if (!isValid)
             {
-                //ViewBag.Email = email; //to pass the email back to the view in case of an error
                 ModelState.AddModelError("", "Invalid or expired OTP");
-                return View(model); // so the email is never lost and the user can try again without having to re-enter their email address
+                return View(model); // keep the email in the model so the user can retry without re-entering it
             }
 
-            //mark as verified
-            user.IsEmailVerified = true;
-            user.OtpCode = null; //clear the OTP code and expiration time after successful verification
-            user.OtpExpiration = null;
-            await _context.SaveChangesAsync(); //save the changes to the database
+            return RedirectToAction("Login"); // redirect to login after successful email verification
+        }
 
+        [HttpGet]
+        public async Task<IActionResult> ResendOtp(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                email = TempData["VerificationEmail"] as string;
+            }
+            
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("SignUp");
+            }
+            var account = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
+            if (account == null)
+            {
+                return RedirectToAction("SignUp");
+            }
+            // 1. Generate a brand new OTP
+            var newOtp = _otpService.GenerateOtp();
 
-            return RedirectToAction("Login"); //redirect to the login page after successful email verification
+            // 2. Configure user OTP (this overwrites account.OtpCode, discarding the old one)
+            _otpService.ConfigureUserOtp(account, newOtp);
+
+            // 3. Persist the change to the database
+            await _context.SaveChangesAsync();
+
+            // 4. Send out the fresh email via SendGrid
+            await _emailService.SendOtpEmailAsync(account.Email, newOtp);
+
+            // Keep the email alive in TempData for the next submission cycle
+            TempData["VerificationEmail"] = account.Email;
+
+            // Redirect back to the verification page with a success flag
+            return RedirectToAction("VerifyEmail", new { resent = true });
         }
 
 
@@ -133,41 +155,29 @@ namespace LegendPay.Controllers
             return View(new LoginViewModel());
         }
 
-
         [HttpPost]
-        public IActionResult Login(LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (ModelState.IsValid) 
+            if (ModelState.IsValid)
             {
-                var user = _context.UserAccounts.Where(u => u.Email == model.PhoneNumberOrEmail || u.PhoneNumber == model.PhoneNumberOrEmail).FirstOrDefault(); // finds user first then verify password seperately
-                if (user != null && BCrypt.Net.BCrypt.Verify(model.Password, user.Password)) //password is correct? proceed with login
-                {
-                    // User found, redirect to a different page or perform login actions
-                    //return RedirectToAction("Index", "Home");
+                // Find user by email or phone number, then verify password separately
+                var user = _context.UserAccounts
+                    .Where(u => u.Email == model.PhoneNumberOrEmail || u.PhoneNumber == model.PhoneNumberOrEmail)
+                    .FirstOrDefault();
 
+                if (user != null && _authService.VerifyPassword(model.Password, user.Password)) // delegate password verification to AuthService
+                {
                     if (!user.IsEmailVerified)
                     {
-                        TempData["VerificationEmail"] = user.Email; //to store the email in TempData so that it can be accessed in the verification page
-                        return RedirectToAction("VerifyEmail"); //redirect to the email verification page if the email is not verified
+                        // Store email in TempData and redirect to verify if account is unverified
+                        TempData["VerificationEmail"] = user.Email;
+                        return RedirectToAction("VerifyEmail");
                     }
 
-                    //successful login, redirect to the home page
-                    // In a real application, you would typically set up authentication cookies or tokens here
-                    // For demonstration purposes, we'll just redirect to a secure page
-                    // Create claims for the authenticated user
+                    // Delegate cookie sign-in (claims creation + SignInAsync) to AuthService
+                    await _authService.SignInUserAsync(HttpContext, user);
 
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, user.Email),
-                        new Claim(ClaimTypes.GivenName, user.FirstName), // Standard First Name claim
-                        new Claim(ClaimTypes.Surname, user.LastName),    // Standard Last Name claim
-                        new Claim(ClaimTypes.Role, "User")// You can add more claims as needed
-                    };
-
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity)); //logins user and creates an authentication cookie
-
-                    return RedirectToAction("HomePage"); //securepage is the home page for authenticated users
+                    return RedirectToAction("HomePage"); // redirect authenticated user to the home page
                 }
                 else
                 {
@@ -177,20 +187,20 @@ namespace LegendPay.Controllers
             return View(model);
         }
 
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme); //to log out the user and clear the authentication cookie
-            return RedirectToAction("Login"); //redirect to login page after logout
+            await _authService.SignOutUserAsync(HttpContext); // delegate sign-out to AuthService
+            return RedirectToAction("Login"); // redirect to login page after logout
         }
 
-        //only authenticated users can access this page
+        // Only authenticated users can access this page
         [Authorize]
-        public IActionResult HomePage() //basically home page for authenticated users
+        public IActionResult HomePage()
         {
-            var firstname = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value; //to get the name of the authenticated user and pass it to the view using ViewBag
-            var lastname = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Surname)?.Value; //to get the last name of the authenticated user and pass it to the view using ViewBag
+            var firstname = HttpContext.User.FindFirst(ClaimTypes.GivenName)?.Value; // get authenticated user's first name from claims
+            var lastname = HttpContext.User.FindFirst(ClaimTypes.Surname)?.Value;    // get authenticated user's last name from claims
 
-            ViewBag.FullName = $"{firstname} {lastname}"; //to combine the first name and last name and pass it to the view as FullName
+            ViewBag.FullName = $"{firstname} {lastname}"; // combine and pass full name to the view
             return View();
         }
     }
