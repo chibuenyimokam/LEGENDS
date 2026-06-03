@@ -1,4 +1,5 @@
 using LegendPay.Interfaces;
+using LegendPay.Models;
 using LegendPay.Models.Data;
 using LegendPay.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
