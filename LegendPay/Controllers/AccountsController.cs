@@ -14,18 +14,16 @@ namespace LegendPay.Controllers
     public class AccountsController : Controller
     {
         // References to the database context and injected services
-        private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
         private readonly IAuthService _authService;
 
         // Constructor dependency injection to get instances of all required services
-        public AccountsController(AppDbContext context,
+        public AccountsController(
                 IEmailService emailService,
                 IOtpService otpService,
                 IAuthService authService)
         {
-            _context = context;
             _emailService = emailService;
             _otpService = otpService;
             _authService = authService;
@@ -46,34 +44,27 @@ namespace LegendPay.Controllers
         {
             if (ModelState.IsValid)
             {
-                UserAccount account = new UserAccount();
-
-                account.FirstName = model.FirstName;
-                account.LastName = model.LastName;
-                account.Email = model.Email;
-                account.Password = _authService.HashPassword(model.Password); // delegate password hashing to AuthService
-                account.PhoneNumber = model.PhoneNumber;
 
                 // Generate OTP and configure expiration/verification state via OtpService
                 var otp = _otpService.GenerateOtp();
-                _otpService.ConfigureUserOtp(account, otp);
+                //_otpService.ConfigureUserOtp(account, otp);
 
                 try
                 {
-                    _context.UserAccounts.Add(account); // add the new account to the database context
-                    await _context.SaveChangesAsync(); // save changes to the database
+                    // delegate user creation, password hashing, OTP configuration, and database saving to AuthService
+                    var user = await _authService.CreateAndSaveUserAsync(model, otp); 
 
                     // Send OTP to the user's email via EmailService
-                    await _emailService.SendOtpEmailAsync(account.Email, otp);
+                    await _emailService.SendOtpEmailAsync(model.Email, otp);
 
                     // Store email in TempData so the verification page can access it
-                    TempData["VerificationEmail"] = account.Email;
+                    TempData["VerificationEmail"] = model.Email;
 
                     return RedirectToAction("VerifyEmail"); // redirect to the email verification page
                 }
                 catch (DbUpdateException)
                 {
-                    ModelState.AddModelError("", "Email already exists");
+                    ModelState.AddModelError("", "Email or unique constraint already exists");
                     return View(model);
                 }
             }
@@ -101,7 +92,7 @@ namespace LegendPay.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Delegate OTP validation (lookup, comparison, expiry check, and DB update) to OtpService
+            // Delegates OTP validation (lookup, comparison, expiry check, and DB update) to OtpService
             var isValid = await _otpService.ValidateUserOtpAsync(model.Email, model.OtpCode);
 
             if (!isValid)
@@ -125,7 +116,7 @@ namespace LegendPay.Controllers
             {
                 return RedirectToAction("SignUp");
             }
-            var account = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
+            var account = await _authService.GetUserByEmailAsync(email);
             if (account == null)
             {
                 return RedirectToAction("SignUp");
@@ -136,10 +127,7 @@ namespace LegendPay.Controllers
             // 2. Configure user OTP (this overwrites account.OtpCode, discarding the old one)
             _otpService.ConfigureUserOtp(account, newOtp);
 
-            // 3. Persist the change to the database
-            await _context.SaveChangesAsync();
-
-            // 4. Send out the fresh email via SendGrid
+            // 3. Send out the fresh email via SendGrid
             await _emailService.SendOtpEmailAsync(account.Email, newOtp);
 
             // Keep the email alive in TempData for the next submission cycle
@@ -160,16 +148,13 @@ namespace LegendPay.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Find user by email or phone number, then verify password separately
-                var user = _context.UserAccounts
-                    .Where(u => u.Email == model.PhoneNumberOrEmail || u.PhoneNumber == model.PhoneNumberOrEmail)
-                    .FirstOrDefault();
-
-                if (user != null && _authService.VerifyPassword(model.Password, user.Password)) // delegate password verification to AuthService
+                
+                var user = await _authService.ValidateLoginCredentialsAsync(model.PhoneNumberOrEmail, model.Password); // delegate password verification to AuthService
+                if (user != null)   
                 {
                     if (!user.IsEmailVerified)
                     {
-                        // Store email in TempData and redirect to verify if account is unverified
+                        // Store email in TempData and redirect to verify if account is unverified, bad architectural choice but it works for this demo
                         TempData["VerificationEmail"] = user.Email;
                         return RedirectToAction("VerifyEmail");
                     }

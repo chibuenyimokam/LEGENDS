@@ -1,7 +1,7 @@
 ﻿using LegendPay.Models.Data.Tables;
 using Microsoft.EntityFrameworkCore;
 
-namespace LegendPay.Models.Data
+namespace LegendPay.Models
 {
     public class AppDbContext : DbContext
     {
