@@ -2,6 +2,11 @@ using LegendPay.Models;
 using LegendPay.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using LegendPay.Interfaces.Admin;
+using LegendPay.Services.Admin;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace LegendPay
 {
@@ -24,12 +29,28 @@ namespace LegendPay
                 options.Cookie.IsEssential = true;
             });
 
-            builder.Services.AddControllersWithViews();
             builder.Services.AddScoped<EmailService>();
-            builder.Services.AddSession();
+            builder.Services.AddScoped<JwtService>();
+            builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
+            builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 
             //cookie authentication
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie()
+                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                    };
+                });
 
 
             var app = builder.Build();

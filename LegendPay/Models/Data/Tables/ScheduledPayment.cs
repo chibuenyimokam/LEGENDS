@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LegendPay.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
@@ -15,8 +16,7 @@ namespace LegendPay.Models.Data.Tables
         public UserAccount UserAccount { get; set; }
 
         [Required(ErrorMessage = "Biller category is required.")]
-        [MaxLength(50, ErrorMessage = "Biller category cannot exceed 50 characters.")]
-        public string BillerCategory { get; set; }
+        public BillerCategory BillerCategory { get; set; }
 
         [Required(ErrorMessage = "Biller name is required.")]
         [MaxLength(100, ErrorMessage = "Biller name cannot exceed 100 characters.")]
@@ -33,12 +33,10 @@ namespace LegendPay.Models.Data.Tables
         [Required(ErrorMessage = "Scheduled date is required.")]
         public DateTime ScheduledDate { get; set; }
 
-        [MaxLength(20)]
-        public string PaymentMethod { get; set; } = "Wallet";
+        public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Wallet;
 
         [Required]
-        [MaxLength(20)]
-        public string Status { get; set; } = "Pending"; // "Pending", "Processed", "Cancelled", "Failed"
+        public ScheduledPaymentStatus Status { get; set; } = ScheduledPaymentStatus.Pending;
 
         public Guid? BillId { get; set; }
 

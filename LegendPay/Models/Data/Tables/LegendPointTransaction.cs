@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LegendPay.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
@@ -26,8 +27,7 @@ namespace LegendPay.Models.Data.Tables
         public Bill? Bill { get; set; }
 
         [Required]
-        [MaxLength(10)]
-        public string Type { get; set; } // "Earned" or "Redeemed"
+        public LegendPointType Type { get; set; }
 
         [Required]
         public int Points { get; set; }

@@ -47,9 +47,9 @@ namespace LegendPay.Models.Data.Tables
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation Properties
-        public Wallet Wallet { get; set; }
-        public LegendPoint LegendPoint { get; set; }
+        
+        public Wallet? Wallet { get; set; }
+        public LegendPoint? LegendPoint { get; set; }
         public ICollection<Bill>? Bills { get; set; }
         public ICollection<Receipt>? Receipts { get; set; }
         public ICollection<Notification>? Notifications { get; set; }

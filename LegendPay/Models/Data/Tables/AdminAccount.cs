@@ -27,10 +27,12 @@ namespace LegendPay.Models.Data.Tables
 
         [Required]
         [MaxLength(20)]
-        public string Role { get; set; } = "Admin"; // "SuperAdmin", "Admin", "Support"
+        public string Role { get; set; } = "Admin"; 
 
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string? TwoFactorCode { get; set; }
+        public DateTime? TwoFactorExpiration { get; set; }
     }
 }

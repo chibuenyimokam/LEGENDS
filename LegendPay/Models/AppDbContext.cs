@@ -11,28 +11,20 @@ namespace LegendPay.Models
 
         public DbSet<UserAccount> UserAccounts { get; set; }
         public DbSet<AdminAccount> AdminAccounts { get; set; }
-
         public DbSet<Wallet> Wallets { get; set; }
         public DbSet<WalletTransaction> WalletTransactions { get; set; }
-
         public DbSet<Bill> Bills { get; set; }
         public DbSet<Receipt> Receipts { get; set; }
-
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<Reminder> Reminders { get; set; }
-
         public DbSet<ScheduledPayment> ScheduledPayments { get; set; }
-
         public DbSet<Beneficiary> Beneficiaries { get; set; }
-
         public DbSet<LegendPoint> LegendPoints { get; set; }
         public DbSet<LegendPointTransaction> LegendPointTransactions { get; set; }
         public DbSet<LegendPointSettings> LegendPointSettings { get; set; }
         public DbSet<FloatAccount> FloatAccounts { get; set; }
         public DbSet<FloatTransaction> FloatTransactions { get; set; }
-
         public DbSet<Notification> Notifications { get; set; }
-
         public DbSet<SupportChat> SupportChats { get; set; }
         public DbSet<SupportMessage> SupportMessages { get; set; }
         public DbSet<SpendingRecord> SpendingRecords { get; set; }
@@ -88,6 +80,43 @@ namespace LegendPay.Models
                 .WithMany()
                 .HasForeignKey(r => r.UserAccountId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            // Seed Admin Accounts
+            modelBuilder.Entity<AdminAccount>().HasData(
+                new AdminAccount
+                {
+                    Id = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
+                    FirstName = "Adaku",
+                    LastName = "Nwaeze",
+                    Email = "nwaeze.adaku@gmail.com",
+                    Password = "$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+                    Role = "Admin",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new AdminAccount
+                {
+                    Id = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901"),
+                    FirstName = "Mitchel",
+                    LastName = "Aziken",
+                    Email = "programmingwithKami@gmail.com",
+                    Password = "$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+                    Role = "Admin",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new AdminAccount
+                {
+                    Id = Guid.Parse("c3d4e5f6-a7b8-9012-cdef-123456789012"),
+                    FirstName = "Chibuenyim",
+                    LastName = "Okam",
+                    Email = "Chibuenyimokam@gmail.com",
+                    Password = "$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+                    Role = "Admin",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            );
         }
     }
 }

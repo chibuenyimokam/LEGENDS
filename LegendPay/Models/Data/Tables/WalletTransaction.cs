@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LegendPay.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
@@ -12,22 +13,19 @@ namespace LegendPay.Models.Data.Tables
         public Guid WalletId { get; set; }
 
         [ForeignKey(nameof(WalletId))]
-        public Wallet Wallet { get; set; }
+        public Wallet? Wallet { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
 
         [Required]
-        [MaxLength(10)]
-        public string Type { get; set; } // "Credit" or "Debit"
+        public WalletTransactionType Type { get; set; }
 
         [Required]
-        [MaxLength(30)]
-        public string Status { get; set; } // "Pending", "Success", "Failed"
+        public WalletTransactionStatus Status { get; set; }
 
-        [MaxLength(50)]
-        public string? Source { get; set; }
+        public WalletTransactionSource? Source { get; set; }
 
         [MaxLength(250)]
         public string? Description { get; set; }

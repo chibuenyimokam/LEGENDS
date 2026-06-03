@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LegendPay.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
@@ -15,8 +16,7 @@ namespace LegendPay.Models.Data.Tables
         public UserAccount UserAccount { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        public string Type { get; set; } // "WalletFunded", "BillPaid", "Reminder", "AutoPay", "CashbackCredited", "LowBalance"
+        public NotificationType Type { get; set; }
 
         [Required]
         [MaxLength(300)]

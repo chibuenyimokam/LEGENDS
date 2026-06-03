@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LegendPay.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
@@ -24,8 +25,7 @@ namespace LegendPay.Models.Data.Tables
         public string Subject { get; set; }
 
         [Required]
-        [MaxLength(20)]
-        public string Status { get; set; } = "Open"; // "Open", "InProgress", "Resolved", "Closed"
+        public SupportChatStatus Status { get; set; } = SupportChatStatus.Open;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

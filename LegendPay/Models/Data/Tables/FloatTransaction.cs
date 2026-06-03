@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LegendPay.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
@@ -12,19 +13,17 @@ namespace LegendPay.Models.Data.Tables
         public Guid FloatAccountId { get; set; }
 
         [ForeignKey(nameof(FloatAccountId))]
-        public FloatAccount FloatAccount { get; set; }
+        public FloatAccount? FloatAccount { get; set; }
 
         [Required]
-        [MaxLength(10)]
-        public string Type { get; set; } // "Credit" or "Debit"
+        public FloatTransactionType Type { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        public string TransactionReason { get; set; } // "AdminTopUp" or "CashbackPayout"
+        public TransactionReason TransactionReason { get; set; }
 
         public Guid? UserAccountId { get; set; }
 

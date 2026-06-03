@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LegendPay.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
@@ -15,8 +16,7 @@ namespace LegendPay.Models.Data.Tables
         public UserAccount UserAccount { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        public string BillerCategory { get; set; }
+        public BillerCategory BillerCategory { get; set; }
 
         [Required]
         [MaxLength(100)]
@@ -31,12 +31,10 @@ namespace LegendPay.Models.Data.Tables
         public decimal Amount { get; set; }
 
         [Required]
-        [MaxLength(20)]
-        public string PaymentMethod { get; set; } // "Wallet" or "Verge"
+        public PaymentMethod PaymentMethod { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        public string Status { get; set; } // "Pending", "Success", "Failed"
+        public BillStatus Status { get; set; } = BillStatus.Pending;
 
         [MaxLength(200)]
         public string? ConfirmationToken { get; set; }

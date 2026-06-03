@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LegendPay.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
@@ -21,8 +22,7 @@ namespace LegendPay.Models.Data.Tables
         public UserAccount UserAccount { get; set; }
 
         [Required]
-        [MaxLength(20)]
-        public string ReminderType { get; set; } 
+        public ReminderType ReminderType { get; set; }
 
         [Required]
         public DateTime ScheduledAt { get; set; }
@@ -30,7 +30,6 @@ namespace LegendPay.Models.Data.Tables
         public DateTime? SentAt { get; set; }
 
         [Required]
-        [MaxLength(20)]
-        public string Status { get; set; } = "Pending"; // "Pending", "Sent", "Failed"
+        public ReminderStatus Status { get; set; } = ReminderStatus.Pending;
     }
 }

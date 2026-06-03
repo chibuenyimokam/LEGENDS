@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace LegendPay.Migrations
 {
     /// <inheritdoc />
@@ -22,7 +24,9 @@ namespace LegendPay.Migrations
                     Password = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     Role = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TwoFactorCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TwoFactorExpiration = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -109,12 +113,12 @@ namespace LegendPay.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BillerCategory = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    BillerCategory = table.Column<int>(type: "int", nullable: false),
                     BillerName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     AccountReference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    PaymentMethod = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    PaymentMethod = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     ConfirmationToken = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     VergeRefrence = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     BilleroneRefrence = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
@@ -137,9 +141,9 @@ namespace LegendPay.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FloatAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TransactionReason = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    TransactionReason = table.Column<int>(type: "int", nullable: false),
                     UserAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -187,7 +191,7 @@ namespace LegendPay.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
                     Message = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
                     IsRead = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -235,15 +239,15 @@ namespace LegendPay.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BillerCategory = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    BillerCategory = table.Column<int>(type: "int", nullable: false),
                     BillerName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     AccountReference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     NextDueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RenewalIntervalDays = table.Column<int>(type: "int", nullable: false),
                     IsAutoPayEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    PaymentMethod = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    PaymentMethod = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -314,13 +318,13 @@ namespace LegendPay.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BillerCategory = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    BillerCategory = table.Column<int>(type: "int", nullable: false),
                     BillerName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     AccountReference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     ScheduledDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PaymentMethod = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    PaymentMethod = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     BillId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -348,7 +352,7 @@ namespace LegendPay.Migrations
                     UserAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     BillId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Subject = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -375,7 +379,7 @@ namespace LegendPay.Migrations
                     LegendPointId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     BillId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Type = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
                     Points = table.Column<int>(type: "int", nullable: false),
                     BillAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     CashbackValue = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
@@ -410,10 +414,10 @@ namespace LegendPay.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SubscriptionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ReminderType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ReminderType = table.Column<int>(type: "int", nullable: false),
                     ScheduledAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     SentAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                    Status = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -438,9 +442,9 @@ namespace LegendPay.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     WalletId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Type = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    Source = table.Column<int>(type: "int", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
                     ExternalReference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -462,7 +466,7 @@ namespace LegendPay.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SupportChatId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Sender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    Sender = table.Column<int>(type: "int", nullable: false),
                     MessageText = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AttachmentPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -476,6 +480,16 @@ namespace LegendPay.Migrations
                         principalTable: "SupportChats",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "AdminAccounts",
+                columns: new[] { "Id", "CreatedAt", "Email", "FirstName", "IsActive", "LastName", "Password", "Role", "TwoFactorCode", "TwoFactorExpiration" },
+                values: new object[,]
+                {
+                    { new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890"), new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "nwaeze.adaku@gmail.com", "Adaku", true, "Nwaeze", "$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", "Admin", null, null },
+                    { new Guid("b2c3d4e5-f6a7-8901-bcde-f12345678901"), new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "programmingwithKami@gmail.com", "Mitchel", true, "Aziken", "$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", "Admin", null, null },
+                    { new Guid("c3d4e5f6-a7b8-9012-cdef-123456789012"), new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Chibuenyimokam@gmail.com", "Chibuenyim", true, "Okam", "$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", "Admin", null, null }
                 });
 
             migrationBuilder.CreateIndex(
