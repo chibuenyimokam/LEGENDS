@@ -31,7 +31,7 @@ body {
     gap: 24px;
 }
 
-/* ── Card ── */
+/* Card */
 .signup-card {
     width: 100%;
     background: var(--white);
@@ -40,7 +40,7 @@ body {
     box-shadow: 0 8px 40px rgba(10,47,182,.10);
 }
 
-/* ── Back link ── */
+/* Back link */
 .back-link {
     display: inline-flex;
     align-items: center;
@@ -55,7 +55,7 @@ body {
 
 .back-link:hover { text-decoration: underline; }
 
-/* ── Header ── */
+/* Header */
 .signup-header {
     display: flex;
     align-items: center;
@@ -89,7 +89,7 @@ body {
     margin-top: 2px;
 }
 
-/* ── Form ── */
+/* Form */
 .form-group {
     margin-bottom: 16px;
 }
@@ -134,7 +134,7 @@ body {
     font-size: 14px;
     color: var(--text-dark);
     background: transparent;
-    padding: 0 14px 0 0;
+    padding: 0 14px 0 14px;
 }
 
 .form-input::placeholder { color: #B0BAD4; }
@@ -167,7 +167,7 @@ body {
 
 .form-group.half { flex: 1; }
 
-/* ── Wallet notice ── */
+/* Wallet notice */
 .wallet-notice {
     display: flex;
     gap: 12px;
@@ -182,13 +182,16 @@ body {
 .wallet-checkbox {
     width: 22px;
     height: 22px;
-    background: var(--blue);
+    background: transparent;
+    border: 2px solid var(--blue);
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     margin-top: 2px;
+    cursor: pointer;
+    transition: background .2s;
 }
 
 .checkmark {
@@ -210,7 +213,7 @@ body {
     line-height: 1.5;
 }
 
-/* ── Submit button ── */
+/* Submit button */
 .btn-create {
     width: 100%;
     height: 52px;
@@ -232,7 +235,7 @@ body {
     box-shadow: 0 6px 24px rgba(21,73,232,.5);
 }
 
-/* ── Login link ── */
+/* Login link */
 .login-link {
     text-align: center;
     font-size: 13px;
@@ -247,7 +250,7 @@ body {
 
 .login-link a:hover { text-decoration: underline; }
 
-/* ── Error states ── */
+/* Error states */
 .error-summary {
     color: var(--error);
     font-size: 13px;
@@ -261,7 +264,7 @@ body {
     display: block;
 }
 
-/* ── Footer ── */
+/* Footer */
 .signup-footer {
     text-align: center;
 }
@@ -281,7 +284,7 @@ body {
     font-weight: 500;
 }
 
-/* ── Responsive ── */
+/* Responsive */
 @media (max-width: 600px) {
     .signup-card { padding: 28px 24px; }
     .form-row { flex-direction: column; gap: 0; }
