@@ -1,9 +1,11 @@
 using LegendPay.Interfaces;
 using LegendPay.Models;
-using LegendPay.Models.Data;
+using LegendPay.Models.Data;    
 using LegendPay.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using LegendPay.Interfaces.Admin;
+using LegendPay.Services.Admin;
 
 namespace LegendPay
 {
@@ -29,9 +31,18 @@ namespace LegendPay
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
+            builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 
             //cookie authentication
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Admin/Login";
+                    options.LogoutPath = "/Admin/Logout";
+                    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+                    options.SlidingExpiration = true;
+                });
 
 
             var app = builder.Build();
