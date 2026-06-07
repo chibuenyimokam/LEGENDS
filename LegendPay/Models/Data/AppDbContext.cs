@@ -88,6 +88,42 @@ namespace LegendPay.Models
                 .WithMany()
                 .HasForeignKey(r => r.UserAccountId)
                 .OnDelete(DeleteBehavior.NoAction);
+            
+            modelBuilder.Entity<AdminAccount>().HasData(
+                new AdminAccount
+                {
+                    Id = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
+                    FirstName = "Adaku",
+                    LastName = "Nwaeze",
+                    Email = "nwaeze.adaku@gmail.com",
+                    Password = "$2a$12$1x0FKmuHNzklamegKSwrSusPA45X1XWIvnMmtRbiwSuATHHILsnle",
+                    Role = "Admin",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new AdminAccount
+                {
+                    Id = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901"),
+                    FirstName = "Mitchel",
+                    LastName = "Aziken",
+                    Email = "programmingwithKami@gmail.com",
+                    Password = "$2a$12$D1.b9QgzLVlmP/9m7.GAhOX/FknZ/lFIhO7kbh.66gwp2HY1sZdHe",
+                    Role = "Admin",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new AdminAccount
+                {
+                    Id = Guid.Parse("c3d4e5f6-a7b8-9012-cdef-123456789012"),
+                    FirstName = "Chibuenyim",
+                    LastName = "Okam",
+                    Email = "$2a$12$CzlvE3HbR/LZa6RF.O2V0O0R5pL/nzpctbJMQMaltYh7II1JvCXTy",
+                    Password = "your-bcrypt-hash-here",
+                    Role = "Admin",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            );
         }
     }
 }
