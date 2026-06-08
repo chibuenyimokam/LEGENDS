@@ -1,4 +1,4 @@
-// ── Dot pagination cycling ──
+// Dot pagination cycling
 const dots = document.querySelectorAll('.dot');
 let current = 0;
 
@@ -8,7 +8,7 @@ setInterval(() => {
   dots[current].classList.add('active');
 }, 2400);
 
-// ── Button ripple effect ──
+// Button ripple effect
 document.querySelectorAll('.btn').forEach(btn => {
   btn.addEventListener('click', function (e) {
     const ripple = document.createElement('span');
