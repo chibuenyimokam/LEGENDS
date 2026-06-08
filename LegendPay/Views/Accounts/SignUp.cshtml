@@ -44,7 +44,7 @@
             <form asp-action="SignUp" method="post">
 
                 <div class="form-group">
-                    <label class="form-label">FULL NAME</label>
+                    <label class="form-label">FIRST NAME</label>
                     <div class="input-wrapper">
                         <span class="input-icon">&#128100;</span>
                         <input asp-for="FirstName" class="form-input" placeholder="First name" />
@@ -98,9 +98,9 @@
                 </div>
 
             
-                <div class="wallet-notice">
-                    <div class="wallet-checkbox">
-                        <span class="checkmark">&#10003;</span>
+                <div class="wallet-notice" id="walletNotice">
+                    <div class="wallet-checkbox" id="walletCheckbox" onclick="toggleWallet()">
+                        <span class="checkmark" id="checkmark" style="display:none;">&#10003;</span>
                     </div>
                     <div class="wallet-text">
                         <strong>Auto-wallet created on signup — wallet ID assigned instantly.</strong>
@@ -130,5 +130,6 @@
         }
     }
 
+    <script src="~/js/signup.js"></script> 
 </body>
 </html>
