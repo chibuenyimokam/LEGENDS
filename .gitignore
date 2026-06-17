@@ -362,5 +362,10 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+<<<<<<< HEAD
 appsettings.Development.jsonLegendPay/appsettings.json 
 LegendPay/Migrations/ 
+=======
+appsettings.Development.json
+Migrations/
+>>>>>>> dcc72c8 (wallet station integration)
