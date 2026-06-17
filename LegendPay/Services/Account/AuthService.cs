@@ -42,28 +42,56 @@ namespace LegendPay.Services.Account
 
         public async Task<UserAccount?> CreateAndSaveUserAsync(SignUpViewModel model, string initialOtp)
         {
-            var user = new UserAccount
-            {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Email = model.Email,
-                Password = HashPassword(model.Password),
-                PhoneNumber = model.PhoneNumber
-            };
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            _otpService.ConfigureUserOtp(user, initialOtp);
-            _context.UserAccounts.Add(user);
-            await _context.SaveChangesAsync();
-
-            // Attempt wallet creation — user is saved regardless of wallet outcome
             try
             {
+                var user = new UserAccount
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    Password = HashPassword(model.Password),
+                    PhoneNumber = model.PhoneNumber
+                };
+
+                _otpService.ConfigureUserOtp(user, initialOtp);
+                _context.UserAccounts.Add(user);
+                await _context.SaveChangesAsync();
+
+                //commit local account info first before attempting wallet creation to ensure user is saved even if wallet fails
+                await transaction.CommitAsync();
+
+                // attempt wallet creation after committing user to ensure user is saved even if wallet fails.
+                // If wallet creation fails, the user can be retried for wallet creation later without losing the account info.
+                await TryProvisionWalletAsync(user);
+
+                return user;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Critical database failure registering user account for {Email}", model.Email);
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> TryProvisionWalletAsync(UserAccount user)
+        { 
+
+            if (!string.IsNullOrEmpty(user.CustomerId))
+            {
+                return true;
+            }
+
+
+            try
+                {
                 var walletRequest = new CreateWalletRequest
                 {
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    CustomerAlias = user.Email   // email used as the unique customer alias
-                    // BVN and Otp left null — add these if your CoralPay profile requires them
+                    CustomerAlias = user.Email   
                 };
 
                 var wallet = await _walletService.CreateWalletAsync(walletRequest);
@@ -73,23 +101,22 @@ namespace LegendPay.Services.Account
                     user.CustomerId = wallet.AccountDetails.CustomerId;
                     user.AccountNumber = wallet.AccountDetails.AccountNumber;
                     user.BankName = wallet.AccountDetails.BankName;
+
+                    _context.UserAccounts.Update(user);
                     await _context.SaveChangesAsync();
+
+                    _logger.LogInformation("Wallet successfully provisioned for user: {Email}", user.Email);
+                    return true;
                 }
-                else
-                {
-                    _logger.LogWarning(
-                        "Wallet creation returned null for {Email}. User registered without a wallet.",
-                        user.Email);
-                }
+
+                _logger.LogWarning("Wallet Engine returned empty payload configurations for {Email}. Flagged for background retry.", user.Email);
+                return false;
             }
             catch (Exception ex)
             {
-                // Don't block registration — the user is already saved.
-                // A background job or manual retry can create the wallet later.
-                _logger.LogError(ex, "Error creating wallet for {Email}", user.Email);
+                _logger.LogError(ex, "External upstream provider failed during wallet creation for {Email}.", user.Email);
+                return false;
             }
-
-            return user;
         }
 
         public async Task<UserAccount?> ValidateLoginCredentialsAsync(string identifier, string plainPassword)
