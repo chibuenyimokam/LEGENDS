@@ -16,7 +16,6 @@ namespace LegendPay.Services.Transaction
         private readonly string _password;
         private readonly string _walletBaseUrl;
 
-        // Simple in-memory token cache — avoids re-authenticating on every request
         private string? _cachedToken;
         private DateTime _tokenExpiry = DateTime.MinValue;
 
@@ -29,12 +28,8 @@ namespace LegendPay.Services.Transaction
             _walletBaseUrl = _config["CoralPay:WalletBaseUrl"]!;
         }
 
-        // ------------------------------------------------------------------
-        // Private: get a valid bearer token, re-authenticating only if needed
-        // ------------------------------------------------------------------
         private async Task<string?> GetTokenAsync()
         {
-            // Return cached token if it hasn't expired (with a 5-min safety buffer)
             if (_cachedToken != null && DateTime.UtcNow < _tokenExpiry.AddMinutes(-5))
                 return _cachedToken;
 
@@ -64,9 +59,7 @@ namespace LegendPay.Services.Transaction
             }
         }
 
-        // ------------------------------------------------------------------
-        // Private: shared POST helper — attaches bearer token and deserializes
-        // ------------------------------------------------------------------
+        // this is a shared POST helper that attaches bearer token and deserializes
         private async Task<T?> PostAsync<T>(string endpoint, object payload) where T : class
         {
             var token = await GetTokenAsync();
@@ -88,10 +81,7 @@ namespace LegendPay.Services.Transaction
             return JsonConvert.DeserializeObject<T>(json);
         }
 
-        // ------------------------------------------------------------------
-        // Public API
-        // ------------------------------------------------------------------
-
+        
         public async Task<CreateWalletResponse?> CreateWalletAsync(CreateWalletRequest walletRequest)
         {
             try

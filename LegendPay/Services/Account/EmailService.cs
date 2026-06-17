@@ -52,7 +52,6 @@ namespace LegendPay.Services.Account
                 throw new InvalidOperationException($"Failed to send OTP email. Status: {response.StatusCode}. Response: {body}");
             }
 
-            // breakpoint to inspect response during runtime
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Body.ReadAsStringAsync();
