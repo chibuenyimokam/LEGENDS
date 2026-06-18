@@ -1,10 +1,10 @@
-﻿using LegendPay.Interfaces;
+﻿using LegendPay.Interfaces.Auth;
 using LegendPay.Models;
 using LegendPay.Models.Data;
 using LegendPay.Models.Data.Tables;
 using Microsoft.EntityFrameworkCore;
 
-namespace LegendPay.Services
+namespace LegendPay.Services.Account
 {
     public class OtpService : IOtpService
     {

@@ -1,8 +1,10 @@
-﻿using LegendPay.Interfaces;
+﻿using LegendPay.Interfaces.Auth;
+using LegendPay.Interfaces.Transaction;
 using LegendPay.Models.Data;
 using LegendPay.Models.Data.Tables;
 using LegendPay.Models.ViewModels;
 using LegendPay.Services;
+using LegendPay.Services.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,16 +19,22 @@ namespace LegendPay.Controllers
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
         private readonly IAuthService _authService;
+        private readonly IWalletService _walletService;
+        private readonly ILogger<AccountsController> _logger;
 
-        // Constructor dependency injection to get instances of all required services
+
         public AccountsController(
                 IEmailService emailService,
                 IOtpService otpService,
-                IAuthService authService)
+                IAuthService authService,
+                IWalletService walletService,
+                ILogger<AccountsController> logger)
         {
             _emailService = emailService;
             _otpService = otpService;
             _authService = authService;
+            _walletService = walletService;
+            _logger = logger;
         }
 
         public IActionResult Index()
@@ -45,22 +53,18 @@ namespace LegendPay.Controllers
             if (ModelState.IsValid)
             {
 
-                // Generate OTP and configure expiration/verification state via OtpService
                 var otp = _otpService.GenerateOtp();
                 //_otpService.ConfigureUserOtp(account, otp);
 
                 try
                 {
-                    // delegate user creation, password hashing, OTP configuration, and database saving to AuthService
                     var user = await _authService.CreateAndSaveUserAsync(model, otp); 
 
-                    // Send OTP to the user's email via EmailService
                     await _emailService.SendOtpEmailAsync(model.Email, otp);
 
-                    // Store email in TempData so the verification page can access it
                     TempData["VerificationEmail"] = model.Email;
 
-                    return RedirectToAction("VerifyEmail"); // redirect to the email verification page
+                    return RedirectToAction("VerifyEmail"); 
                 }
                 catch (DbUpdateException)
                 {
@@ -74,15 +78,14 @@ namespace LegendPay.Controllers
 
         public IActionResult VerifyEmail()
         {
-            var email = TempData["VerificationEmail"] as string; // retrieve the email stored during sign-up or login
+            var email = TempData["VerificationEmail"] as string; 
 
             if (string.IsNullOrEmpty(email))
             {
-                // Safety net: if they refresh or navigate here manually without an email, redirect away
                 return RedirectToAction("SignUp");
             }
 
-            var model = new VerifyEmailViewModel { Email = email }; // pre-populate the model with the email
+            var model = new VerifyEmailViewModel { Email = email }; 
             return View(model);
         }
 
@@ -92,16 +95,15 @@ namespace LegendPay.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Delegates OTP validation (lookup, comparison, expiry check, and DB update) to OtpService
             var isValid = await _otpService.ValidateUserOtpAsync(model.Email, model.OtpCode);
 
             if (!isValid)
             {
                 ModelState.AddModelError("", "Invalid or expired OTP");
-                return View(model); // keep the email in the model so the user can retry without re-entering it
+                return View(model);
             }
 
-            return RedirectToAction("Login"); // redirect to login after successful email verification
+            return RedirectToAction("Login"); 
         }
 
         [HttpGet]
@@ -121,19 +123,14 @@ namespace LegendPay.Controllers
             {
                 return RedirectToAction("SignUp");
             }
-            // 1. Generate a brand new OTP
             var newOtp = _otpService.GenerateOtp();
 
-            // 2. Configure user OTP (this overwrites account.OtpCode, discarding the old one)
             _otpService.ConfigureUserOtp(account, newOtp);
 
-            // 3. Send out the fresh email via SendGrid
             await _emailService.SendOtpEmailAsync(account.Email, newOtp);
 
-            // Keep the email alive in TempData for the next submission cycle
             TempData["VerificationEmail"] = account.Email;
 
-            // Redirect back to the verification page with a success flag
             return RedirectToAction("VerifyEmail", new { resent = true });
         }
 
@@ -149,23 +146,23 @@ namespace LegendPay.Controllers
             if (ModelState.IsValid)
             {
                 
-                var user = await _authService.ValidateLoginCredentialsAsync(model.PhoneNumberOrEmail, model.Password); // delegate password verification to AuthService
+                var user = await _authService.ValidateLoginCredentialsAsync(model.PhoneNumberOrEmail, model.Password); 
                 if (user != null)   
                 {
                     if (!user.IsEmailVerified)
                     {
-                        // Store email in TempData and redirect to verify if account is unverified, bad architectural choice but it works for this demo
+                        // Store email in TempData and redirect to verify if account is unverified (this is a bad architectural choice but it works for this demo rn)
                         TempData["VerificationEmail"] = user.Email;
                         return RedirectToAction("VerifyEmail");
                     }
 
-                    // Delegate cookie sign-in (claims creation + SignInAsync) to AuthService
                     await _authService.SignInUserAsync(HttpContext, user);
 
-                    return RedirectToAction("HomePage"); // redirect authenticated user to the home page
+                    return RedirectToAction("HomePage", "Home"); 
                 }
                 else
                 {
+                    _logger.LogError("Invalid login attempt for email: {Email}", model.PhoneNumberOrEmail);
                     ModelState.AddModelError("", "Invalid email or password");
                 }
             }
@@ -174,19 +171,9 @@ namespace LegendPay.Controllers
 
         public async Task<IActionResult> Logout()
         {
-            await _authService.SignOutUserAsync(HttpContext); // delegate sign-out to AuthService
-            return RedirectToAction("Login"); // redirect to login page after logout
+            await _authService.SignOutUserAsync(HttpContext); 
+            return RedirectToAction("Login"); 
         }
 
-        // Only authenticated users can access this page
-        [Authorize]
-        public IActionResult HomePage()
-        {
-            var firstname = HttpContext.User.FindFirst(ClaimTypes.GivenName)?.Value; // get authenticated user's first name from claims
-            var lastname = HttpContext.User.FindFirst(ClaimTypes.Surname)?.Value;    // get authenticated user's last name from claims
-
-            ViewBag.FullName = $"{firstname} {lastname}"; // combine and pass full name to the view
-            return View();
-        }
     }
 }
