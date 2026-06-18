@@ -1,7 +1,9 @@
-using LegendPay.Interfaces;
+using LegendPay.Interfaces.Auth;
+using LegendPay.Interfaces.Transaction;
 using LegendPay.Models;
 using LegendPay.Models.Data;
-using LegendPay.Services;
+using LegendPay.Services.Account;
+using LegendPay.Services.Transaction;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,6 +31,10 @@ namespace LegendPay
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            // HttpClient for CoralPay's api, registered with the IWalletService interface and implemented by WalletService
+            builder.Services.AddHttpClient<IWalletService, WalletService>();
+
+            // Add your CoralPay credentials to appsettings.json
 
             //cookie authentication
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();

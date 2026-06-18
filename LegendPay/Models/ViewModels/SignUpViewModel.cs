@@ -35,7 +35,7 @@ namespace LegendPay.Models.ViewModels
         [StringLength(20, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 20 characters.")]
         public string Password { get; set; }
 
-        [Compare("Password", ErrorMessage = "Please cnfirm your password")]
+        [Compare("Password", ErrorMessage = "Please confirm your password")]
         [DataType(DataType.Password)]
         public string ConfirmPassword { get; set; }
     }
