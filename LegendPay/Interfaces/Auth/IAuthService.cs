@@ -2,7 +2,7 @@
 using LegendPay.Models.ViewModels;
 using System.Globalization;
 
-namespace LegendPay.Interfaces
+namespace LegendPay.Interfaces.Auth
 {
     public interface IAuthService
     {
@@ -14,5 +14,7 @@ namespace LegendPay.Interfaces
         Task<UserAccount?> GetUserByEmailAsync(string email);
         Task<UserAccount?>CreateAndSaveUserAsync(SignUpViewModel model, string initialotp);
         Task<UserAccount?> ValidateLoginCredentialsAsync(string identifier, string plainPassword);
+        Task<decimal?> GetUserBalanceAsync(string email);
+        Task<bool> TryProvisionWalletAsync(UserAccount user);
     }
 }

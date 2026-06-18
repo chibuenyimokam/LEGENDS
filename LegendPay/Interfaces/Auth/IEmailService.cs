@@ -1,4 +1,4 @@
-﻿namespace LegendPay.Interfaces
+﻿namespace LegendPay.Interfaces.Auth
 {
     public interface IEmailService
     {

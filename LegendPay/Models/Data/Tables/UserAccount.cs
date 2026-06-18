@@ -46,6 +46,10 @@ namespace LegendPay.Models.Data.Tables
         public bool IsEmailVerified { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string? WalletId { get; set; }      
+        public string? CustomerId { get; set; }    //might not be needed
+        public string? AccountNumber { get; set; } 
+        public string? BankName { get; set; }
 
         // Navigation Properties
         public Wallet Wallet { get; set; }

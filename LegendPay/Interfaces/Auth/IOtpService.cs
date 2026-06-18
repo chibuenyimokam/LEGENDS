@@ -1,6 +1,6 @@
 ﻿using LegendPay.Models.Data.Tables;
 
-namespace LegendPay.Interfaces
+namespace LegendPay.Interfaces.Auth
 {
     public interface IOtpService
     {
