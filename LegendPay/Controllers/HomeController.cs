@@ -15,6 +15,15 @@ namespace LegendPay.Controllers
         {
             return View();
         }
+        public IActionResult FundWallet()
+        {
+            return View();
+        }
+
+        public IActionResult Receipt()
+        {
+            return View();
+        }
 
         public IActionResult Onboarding()
         {

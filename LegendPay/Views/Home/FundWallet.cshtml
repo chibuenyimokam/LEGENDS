@@ -1,0 +1,110 @@
+﻿@{
+    ViewData["Title"] = "Fund Wallet";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    double availableBalance = 450230.00;
+    string institutionName = "Fidelity Bank";
+    string targetAccountNo = "0123456789";
+    string targetAccountName = "Ibrahim A. Abubakar";
+}
+
+<div>
+    <p class="page-header-text">Available Balance</p>
+    <div class="balance-display-wrapper">
+        <span>₦@string.Format("{0:N2}", availableBalance)</span>
+        <button class="balance-visibility-trigger" type="button">
+            <i class="bi bi-eye"></i>
+        </button>
+    </div>
+</div>
+
+<div class="funding-gradient-card">
+    <div class="funding-card-header">
+        <div>
+            <h3 class="funding-card-title">Funding Account</h3>
+            <p class="funding-card-desc">Transfer funds here to top up instantly</p>
+        </div>
+        <div class="qr-placeholder-box">
+            <i class="bi bi-qr-code"></i>
+        </div>
+    </div>
+
+    <div class="data-grid-row">
+        <p class="data-row-label">Bank Name</p>
+        <div class="data-row-value-container">
+            <span class="data-row-text">@institutionName</span>
+            <button class="action-copy-btn" type="button"><i class="bi bi-copy"></i></button>
+        </div>
+    </div>
+
+    <div class="data-grid-row">
+        <p class="data-row-label">Account Number</p>
+        <div class="data-row-value-container">
+            <span class="data-row-text mono-styled">@targetAccountNo</span>
+            <button class="action-copy-btn" type="button"><i class="bi bi-copy"></i></button>
+        </div>
+    </div>
+
+    <div class="data-grid-row">
+        <p class="data-row-label">Account Name</p>
+        <div class="data-row-value-container">
+            <span class="data-row-text">@targetAccountName</span>
+            <button class="action-copy-btn" type="button"><i class="bi bi-copy"></i></button>
+        </div>
+    </div>
+
+    <div class="card-meta-footer">
+        <span class="verified-pill-label">
+            <span class="verified-indicator-dot"></span> Verified
+        </span>
+        <span>
+            <i class="bi bi-clock-history"></i> Expected time: <strong class="text-white fw-medium">Instant</strong>
+        </span>
+    </div>
+</div>
+
+<div class="automated-notice-banner">
+    <i class="bi bi-info-circle-fill notice-icon"></i>
+    <p class="notice-message-text">
+        Funds transferred to this account will be automatically credited to your LegendPay wallet within 60 seconds.
+    </p>
+</div>
+
+<div class="activity-section-wrapper">
+    <div class="section-header-row">
+        <h4 class="section-headline">Recent Funding</h4>
+        <a href="#" class="section-action-anchor">View History</a>
+    </div>
+
+    <div class="transaction-row-card">
+        <div class="row-identity-block">
+            <div class="row-icon-avatar">
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <div>
+                <h5 class="row-primary-label">Wallet Funding</h5>
+                <p class="row-secondary-timestamp">Oct 24, 2023 • 10:45 AM</p>
+            </div>
+        </div>
+        <div class="row-financial-metrics">
+            <span class="metric-delta-amount">+₦25,000.00</span>
+            <p class="metric-status-badge">Completed</p>
+        </div>
+    </div>
+
+    <div class="transaction-row-card">
+        <div class="row-identity-block">
+            <div class="row-icon-avatar">
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <div>
+                <h5 class="row-primary-label">Wallet Funding</h5>
+                <p class="row-secondary-timestamp">Oct 22, 2023 • 03:12 PM</p>
+            </div>
+        </div>
+        <div class="row-financial-metrics">
+            <span class="metric-delta-amount">+₦100,000.00</span>
+            <p class="metric-status-badge">Completed</p>
+        </div>
+    </div>
+</div>

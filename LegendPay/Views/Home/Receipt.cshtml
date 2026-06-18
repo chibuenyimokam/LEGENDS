@@ -1,0 +1,95 @@
+﻿@{
+    ViewData["Title"] = "Payment Receipt";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    string txId = "LP-98472910";
+    string formatTimestamp = "June 12, 2024 • 04:45 PM";
+    string tokenSequence = "4509-1222-3341-2890-5567";
+}
+
+<div class="receipt-center-layout">
+
+    <div class="status-success-circle">
+        <i class="bi bi-check-lg"></i>
+    </div>
+
+    <h2 class="receipt-title">Payment Successful</h2>
+    <p class="meta-receipt-text">Transaction ID: <span class="dark-span">@txId</span></p>
+    <p class="meta-receipt-text mt-1">@formatTimestamp</p>
+
+    <div class="receipt-sheet-card">
+
+        <div class="biller-identity-bar">
+            <div class="biller-branding-block">
+                <div class="biller-avatar-box">EKEDC</div>
+                <div>
+                    <span class="biller-context-label">Biller</span>
+                    <span class="biller-core-name">EKEDC Electricity</span>
+                </div>
+            </div>
+            <span class="pill-verified-tag">Verified</span>
+        </div>
+
+        <div class="token-accent-banner">
+            <div class="token-banner-meta">
+                <span class="token-banner-title">Electricity Token</span>
+                <span>Units: <strong class="text-white fw-bold">45.8 kWh</strong></span>
+            </div>
+            <div class="token-flex-interactive-row">
+                <span class="token-numerical-string">@tokenSequence</span>
+                <button class="token-copy-action-btn" type="button">
+                    <i class="bi bi-copy"></i> Copy
+                </button>
+            </div>
+        </div>
+
+        <div class="invoice-metric-table">
+            <div class="invoice-row-item">
+                <span>Purchase Amount</span>
+                <span class="bold-val">₦15,000.00</span>
+            </div>
+            <div class="invoice-row-item">
+                <span>Convenience Fee</span>
+                <span class="bold-val">₦100.00</span>
+            </div>
+            <div class="dashed-divider-line"></div>
+            <div class="invoice-row-item total-row-highlight">
+                <span>Total Paid</span>
+                <span class="grand-price">₦15,100.00</span>
+            </div>
+        </div>
+
+        <div class="wallet-post-audit-banner">
+            <div class="wallet-audit-label">
+                <i class="bi bi-wallet2"></i> Wallet Balance
+            </div>
+            <span class="wallet-audit-balance-string">₦225,450.50</span>
+        </div>
+    </div>
+
+    <div class="incentive-bonus-strip">
+        <div class="incentive-info-cluster">
+            <div class="star-avatar-badge">
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <div>
+                <span class="incentive-micro-lbl">Legend Points Earned</span>
+                <span class="incentive-main-value-lbl">+150 Points</span>
+            </div>
+        </div>
+        <button class="incentive-action-btn" type="button">Convert to Airtime</button>
+    </div>
+
+    <div class="action-button-grid">
+        <button class="primary-portal-btn" type="button">
+            <i class="bi bi-download"></i> Download Receipt (PDF)
+        </button>
+        <button class="secondary-portal-btn" type="button">
+            <i class="bi bi-share"></i> Share Receipt
+        </button>
+    </div>
+
+    <a href="#" class="return-navigation-anchor">
+        <i class="bi bi-plus-circle"></i> Pay Another Bill
+    </a>
+</div>
