@@ -12,60 +12,52 @@ namespace LegendPay.Services.Transaction
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
+        private readonly WalletTokenCache _tokenCache;
         private readonly string _username;
         private readonly string _password;
-        private readonly string _walletBaseUrl;
 
-        private string? _cachedToken;
-        private DateTime _tokenExpiry = DateTime.MinValue;
-
-        public WalletService(HttpClient httpClient, IConfiguration config)
+        public WalletService(HttpClient httpClient, IConfiguration config, WalletTokenCache tokenCache)
         {
             _httpClient = httpClient;
             _config = config;
-            _username = _config["CoralPay:Username"]!;
-            _password = _config["CoralPay:Password"]!;
-            _walletBaseUrl = _config["CoralPay:WalletBaseUrl"]!;
+            _tokenCache = tokenCache;
+            _username = _config["WalletStation:Username"]!;
+            _password = _config["WalletStation:Password"]!;
         }
 
         private async Task<string?> GetTokenAsync()
         {
-            if (_cachedToken != null && DateTime.UtcNow < _tokenExpiry.AddMinutes(-5))
-                return _cachedToken;
+            var cachedToken = await _tokenCache.GetAsync();
+            if (cachedToken != null) return cachedToken;
 
-            try
+            var payload = new AuthenticationRequest
             {
-                var url = $"{_walletBaseUrl}/api/Auth";
-                var payload = new AuthenticationRequest
-                {
-                    Username = _username,
-                    Password = _password
-                };
+                Username = _username,
+                Password = _password
+            };
 
-                var response = await _httpClient.PostAsJsonAsync(url, payload);
-                var json = await response.Content.ReadAsStringAsync();
-                var result = JsonConvert.DeserializeObject<AuthenticationResponse>(json);
+            var response = await _httpClient.PostAsJsonAsync("api/Auth", payload);
+            if (!response.IsSuccessStatusCode) return null;
 
-                if (result?.responseHeader?.ResponseCode != ResponseCode.Successful || result.Token == null)
-                    return null;
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<AuthenticationResponse>(json);
 
-                _cachedToken = result.Token;
-                _tokenExpiry = result.ExpiryDate;
-                return _cachedToken;
-            }
-            catch
-            {
+            if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful || result.Token == null)
                 return null;
-            }
+
+            await _tokenCache.SetAsync(result.Token, result.ExpiryDate);
+            return result.Token;
         }
 
-        // this is a shared POST helper that attaches bearer token and deserializes
         private async Task<T?> PostAsync<T>(string endpoint, object payload) where T : class
         {
             var token = await GetTokenAsync();
-            if (token == null) return null;
+            if (token == null)
+            {
+                throw new InvalidOperationException("Failed to acquire authentication token from the upstream Wallet Engine provider.");
+            }
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{_walletBaseUrl}/{endpoint}")
+            var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
                 Content = new StringContent(
                     JsonConvert.SerializeObject(payload),
@@ -75,46 +67,38 @@ namespace LegendPay.Services.Transaction
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await _httpClient.SendAsync(request);
-            if (!response.IsSuccessStatusCode) return null;
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Upstream API wallet call to '{endpoint}' failed with status code {response.StatusCode}. Details: {errorContent}");
+            }
 
             var json = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"RAW WALLET RESPONSE: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
 
-        
         public async Task<CreateWalletResponse?> CreateWalletAsync(CreateWalletRequest walletRequest)
         {
-            try
-            {
-                var result = await PostAsync<CreateWalletResponse>("api/CreateWallet", walletRequest);
+            
+            var result = await PostAsync<CreateWalletResponse>("api/CreateAccount", walletRequest);
 
-                if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
-                    return null;
-
-                return result;
-            }
-            catch
-            {
+            if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
                 return null;
-            }
+
+            return result;
         }
 
         public async Task<decimal?> GetBalanceAsync(string customerId)
         {
-            try
-            {
-                var payload = new { CustomerId = customerId };
-                var result = await PostAsync<GetBalanceResponse>("api/GetBalance", payload);
+            var payload = new { CustomerId = customerId };
+            var result = await PostAsync<GetBalanceResponse>("api/GetBalance", payload);
 
-                if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
-                    return null;
-
-                return result.Balance;
-            }
-            catch
-            {
+            if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
                 return null;
-            }
+
+            return result.Balance;
         }
     }
 }
