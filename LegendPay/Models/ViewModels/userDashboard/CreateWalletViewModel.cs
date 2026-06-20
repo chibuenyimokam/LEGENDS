@@ -1,4 +1,4 @@
-﻿namespace LegendPay.Models.ViewModels
+﻿namespace LegendPay.Models.ViewModels.userDashboard
 {
     public class CreateWalletViewModel
     {
