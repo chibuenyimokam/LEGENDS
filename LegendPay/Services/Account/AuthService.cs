@@ -57,15 +57,44 @@ namespace LegendPay.Services.Account
 
                 _otpService.ConfigureUserOtp(user, initialOtp);
                 _context.UserAccounts.Add(user);
+
                 await _context.SaveChangesAsync();
 
-                //commit local account info first before attempting wallet creation to ensure user is saved even if wallet fails
+                try
+                {
+                    var walletRequest = new CreateWalletRequest
+                    {
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        CustomerAlias = user.Email
+                    };
+
+                    _logger.LogInformation("Sending wallet request: {@WalletRequest}", walletRequest);
+                    var wallet = await _walletService.CreateWalletAsync(walletRequest);
+                    //_logger.LogInformation("Wallet response: {@WalletResponse}", wallet);
+
+                    if (wallet?.AccountDetails != null)
+                    {
+                        user.CustomerId = wallet.AccountDetails.CustomerId;
+                        user.AccountNumber = wallet.AccountDetails.AccountNumber;
+                        user.BankName = wallet.AccountDetails.BankName;
+
+                        _context.UserAccounts.Update(user);
+                        await _context.SaveChangesAsync();
+
+                        _logger.LogInformation("Wallet details added to transaction for user: {Email}", user.Email);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Wallet Engine returned empty payload for {Email}. Proceeding with account creation only.", user.Email);
+                    }
+                }
+                catch (Exception walletEx)
+                {
+                    _logger.LogError(walletEx, "Upstream wallet provider failed during signup for {Email}. User account will be created without wallet identifiers.", user.Email);
+                }
+
                 await transaction.CommitAsync();
-
-                // attempt wallet creation after committing user to ensure user is saved even if wallet fails.
-                // If wallet creation fails, the user can be retried for wallet creation later without losing the account info.
-                await TryProvisionWalletAsync(user);
-
                 return user;
             }
             catch (Exception ex)
@@ -77,21 +106,19 @@ namespace LegendPay.Services.Account
         }
 
         public async Task<bool> TryProvisionWalletAsync(UserAccount user)
-        { 
-
+        {
             if (!string.IsNullOrEmpty(user.CustomerId))
             {
                 return true;
             }
 
-
             try
-                {
+            {
                 var walletRequest = new CreateWalletRequest
                 {
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    CustomerAlias = user.Email   
+                    CustomerAlias = user.Email
                 };
 
                 var wallet = await _walletService.CreateWalletAsync(walletRequest);
@@ -102,14 +129,13 @@ namespace LegendPay.Services.Account
                     user.AccountNumber = wallet.AccountDetails.AccountNumber;
                     user.BankName = wallet.AccountDetails.BankName;
 
-                    _context.UserAccounts.Update(user);
+                    _context.Entry(user).State = EntityState.Modified;
                     await _context.SaveChangesAsync();
 
                     _logger.LogInformation("Wallet successfully provisioned for user: {Email}", user.Email);
                     return true;
                 }
 
-                _logger.LogWarning("Wallet Engine returned empty payload configurations for {Email}. Flagged for background retry.", user.Email);
                 return false;
             }
             catch (Exception ex)
