@@ -11,61 +11,53 @@ namespace LegendPay.Services.Transaction
     public class WalletService : IWalletService
     {
         private readonly HttpClient _httpClient;
-        private readonly IConfiguration _config;
+        private readonly WalletTokenCache _tokenCache;
         private readonly string _username;
         private readonly string _password;
-        private readonly string _walletBaseUrl;
 
-        private string? _cachedToken;
-        private DateTime _tokenExpiry = DateTime.MinValue;
-
-        public WalletService(HttpClient httpClient, IConfiguration config)
+        public WalletService(HttpClient httpClient, IConfiguration config, WalletTokenCache tokenCache)
         {
             _httpClient = httpClient;
-            _config = config;
-            _username = _config["CoralPay:Username"]!;
-            _password = _config["CoralPay:Password"]!;
-            _walletBaseUrl = _config["CoralPay:WalletBaseUrl"]!;
+            _tokenCache = tokenCache;
+            _username = config["WalletStation:Username"]!;
+            _password = config["WalletStation:Password"]!;
         }
 
-        private async Task<string?> GetTokenAsync()
+        // Fetches a fresh token from CoralPay. Only called by WalletTokenCache
+        // when the cached token is missing or expired.
+        private async Task<(string Token, DateTime Expiry)> FetchTokenFromApiAsync()
         {
-            if (_cachedToken != null && DateTime.UtcNow < _tokenExpiry.AddMinutes(-5))
-                return _cachedToken;
-
-            try
+            var payload = new AuthenticationRequest
             {
-                var url = $"{_walletBaseUrl}/api/Auth";
-                var payload = new AuthenticationRequest
-                {
-                    Username = _username,
-                    Password = _password
-                };
+                Username = _username,
+                Password = _password
+            };
 
-                var response = await _httpClient.PostAsJsonAsync(url, payload);
-                var json = await response.Content.ReadAsStringAsync();
-                var result = JsonConvert.DeserializeObject<AuthenticationResponse>(json);
+            var response = await _httpClient.PostAsJsonAsync("api/Auth", payload);
 
-                if (result?.responseHeader?.ResponseCode != ResponseCode.Successful || result.Token == null)
-                    return null;
-
-                _cachedToken = result.Token;
-                _tokenExpiry = result.ExpiryDate;
-                return _cachedToken;
-            }
-            catch
+            if (!response.IsSuccessStatusCode)
             {
-                return null;
+                var error = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"Token fetch failed ({response.StatusCode}): {error}");
             }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<AuthenticationResponse>(json);
+
+            if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful || result.Token == null)
+                throw new InvalidOperationException(
+                    $"CoralPay authentication rejected. Code: {result?.ResponseHeader?.ResponseCode}");
+
+            return (result.Token, result.ExpiryDate);
         }
 
-        // this is a shared POST helper that attaches bearer token and deserializes
-        private async Task<T?> PostAsync<T>(string endpoint, object payload) where T : class
+        private async Task<T?> PostAsync<T>(string endpoint, object payload, CancellationToken cancellationToken = default)
+            where T : class
         {
-            var token = await GetTokenAsync();
-            if (token == null) return null;
+            var token = await _tokenCache.GetOrRefreshAsync(FetchTokenFromApiAsync, cancellationToken);
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{_walletBaseUrl}/{endpoint}")
+            var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
                 Content = new StringContent(
                     JsonConvert.SerializeObject(payload),
@@ -74,47 +66,38 @@ namespace LegendPay.Services.Transaction
             };
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await _httpClient.SendAsync(request);
-            if (!response.IsSuccessStatusCode) return null;
+            var response = await _httpClient.SendAsync(request, cancellationToken);
 
-            var json = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new HttpRequestException(
+                    $"Wallet API call to '{endpoint}' failed ({response.StatusCode}): {errorContent}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
             return JsonConvert.DeserializeObject<T>(json);
         }
 
-        
-        public async Task<CreateWalletResponse?> CreateWalletAsync(CreateWalletRequest walletRequest)
+        public async Task<CreateWalletResponse?> CreateWalletAsync(CreateWalletRequest walletRequest, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var result = await PostAsync<CreateWalletResponse>("api/CreateWallet", walletRequest);
+            var result = await PostAsync<CreateWalletResponse>("api/CreateAccount", walletRequest, cancellationToken);
 
-                if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
-                    return null;
-
-                return result;
-            }
-            catch
-            {
+            if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
                 return null;
-            }
+
+            return result;
         }
 
-        public async Task<decimal?> GetBalanceAsync(string customerId)
+        public async Task<decimal?> GetBalanceAsync(string customerId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var payload = new { CustomerId = customerId };
-                var result = await PostAsync<GetBalanceResponse>("api/GetBalance", payload);
+            var payload = new { CustomerId = customerId };
+            var result = await PostAsync<GetBalanceResponse>("api/GetBalance", payload, cancellationToken);
 
-                if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
-                    return null;
-
-                return result.Balance;
-            }
-            catch
-            {
+            if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
                 return null;
-            }
+
+            return result.Balance;
         }
     }
 }
