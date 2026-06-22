@@ -4,7 +4,7 @@
     ViewData["Title"] = "Verify Email";
 }
 
-<link rel="stylesheet" href="~/css/verify-email.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/Auth/verify-email.css" asp-append-version="true" />
 
 <div class="verification-wrapper">
     <div class="verification-card">
@@ -15,7 +15,7 @@
             <span class="user-email">@Model.Email</span>
         </p>
 
-        <form asp-controller="Accounts" asp-action="VerifyEmail" method="post" autocomplete="off" id="otpForm">
+        <form asp-controller="Auth" asp-action="VerifyEmail" method="post" autocomplete="off" id="otpForm">
             <input type="hidden" asp-for="Email" />
             <input type="hidden" asp-for="OtpCode" id="hiddenOtpCode" />
 
@@ -64,5 +64,5 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script src="~/js/verify-email.js" asp-append-version="true"></script>
+    <script src="~/js/Auth/verify-email.js" asp-append-version="true"></script>
 }
