@@ -45,20 +45,23 @@ namespace LegendPay.Controllers
         public async Task<IActionResult> HomePage()
         {
             var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Accounts");
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
 
             var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Accounts");
+            if (user == null) return RedirectToAction("Login", "Auth");
 
             //If the wallet background creation originally failed, retry
-            if (string.IsNullOrEmpty(user.CustomerId))
+            if (string.IsNullOrEmpty(user.AccountNumber)) // should be customerId
             {
                 bool provisionSuccess = await _authService.TryProvisionWalletAsync(user);
                 if (!provisionSuccess)
                 {
                     ViewBag.FullName = $"{user.FirstName} {user.LastName}";
                     ViewBag.Balance = "Unavailable";
-                    ViewBag.WalletId = "Pending Activation";
+                    ViewBag.AccountNumber = "Pending Activation";
+                    ViewBag.CustomerId = "Pending Activation";
+                    ViewBag.BankName = "Unavailable";
+
                     return View();
                 }
             }
@@ -67,7 +70,9 @@ namespace LegendPay.Controllers
 
             ViewBag.FullName = $"{user.FirstName} {user.LastName}";
             ViewBag.Balance = balance.HasValue ? balance.Value.ToString("N2") : "0.00";
-            ViewBag.WalletId = user.AccountNumber; 
+            ViewBag.AccountNumber = user.AccountNumber; 
+            ViewBag.BankName = user.BankName;
+            ViewBag.CustomerId = user.CustomerId;
 
             return View("HomePage");
         }
