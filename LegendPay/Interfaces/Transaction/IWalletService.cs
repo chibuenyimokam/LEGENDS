@@ -5,7 +5,7 @@ namespace LegendPay.Interfaces.Transaction
 {
     public interface IWalletService
     {
-        Task<CreateWalletResponse?> CreateWalletAsync(CreateWalletRequest request);
-        Task<decimal?> GetBalanceAsync(string customerId);
+        Task<CreateWalletResponse?> CreateWalletAsync(CreateWalletRequest walletRequest, CancellationToken cancellationToken = default);
+        Task<decimal?> GetBalanceAsync(string customerId, CancellationToken cancellationToken = default);
     }
 }

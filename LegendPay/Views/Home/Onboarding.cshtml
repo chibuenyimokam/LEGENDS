@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LegendPay — Your Financial Life, Perfectly Orchestrated</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/css/onboarding.css" />
+    <link rel="stylesheet" href="~/css/Auth/onboarding.css" />
 </head>
 <body>
 
@@ -29,9 +29,9 @@
 
             <div class="btn-row">
                 <!-- <button class="btn btn-primary">Get Started</button>-->
-                <a asp-controller="Accounts" asp-action="SignUp" class="btn btn-primary">Get Started</a>
+                <a asp-controller="Auth" asp-action="SignUp" class="btn btn-primary">Get Started</a>
                 <!--<button class="btn btn-outline">Log in</button>-->
-                <a asp-controller="Accounts" asp-action="Login" class="btn btn-outline">Log in</a>
+                <a asp-controller="Auth" asp-action="Login" class="btn btn-outline">Log in</a>
             </div>
 
             <div class="features">
@@ -70,6 +70,6 @@
 
     </div>
 
-    <script src="~/js/script.js"></script>
+    <script src="~/js/Auth/script.js"></script>
 </body>
 </html>
