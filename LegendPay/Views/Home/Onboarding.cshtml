@@ -1,75 +1,455 @@
-﻿@{
-    ViewData["Title"] = "Onboarding";
+@{
+    ViewData["Title"] = "All your bills. One wallet. Zero stress.";
     Layout = null;
 }
-
 <!DOCTYPE html>
-<html lang="en">
+<html class="scroll-smooth" lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LegendPay — Your Financial Life, Perfectly Orchestrated</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/css/Auth/onboarding.css" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>LegendPay | All your bills. One wallet. Zero stress.</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#ffd9e1",
+                    "on-tertiary-fixed-variant": "#86174f",
+                    "naira-green": "#008751",
+                    "on-primary-fixed": "#3f001b",
+                    "primary-fixed-dim": "#ffb1c5",
+                    "primary": "#0b4a8f",
+                    "secondary-container": "#96bdff",
+                    "inverse-on-surface": "#eef1f6",
+                    "error-container": "#ffdad6",
+                    "surface-dim": "#d7dadf",
+                    "on-background": "#181c20",
+                    "background": "#f7f9ff",
+                    "surface": "#f7f9ff",
+                    "on-tertiary-container": "#ffbed4",
+                    "inverse-surface": "#2d3135",
+                    "surface-container-high": "#e5e8ee",
+                    "on-secondary-fixed-variant": "#194781",
+                    "tertiary": "#7f104a",
+                    "surface-container-low": "#f1f4f9",
+                    "secondary-fixed": "#d6e3ff",
+                    "on-surface-variant": "#594046",
+                    "on-error": "#ffffff",
+                    "secondary-fixed-dim": "#a9c8ff",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#8f0045",
+                    "surface-muted": "#F8F9FA",
+                    "error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#f7f9ff",
+                    "primary-container": "#0b4a8f",
+                    "tertiary-fixed": "#ffd9e4",
+                    "on-secondary-fixed": "#001b3d",
+                    "on-surface": "#181c20",
+                    "on-tertiary-fixed": "#3e0020",
+                    "surface-container-highest": "#e0e3e8",
+                    "outline": "#8c7076",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#ffbfce",
+                    "surface-tint": "#0b4a8f",
+                    "surface-base": "#FFFFFF",
+                    "tertiary-fixed-dim": "#ffb0cc",
+                    "inverse-primary": "#ffb1c5",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#9e2c62",
+                    "secondary": "#365f9a",
+                    "surface-container-lowest": "#ffffff",
+                    "error-red": "#D32F2F",
+                    "surface-container": "#ebeef3",
+                    "outline-variant": "#e0bec5",
+                    "on-secondary-container": "#1f4b85",
+                    "surface-variant": "#e0e3e8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-md": "12px",
+                    "margin-desktop": "40px",
+                    "container-max": "1200px",
+                    "stack-sm": "4px",
+                    "stack-lg": "24px",
+                    "base": "8px",
+                    "gutter": "24px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "currency-display": ["Inter"],
+                    "body-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "currency-display": ["36px", {"lineHeight": "44px", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        .ambient-shadow {
+            box-shadow: 0 4px 12px rgba(16, 65, 123, 0.15);
+        }
+
+        .ambient-shadow-hover:hover {
+            box-shadow: 0 8px 20px rgba(16, 65, 123, 0.15);
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+    </style>
 </head>
-<body>
-
-    <div class="phone">
-
-        <div class="hero">
-            <img src="~/screenicon/Section - Hero Band.svg" alt="Hero image" />
+<body class="bg-surface text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+    <header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+        <nav class="flex items-center justify-between px-margin-desktop max-w-container-max mx-auto h-20">
+            <div class="flex items-center gap-8">
+                <span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">LegendPay</span>
+                <div class="hidden lg:flex items-center gap-6">
+                    <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md" href="#">Features</a>
+                    <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md" href="#">Personal</a>
+                    <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md" href="#">Business</a>
+                    <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md" href="#">Company</a>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <a asp-controller="Auth" asp-action="Login" class="px-4 py-2 font-label-md text-on-surface-variant hover:bg-primary/5 transition-all rounded active:scale-95">Log in</a>
+                <a asp-controller="Auth" asp-action="SignUp" class="px-6 py-2 bg-primary-container text-on-primary font-label-md rounded shadow-sm hover:opacity-90 active:scale-95 transition-all">Get Started</a>
+            </div>
+        </nav>
+    </header>
+    <main class="pt-20">
+        <section class="relative overflow-hidden pt-20 pb-32 px-margin-desktop">
+            <div class="max-w-container-max mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="z-10">
+                    <h1 class="font-display-lg text-display-lg text-on-surface mb-6 leading-tight">
+                        All your bills. <br />
+                        <span class="text-primary">One wallet.</span> <br />
+                        Zero stress.
+                    </h1>
+                    <p class="font-body-lg text-body-lg text-on-surface-variant mb-10 max-w-lg">
+                        Automate your utility payments, manage subscriptions, and earn rewards. LegendPay is the smartest way to stay ahead of your lifestyle expenses in Nigeria.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a asp-controller="Auth" asp-action="SignUp" class="inline-flex items-center justify-center px-8 py-4 bg-primary-container text-on-primary font-label-md rounded-lg ambient-shadow hover:opacity-95 active:scale-95 transition-all">
+                            Create your free wallet
+                        </a>
+                        <a href="#how-it-works" class="inline-flex items-center justify-center px-8 py-4 border-2 border-secondary text-secondary font-label-md rounded-lg hover:bg-secondary/5 active:scale-95 transition-all">
+                            See how it works
+                        </a>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="relative z-10 ambient-shadow rounded-xl overflow-hidden border border-outline-variant/30">
+                        <img alt="LegendPay dashboard preview" class="w-full h-auto" src="~/img/landing/dashboard-preview.png" />
+                    </div>
+                    <div class="absolute -top-10 -right-10 w-64 h-64 bg-primary-fixed-dim/20 blur-3xl rounded-full -z-10"></div>
+                </div>
+            </div>
+        </section>
+        <section class="bg-surface-container-low py-12 px-margin-desktop">
+            <div class="max-w-container-max mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="flex flex-wrap justify-center gap-8 md:gap-12">
+                    <div class="flex flex-col items-center gap-2 group">
+                        <div class="w-12 h-12 rounded-full bg-surface-base flex items-center justify-center ambient-shadow group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-primary">smartphone</span>
+                        </div>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant">Airtime</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2 group">
+                        <div class="w-12 h-12 rounded-full bg-surface-base flex items-center justify-center ambient-shadow group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-primary">bolt</span>
+                        </div>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant">Electricity</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2 group">
+                        <div class="w-12 h-12 rounded-full bg-surface-base flex items-center justify-center ambient-shadow group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-primary">tv</span>
+                        </div>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant">TV</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2 group">
+                        <div class="w-12 h-12 rounded-full bg-surface-base flex items-center justify-center ambient-shadow group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-primary">wifi</span>
+                        </div>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant">Internet</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2 group">
+                        <div class="w-12 h-12 rounded-full bg-surface-base flex items-center justify-center ambient-shadow group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-primary">school</span>
+                        </div>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant">Education</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2 group">
+                        <div class="w-12 h-12 rounded-full bg-surface-base flex items-center justify-center ambient-shadow group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-primary">commute</span>
+                        </div>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant">Transport</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 px-6 py-3 bg-naira-green/10 rounded-full border border-naira-green/20">
+                    <span class="material-symbols-outlined text-naira-green" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+                    <span class="font-label-md text-label-md text-naira-green">Secured &amp; CBN-Licensed</span>
+                </div>
+            </div>
+        </section>
+        <section class="py-stack-lg px-margin-desktop max-w-container-max mx-auto mt-24">
+            <div class="text-center mb-16">
+                <h2 class="font-headline-lg text-headline-lg text-on-surface mb-4">Powerful tools for your wallet</h2>
+                <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto">Everything you need to handle your financial responsibilities without breaking a sweat.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                <div class="bg-surface-base p-stack-lg rounded-xl border border-outline-variant/30 ambient-shadow-hover">
+                    <span class="material-symbols-outlined text-primary mb-4 text-3xl">account_balance_wallet</span>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">One Wallet</h3>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant">Consolidate all utility categories into a single balance. No more switching apps.</p>
+                </div>
+                <div class="md:col-span-2 bg-surface-base rounded-xl border border-outline-variant/30 ambient-shadow-hover overflow-hidden flex flex-col md:flex-row">
+                    <div class="p-stack-lg md:w-1/2">
+                        <span class="material-symbols-outlined text-primary mb-4 text-3xl">analytics</span>
+                        <h3 class="font-headline-md text-headline-md text-on-surface mb-2">Spending Intelligence</h3>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant">Get deep insights into your monthly consumption patterns with detailed visualizations.</p>
+                    </div>
+                    <div class="md:w-1/2 h-48 md:h-auto overflow-hidden">
+                        <img alt="Spending analysis dashboard" class="w-full h-full object-cover" src="~/img/landing/spending-intelligence.jpg" />
+                    </div>
+                </div>
+                <div class="bg-surface-base p-stack-lg rounded-xl border border-outline-variant/30 ambient-shadow-hover">
+                    <span class="material-symbols-outlined text-primary mb-4 text-3xl">notifications_active</span>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">Smart Reminders</h3>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant">Never miss a bill with intelligent notifications before your subscriptions expire.</p>
+                </div>
+                <div class="bg-primary-container text-on-primary p-stack-lg rounded-xl ambient-shadow-hover">
+                    <span class="material-symbols-outlined mb-4 text-3xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+                    <h3 class="font-headline-md text-headline-md mb-2">Legend Points</h3>
+                    <p class="font-body-sm text-body-sm opacity-90">Every payment earns you points. Redeem them for free airtime or discounted bill payments.</p>
+                </div>
+                <div class="bg-surface-base p-stack-lg rounded-xl border border-outline-variant/30 ambient-shadow-hover">
+                    <span class="material-symbols-outlined text-primary mb-4 text-3xl">payments</span>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">Dual Payment</h3>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant">Choose to pay from your wallet balance or directly through our secure payment gateway.</p>
+                </div>
+            </div>
+        </section>
+        <section id="how-it-works" class="py-24 bg-surface-container-lowest">
+            <div class="max-w-container-max mx-auto px-margin-desktop">
+                <div class="text-center mb-16">
+                    <h2 class="font-headline-lg text-headline-lg text-on-surface">Effortless in 3 steps</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-primary-fixed flex items-center justify-center rounded-full mx-auto mb-6 text-primary font-bold text-2xl">1</div>
+                        <h4 class="font-headline-md text-headline-md text-on-surface mb-3">Fund your wallet</h4>
+                        <p class="font-body-md text-body-md text-on-surface-variant">Instantly transfer funds from any bank to your dedicated LegendPay account.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-primary-fixed flex items-center justify-center rounded-full mx-auto mb-6 text-primary font-bold text-2xl">2</div>
+                        <h4 class="font-headline-md text-headline-md text-on-surface mb-3">Pay or schedule</h4>
+                        <p class="font-body-md text-body-md text-on-surface-variant">Select your biller, enter details, and pay immediately or set it to auto-renew.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-primary-fixed flex items-center justify-center rounded-full mx-auto mb-6 text-primary font-bold text-2xl">3</div>
+                        <h4 class="font-headline-md text-headline-md text-on-surface mb-3">Earn rewards</h4>
+                        <p class="font-body-md text-body-md text-on-surface-variant">Automatically receive Legend Points and insights for every successful transaction.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="relative bg-primary overflow-hidden py-24">
+            <div class="relative z-10 max-w-container-max mx-auto px-margin-desktop text-center text-on-primary">
+                <span class="inline-block px-4 py-1 bg-on-primary/10 rounded-full font-label-sm text-label-sm mb-6 border border-on-primary/20">EXCLUSIVE REWARDS</span>
+                <h2 class="font-display-lg text-display-lg mb-6">Spend Smarter. Earn Points.</h2>
+                <p class="font-body-lg text-body-lg max-w-3xl mx-auto mb-10 opacity-90">
+                    Why pay bills for free when you can get paid to pay them? Join thousands of Nigerians redeeming Legend Points for free MTN/Airtel airtime and cash discounts every month.
+                </p>
+                <div class="flex justify-center items-center gap-12 flex-wrap">
+                    <div class="flex items-center gap-4">
+                        <img alt="MTN" class="h-10 w-10 object-contain rounded" src="~/img/landing/mtn.svg" />
+                        <span class="font-label-md">Airtime Redemption</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <img alt="Airtel" class="h-10 w-10 object-contain rounded" src="~/img/landing/airtel.svg" />
+                        <span class="font-label-md">Instant Discounts</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="material-symbols-outlined text-3xl">stars</span>
+                        <span class="font-label-md">1 Point = &#8358;1 Naira</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="py-24 px-margin-desktop bg-surface">
+            <div class="max-w-container-max mx-auto">
+                <h2 class="font-headline-lg text-headline-lg text-on-surface text-center mb-16">Trusted by 50,000+ Users</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                    <div class="bg-surface-base p-8 rounded-xl border border-outline-variant/30 ambient-shadow">
+                        <div class="flex gap-1 mb-4 text-primary">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                        </div>
+                        <p class="font-body-md text-body-md text-on-surface-variant mb-6 italic">"LegendPay has saved me so much time. I set up my DSTV and Electricity on auto-pay and I never have to worry about a blackout again."</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-secondary-container"></div>
+                            <div>
+                                <p class="font-label-md text-label-md text-on-surface">Tunde A.</p>
+                                <p class="font-label-sm text-label-sm text-on-surface-variant">Lagos, NG</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-surface-base p-8 rounded-xl border border-outline-variant/30 ambient-shadow">
+                        <div class="flex gap-1 mb-4 text-primary">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                        </div>
+                        <p class="font-body-md text-body-md text-on-surface-variant mb-6 italic">"The points system is real! I've paid for my airtime for the last 3 months just by using the points I earned from paying bills."</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-primary-fixed"></div>
+                            <div>
+                                <p class="font-label-md text-label-md text-on-surface">Blessing O.</p>
+                                <p class="font-label-sm text-label-sm text-on-surface-variant">Abuja, NG</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-surface-base p-8 rounded-xl border border-outline-variant/30 ambient-shadow">
+                        <div class="flex gap-1 mb-4 text-primary">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+                        </div>
+                        <p class="font-body-md text-body-md text-on-surface-variant mb-6 italic">"Simple, fast, and the dashboard is beautiful. The spending charts help me see exactly where my money is going each month."</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-tertiary-fixed"></div>
+                            <div>
+                                <p class="font-label-md text-label-md text-on-surface">Chidi E.</p>
+                                <p class="font-label-sm text-label-sm text-on-surface-variant">Port Harcourt, NG</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="py-24 px-margin-desktop">
+            <div class="max-w-container-max mx-auto bg-surface-container-high rounded-3xl p-12 text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <h2 class="font-display-lg text-display-lg text-on-surface mb-6">Start paying smarter today</h2>
+                <p class="font-body-lg text-body-lg text-on-surface-variant mb-10 max-w-2xl mx-auto">Join thousands of Nigerians who have simplified their utility management. Create your free wallet in 60 seconds.</p>
+                <a asp-controller="Auth" asp-action="SignUp" class="inline-flex items-center justify-center px-12 py-5 bg-primary-container text-on-primary font-label-md rounded-xl ambient-shadow hover:opacity-90 active:scale-95 transition-all">
+                    Create your free wallet
+                </a>
+            </div>
+        </section>
+    </main>
+    <footer class="bg-surface-container-low dark:bg-inverse-surface mt-20">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-gutter px-margin-desktop py-stack-lg max-w-container-max mx-auto">
+            <div class="col-span-2">
+                <span class="font-headline-sm text-headline-sm font-black text-primary dark:text-primary-fixed block mb-4">LegendPay</span>
+                <p class="font-body-sm text-body-sm text-on-surface-variant max-w-xs mb-6">The ultimate utility bill payment companion for every Nigerian home and business.</p>
+                <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded bg-surface-container-highest flex items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors">
+                        <span class="material-symbols-outlined text-sm">public</span>
+                    </div>
+                    <div class="w-8 h-8 rounded bg-surface-container-highest flex items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors">
+                        <span class="material-symbols-outlined text-sm">chat</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h5 class="font-label-md text-label-md text-primary mb-4">Savings</h5>
+                <ul class="space-y-2">
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">Automated</a></li>
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">Fixed Deposits</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-label-md text-label-md text-primary mb-4">Cards</h5>
+                <ul class="space-y-2">
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">Virtual Cards</a></li>
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">Physical Cards</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-label-md text-label-md text-primary mb-4">Company</h5>
+                <ul class="space-y-2">
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">About Us</a></li>
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">Careers</a></li>
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">Press</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-label-md text-label-md text-primary mb-4">Legal</h5>
+                <ul class="space-y-2">
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">Privacy Policy</a></li>
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">Terms of Service</a></li>
+                    <li><a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-colors" href="#">Security</a></li>
+                </ul>
+            </div>
         </div>
-
-        <div class="content">
-            <h1 class="headline">Your Financial Life,<br />Perfectly Orchestrated</h1>
-            <p class="subline">
-                Consolidate your utility bills, manage your digital wallet, and earn
-                exclusive rewards all in one secure, high-velocity platform.
-            </p>
-
-            <div class="btn-row">
-                <!-- <button class="btn btn-primary">Get Started</button>-->
-                <a asp-controller="Auth" asp-action="SignUp" class="btn btn-primary">Get Started</a>
-                <!--<button class="btn btn-outline">Log in</button>-->
-                <a asp-controller="Auth" asp-action="Login" class="btn btn-outline">Log in</a>
-            </div>
-
-            <div class="features">
-                <div class="feat">
-                    <div class="feat-icon purple">
-                        <img src="~/screenicon/Instant bills.svg" alt="Instant Bills" />
-                    </div>
-                    <span class="feat-label">Instant Bills</span>
-                </div>
-                <div class="feat">
-                    <div class="feat-icon blue">
-                        <img src="~/screenicon/secure wallet.png" alt="Secure Wallet" />
-                    </div>
-                    <span class="feat-label">Secure Wallet</span>
-                </div>
-                <div class="feat">
-                    <div class="feat-icon teal">
-                        <img src="~/screenicon/Daily Rewards.svg" alt="Daily Rewards" />
-                    </div>
-                    <span class="feat-label">Daily Rewards</span>
+        <div class="border-t border-outline-variant/10 px-margin-desktop py-6">
+            <div class="max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="font-label-sm text-label-sm text-on-surface-variant">© @DateTime.Now.Year LegendPay. Licensed by the Central Bank of Nigeria (CBN).</p>
+                <div class="flex gap-4">
+                    <img alt="Get it on Google Play" class="h-8" src="~/img/landing/google-play-badge.svg" />
+                    <img alt="Download on the App Store" class="h-8" src="~/img/landing/app-store-badge.svg" />
                 </div>
             </div>
-
-            <div class="dots">
-                <div class="dot active"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </div>
-
-            <p class="footer-note">
-                By continuing, you agree to LegendPay's
-                <a href="#">Terms of Service</a> and <!-- <a href="#">Privacy Policy</a>-->.
-                <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a>
-            </p>
         </div>
+    </footer>
+    <script>
+        const observerOptions = {
+            threshold: 0.1
+        };
 
-    </div>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-10');
+                }
+            });
+        }, observerOptions);
 
-    <script src="~/js/Auth/script.js"></script>
+        document.querySelectorAll('section > div').forEach(section => {
+            section.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-10');
+            observer.observe(section);
+        });
+    </script>
 </body>
 </html>

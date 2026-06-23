@@ -1,66 +1,244 @@
-﻿<!DOCTYPE html>
+@using System.Security.Claims
+@{
+    var firstName = User.FindFirstValue(ClaimTypes.GivenName);
+    var lastName = User.FindFirstValue(ClaimTypes.Surname);
+    var fullName = $"{firstName} {lastName}".Trim();
+    var initials = string.Concat(new[] { firstName, lastName }
+        .Where(s => !string.IsNullOrWhiteSpace(s))
+        .Select(s => char.ToUpperInvariant(s![0])));
+    if (string.IsNullOrEmpty(initials)) initials = "?";
+    var accountType = ViewData["AccountType"] as string ?? "Personal Account";
+}
+@functions {
+    private string NavClass(string controller, string action)
+    {
+        var route = ViewContext.RouteData.Values;
+        var active = string.Equals(route["controller"]?.ToString(), controller, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(route["action"]?.ToString(), action, StringComparison.OrdinalIgnoreCase);
+
+        const string baseClass = "flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors";
+        return active
+            ? $"sidebar-active {baseClass}"
+            : $"text-on-surface-variant hover:text-slate-900 {baseClass}";
+    }
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - LegendPay</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>LegendPay | @ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "background": "#f9fafb",
+                      "surface": "#ffffff",
+                      "primary": "#0b4a8f",
+                      "on-primary": "#ffffff",
+                      "primary-container": "#d1e4ff",
+                      "on-primary-container": "#001d36",
+                      "primary-fixed": "#d1e4ff",
+                      "on-surface": "#111827",
+                      "on-surface-variant": "#4b5563",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f1f4f9",
+                      "surface-variant": "#e0e3e8",
+                      "outline": "#74777f",
+                      "outline-variant": "#e5e7eb",
+                      "naira-green": "#008751",
+                      "error": "#ba1a1a",
+                      "slate-50": "#f8fafc",
+                      "slate-100": "#f1f5f9",
+                      "slate-200": "#e2e8f0",
+                      "slate-900": "#0f172a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.375rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-desktop": "40px",
+                      "container-max": "1200px"
+              },
+              "fontFamily": {
+                      "headline": ["Inter", "sans-serif"],
+                      "display": ["Inter", "sans-serif"],
+                      "body": ["Inter", "sans-serif"],
+                      "label": ["Inter", "sans-serif"],
+                      "headline-md": ["Inter", "sans-serif"],
+                      "display-lg": ["Inter", "sans-serif"],
+                      "label-md": ["Inter", "sans-serif"],
+                      "label-sm": ["Inter", "sans-serif"],
+                      "body-sm": ["Inter", "sans-serif"]
+              },
+              "fontSize": {
+                      "display-lg": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                      "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                      "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                      "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                      "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+              }
+            },
+          }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
 
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="~/css/dashboard-transactions.css" asp-append-version="true" />
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            font-size: 20px;
+        }
+
+        .sidebar-active {
+            position: relative;
+            color: #0b4a8f;
+        }
+
+            .sidebar-active::before {
+                content: '';
+                position: absolute;
+                left: -16px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 3px;
+                height: 16px;
+                background-color: #0b4a8f;
+                border-radius: 0 4px 4px 0;
+            }
+
+        .soft-elevation {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .tonal-elevation {
+            box-shadow: 0 4px 20px rgba(11, 74, 143, 0.08);
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+    </style>
 </head>
-<body>
-
-    <div class="dashboard-wrapper">
-        <!-- Persistent Portal Sidebar Navigation -->
-        <aside class="app-sidebar">
-            <div>
-                <div class="brand-section">
-                    <h1 class="brand-title">User central</h1>
-                    <span class="brand-subtitle">Management Portal</span>
-                </div>
-
-                <nav class="nav-menu">
-                    <a asp-controller="Accounts" asp-action="HomePage" class="nav-menu-link">
-                        <i class="bi bi-grid-1x2-fill"></i> <span>Overview</span>
-                    </a>
-                    <a href="#" class="nav-menu-link active">
-                        <i class="bi bi-wallet2"></i> <span>Transactions</span>
-                    </a>
-                    <a href="#" class="nav-menu-link">
-                        <i class="bi bi-bar-chart-line"></i> <span>Analytics</span>
-                    </a>
-                    <a href="#" class="nav-menu-link">
-                        <i class="bi bi-chat-left-text"></i> <span>Support</span>
-                    </a>
-                </nav>
+<body class="bg-background text-on-surface min-h-screen">
+    <aside class="fixed left-0 top-0 h-screen w-64 flex flex-col p-6 z-40 bg-surface border-r border-slate-200">
+        <div class="mb-10">
+            <h1 class="text-xl font-bold tracking-tight text-slate-900">LegendPay</h1>
+        </div>
+        <nav class="flex-1 space-y-1">
+            <a asp-controller="Home" asp-action="HomePage" class="@NavClass("Home", "HomePage")">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+            <a asp-controller="Home" asp-action="FundWallet" class="@NavClass("Home", "FundWallet")">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+                <span>Fund Wallet</span>
+            </a>
+            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined">payments</span>
+                <span>Pay a Bill</span>
+            </a>
+            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined">event_repeat</span>
+                <span>Subscriptions</span>
+            </a>
+            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined">query_stats</span>
+                <span>Spending</span>
+            </a>
+            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined">stars</span>
+                <span>Rewards</span>
+            </a>
+            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined">history</span>
+                <span>History</span>
+            </a>
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-50">Account</p>
             </div>
+            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined">group</span>
+                <span>Beneficiaries</span>
+            </a>
+            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+                <span class="material-symbols-outlined">contact_support</span>
+                <span>Support</span>
+            </a>
+        </nav>
+        <div class="mt-auto">
+            <a asp-controller="Auth" asp-action="Logout" class="w-full bg-slate-900 text-white text-xs font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors">
+                <span class="material-symbols-outlined text-[16px]">logout</span>
+                Log Out
+            </a>
+        </div>
+    </aside>
 
-            <div class="sidebar-footer">
-                <div class="account-status-card">
-                    <span class="status-pulse-dot"></span>
-                    <span>Account Status: Active</span>
-                </div>
-
-                <div class="footer-action-links">
-                    <a href="#" class="footer-link">
-                        <i class="bi bi-gear"></i> <span>Settings</span>
-                    </a>
-                    <a asp-controller="Home" asp-action="Onboarding" class="footer-link logout">
-                        <i class="bi bi-box-arrow-left"></i> <span>Logout</span>
-                    </a>
+    <main class="ml-64 min-h-screen flex flex-col">
+        <header class="flex justify-between items-center w-full px-10 py-4 sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-slate-200">
+            <div class="flex items-center gap-6 flex-1">
+                <div class="relative w-full max-w-sm">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                    <input class="w-full pl-10 pr-4 py-1.5 bg-slate-100/50 border-none rounded-md focus:ring-1 focus:ring-slate-300 text-sm placeholder-on-surface-variant/60" placeholder="Search anything..." type="text" />
                 </div>
             </div>
-        </aside>
+            <div class="flex items-center gap-5">
+                <button class="p-1.5 text-on-surface-variant hover:text-slate-900 transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+                <div class="flex items-center gap-3 pl-5 border-l border-slate-200">
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-slate-900">@fullName</p>
+                        <p class="text-[11px] text-on-surface-variant font-medium">@accountType</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600 uppercase">@initials</div>
+                </div>
+            </div>
+        </header>
 
-        <!-- Main Workspace Render View injection window -->
-        <main class="content-viewport">
-            @RenderBody()
-        </main>
+        @RenderBody()
+
+        <footer class="mt-auto flex justify-between items-center w-full px-10 py-6 border-t border-slate-200">
+            <p class="text-[11px] font-medium text-on-surface-variant/60">© @DateTime.Now.Year LegendPay • Licensed by CBN</p>
+            <div class="flex gap-8">
+                <a asp-controller="Home" asp-action="Privacy" class="text-[11px] font-bold text-on-surface-variant/60 hover:text-slate-900 transition-colors">Privacy</a>
+                <a href="#" class="text-[11px] font-bold text-on-surface-variant/60 hover:text-slate-900 transition-colors">Terms</a>
+                <a href="#" class="text-[11px] font-bold text-on-surface-variant/60 hover:text-slate-900 transition-colors">Security</a>
+            </div>
+        </footer>
+    </main>
+
+    <div id="copyToast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900 text-white rounded-lg text-sm opacity-0 pointer-events-none transition-opacity duration-300 z-[100] shadow-2xl flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">check_circle</span>
+        Account number copied
     </div>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function copyToClipboard(text) {
+            if (text && navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text);
+            }
+
+            const toast = document.getElementById('copyToast');
+            if (!toast) return;
+
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

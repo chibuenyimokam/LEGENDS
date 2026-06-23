@@ -1,6 +1,7 @@
 using LegendPay.Interfaces.Auth;
 using LegendPay.Interfaces.Transaction;
 using LegendPay.Models;
+using LegendPay.Models.ViewModels.UserDashboard;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -35,9 +36,41 @@ namespace LegendPay.Controllers
         {
             return View();
         }
-        public IActionResult FundWallet()
+        [Authorize]
+        public async Task<IActionResult> FundWallet()
         {
-            return View();
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 10);
+
+            var model = new WalletDashboardViewModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                CustomerId = user.CustomerId ?? string.Empty,
+                AccountNumber = wallet?.StaticAccountNumber ?? user.AccountNumber ?? string.Empty,
+                BankName = wallet?.BankName ?? user.BankName ?? string.Empty,
+                Balance = wallet?.Balance ?? 0m,
+                RecentTransactions = wallet?.WalletTransactions?
+                    .Select(t => new RecentTransactionViewModel
+                    {
+                        TransactionId = t.ExternalReference ?? t.Id.ToString(),
+                        Description = t.Description ?? t.Source ?? t.Type,
+                        Amount = t.Amount,
+                        Type = t.Type,
+                        Date = t.CreatedAt,
+                        Status = t.Status
+                    })
+                    .ToList() ?? new List<RecentTransactionViewModel>()
+            };
+
+            ViewData["KycTier"] = model.KycTier;
+
+            return View(model);
         }
 
         public IActionResult Receipt()
@@ -59,31 +92,14 @@ namespace LegendPay.Controllers
             var user = await _authService.GetUserByEmailAsync(userEmail);
             if (user == null) return RedirectToAction("Login", "Auth");
 
-            //If the wallet background creation originally failed, retry
-            if (string.IsNullOrEmpty(user.AccountNumber)) // should be customerId
+            if (string.IsNullOrEmpty(user.AccountNumber))
             {
-                bool provisionSuccess = await _authService.TryProvisionWalletAsync(user);
-                if (!provisionSuccess)
-                {
-                    ViewBag.FullName = $"{user.FirstName} {user.LastName}";
-                    ViewBag.Balance = "Unavailable";
-                    ViewBag.AccountNumber = "Pending Activation";
-                    ViewBag.CustomerId = "Pending Activation";
-                    ViewBag.BankName = "Unavailable";
-
-                    return View();
-                }
+                await _authService.TryProvisionWalletAsync(user);
             }
 
-            var balance = await _authService.GetUserBalanceAsync(user.Email);
+            var model = await _authService.GetUserDashboardAsync(user);
 
-            ViewBag.FullName = $"{user.FirstName} {user.LastName}";
-            ViewBag.Balance = balance.HasValue ? balance.Value.ToString("N2") : "0.00";
-            ViewBag.AccountNumber = user.AccountNumber; 
-            ViewBag.BankName = user.BankName;
-            ViewBag.CustomerId = user.CustomerId;
-
-            return View("HomePage");
+            return View(model);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
