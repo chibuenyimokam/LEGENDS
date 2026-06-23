@@ -1,6 +1,7 @@
 using LegendPay.Interfaces.Auth;
 using LegendPay.Interfaces.Transaction;
 using LegendPay.Models;
+using LegendPay.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -76,6 +77,40 @@ namespace LegendPay.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Dashboard()
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("Login");
+
+            var user = await _authService.GetUserByEmailAsync(email);
+            if (user == null)
+                return RedirectToAction("Login");
+
+            var balance = await _walletService.GetBalanceAsync(user.CustomerId);
+
+            var model = new UserDashboardViewModel
+            {
+                AccountInfo = new AccountInfoViewModel
+                {
+                    UserName = $"{user.FirstName} {user.LastName}",
+                    AvailableBalance = balance ?? 0,
+                    WalletId = user.WalletId ?? "N/A"
+                },
+                LegendPoints = new LegendPointsViewModel
+                {
+                    CurrentPoints = user.LegendPoint?.TotalPoints ?? 0,
+                    GoalPoints = 5000,
+                    AmountToNextReward = 500
+                },
+                RecentActivities = new List<RecentActivityViewModel>(),
+                UpcomingRenewals = new List<UpcomingRenewalViewModel>()
+            };
+
+            return View("HomePage", model);
         }
     }
 }
