@@ -13,22 +13,22 @@ using System.Security.Claims;
 
 namespace LegendPay.Controllers
 {
-    public class AccountsController : Controller
+    public class AuthController : Controller
     {
         // References to the database context and injected services
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
         private readonly IAuthService _authService;
         private readonly IWalletService _walletService;
-        private readonly ILogger<AccountsController> _logger;
+        private readonly ILogger<AuthController> _logger;
 
 
-        public AccountsController(
+        public AuthController(
                 IEmailService emailService,
                 IOtpService otpService,
                 IAuthService authService,
                 IWalletService walletService,
-                ILogger<AccountsController> logger)
+                ILogger<AuthController> logger)
         {
             _emailService = emailService;
             _otpService = otpService;
