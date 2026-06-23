@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>@ViewData["Title"] - LegendPay</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-bright": "#f9f9ff",
+                      "surface-variant": "#d4e3ff",
+                      "surface-tint": "#2b5ea4",
+                      "error-container": "#ffdad6",
+                      "background": "#f9f9ff",
+                      "on-primary-fixed": "#001b3d",
+                      "on-secondary-container": "#770c4b",
+                      "inverse-surface": "#213147",
+                      "on-primary-fixed-variant": "#01468b",
+                      "secondary-fixed-dim": "#ffb0d0",
+                      "on-surface-variant": "#424751",
+                      "error": "#ba1a1a",
+                      "on-background": "#0b1c31",
+                      "inverse-primary": "#a9c7ff",
+                      "secondary-container": "#fd7eb9",
+                      "on-tertiary-fixed": "#230f44",
+                      "tertiary-fixed-dim": "#d3bcfa",
+                      "primary-fixed-dim": "#a9c7ff",
+                      "tertiary-container": "#544176",
+                      "surface-container-high": "#dde9ff",
+                      "on-error": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-surface": "#0b1c31",
+                      "on-primary-container": "#95bcff",
+                      "surface-container-highest": "#d4e3ff",
+                      "tertiary": "#3d2a5e",
+                      "surface-container-low": "#eff3ff",
+                      "on-tertiary-container": "#c8b0ee",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed-variant": "#503d72",
+                      "on-secondary-fixed": "#3d0024",
+                      "outline": "#737782",
+                      "tertiary-fixed": "#ebdcff",
+                      "primary-fixed": "#d6e3ff",
+                      "on-secondary-fixed-variant": "#841955",
+                      "primary-container": "#0b4a8f",
+                      "primary": "#003369",
+                      "surface-container": "#e6eeff",
+                      "surface": "#f9f9ff",
+                      "secondary-fixed": "#ffd8e6",
+                      "on-tertiary": "#ffffff",
+                      "inverse-on-surface": "#ebf1ff",
+                      "on-secondary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "surface-dim": "#cbdbf8",
+                      "outline-variant": "#c2c6d2",
+                      "secondary": "#a2346d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Inter"],
+                      "display": ["Inter"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .px-margin-desktop {
+            padding-left: 48px;
+            padding-right: 48px;
+        }
+
+        .max-w-container-max {
+            max-width: 1280px;
+        }
+
+        .py-stack-lg {
+            padding-top: 48px;
+            padding-bottom: 48px;
+        }
+
+        @@media (max-width: 768px) {
+            .px-margin-desktop {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background min-h-screen flex flex-col">
+    <header class="bg-surface-container-lowest w-full top-0 sticky border-b border-surface-container-highest shadow-sm z-50">
+        <div class="flex justify-between items-center h-16 px-margin-desktop max-w-container-max mx-auto">
+            <a asp-controller="Home" asp-action="Onboarding" class="font-headline text-[24px] font-bold text-primary">LegendPay</a>
+            <nav class="hidden md:flex items-center gap-8">
+                <a class="font-body text-[16px] text-on-surface-variant hover:text-primary transition-colors" href="#">Features</a>
+                <a class="font-body text-[16px] text-on-surface-variant hover:text-primary transition-colors" href="#">Security</a>
+                <a class="font-body text-[16px] text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a>
+            </nav>
+            <div class="flex items-center gap-4">
+                <a asp-controller="Auth" asp-action="Login" class="font-body text-[16px] text-primary font-semibold underline underline-offset-4 hover:opacity-80 transition-opacity">Sign In</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center py-12 px-5 bg-surface-container-low/30 relative overflow-hidden">
+        <div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl pointer-events-none"></div>
+        @RenderBody()
+    </main>
+
+    <footer class="bg-surface-container-low w-full mt-auto border-t border-surface-container-highest">
+        <div class="py-stack-lg px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-8 max-w-container-max mx-auto">
+            <div class="flex flex-col items-center md:items-start gap-2">
+                <div class="font-headline text-[24px] font-bold text-primary">LegendPay</div>
+                <p class="font-label text-[12px] text-on-surface-variant text-center md:text-left">© @DateTime.Now.Year LegendPay. Licensed by the Central Bank of Nigeria.</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-6">
+                <a asp-controller="Home" asp-action="Privacy" class="font-label text-[12px] text-on-surface-variant hover:underline hover:text-primary transition-opacity">Privacy Policy</a>
+                <a class="font-label text-[12px] text-on-surface-variant hover:underline hover:text-primary transition-opacity" href="#">Terms of Service</a>
+                <a class="font-label text-[12px] text-on-surface-variant hover:underline hover:text-primary transition-opacity" href="#">Help Center</a>
+                <a class="font-label text-[12px] text-on-surface-variant hover:underline hover:text-primary transition-opacity" href="#">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

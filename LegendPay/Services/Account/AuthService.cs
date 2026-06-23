@@ -4,6 +4,7 @@ using LegendPay.Models;
 using LegendPay.Models.Data;
 using LegendPay.Models.Data.Tables;
 using LegendPay.Models.ViewModels;
+using LegendPay.Models.ViewModels.UserDashboard;
 using LegendPay.Models.WalletStation.Request;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -170,6 +171,87 @@ namespace LegendPay.Services.Account
             await httpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity));
+        }
+
+        public async Task<Wallet?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10) =>
+            await _context.Wallets
+                .AsNoTracking()
+                .Include(w => w.WalletTransactions!
+                    .OrderByDescending(t => t.CreatedAt)
+                    .Take(recentCount))
+                .FirstOrDefaultAsync(w => w.UserAccountId == userId);
+
+        public async Task<UserDashboardViewModel> GetUserDashboardAsync(UserAccount user)
+        {
+            var userId = user.Id;
+            var now = DateTime.UtcNow;
+
+            var wallet = await _context.Wallets.AsNoTracking()
+                .FirstOrDefaultAsync(w => w.UserAccountId == userId);
+
+            var legendPoint = await _context.LegendPoints.AsNoTracking()
+                .FirstOrDefaultAsync(lp => lp.UserAccountId == userId);
+
+            var pendingBills = await _context.Bills.AsNoTracking()
+                .Where(b => b.UserAccountId == userId && b.Status == "Pending")
+                .OrderBy(b => b.CreatedAt)
+                .ToListAsync();
+
+            var spending = await _context.SpendingRecords.AsNoTracking()
+                .Where(s => s.UserAccountId == userId && s.Year == now.Year && s.Month == now.Month)
+                .ToListAsync();
+
+            var renewals = await _context.Subscriptions.AsNoTracking()
+                .Where(s => s.UserAccountId == userId && s.Status == "Active")
+                .OrderBy(s => s.NextDueDate)
+                .Take(6)
+                .ToListAsync();
+
+            var totalSpending = spending.Sum(s => s.TotalSpent);
+
+            return new UserDashboardViewModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                WalletBalance = wallet?.Balance ?? 0m,
+                LegendPoints = legendPoint == null ? 0 : legendPoint.TotalPoints - legendPoint.RedeemedPoints,
+                PendingBillsCount = pendingBills.Count,
+                PendingBillsTotal = pendingBills.Sum(b => b.Amount),
+                TotalSpending = totalSpending,
+                UpcomingBills = pendingBills
+                    .Take(5)
+                    .Select(b => new DashboardBillViewModel
+                    {
+                        Id = b.Id,
+                        BillerName = b.BillerName,
+                        Nickname = b.AccountReference,
+                        Amount = b.Amount,
+                        Status = b.Status
+                    })
+                    .ToList(),
+                SpendingBreakdown = spending
+                    .GroupBy(s => s.BillerCategory)
+                    .Select(g => new SpendingSliceViewModel
+                    {
+                        Category = g.Key,
+                        Amount = g.Sum(x => x.TotalSpent),
+                        Percentage = totalSpending > 0
+                            ? (double)(g.Sum(x => x.TotalSpent) / totalSpending) * 100
+                            : 0
+                    })
+                    .OrderByDescending(s => s.Amount)
+                    .ToList(),
+                UpcomingRenewals = renewals
+                    .Select(s => new RenewalViewModel
+                    {
+                        Id = s.Id,
+                        BillerName = s.BillerName,
+                        NextDueDate = s.NextDueDate,
+                        Amount = s.Amount,
+                        IsAutoPayEnabled = s.IsAutoPayEnabled
+                    })
+                    .ToList()
+            };
         }
 
         public async Task<decimal?> GetUserBalanceAsync(string email)
