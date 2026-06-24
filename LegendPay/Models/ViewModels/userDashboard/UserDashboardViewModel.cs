@@ -3,6 +3,7 @@
     public class WalletDashboardViewModel
     {
         public string CustomerId { get; set; }
+        public string WalletId { get; set; } // to be added
         public string AccountNumber { get; set; }
         public string BankName { get; set; }
         public decimal Balance { get; set; }

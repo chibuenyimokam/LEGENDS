@@ -1,6 +1,7 @@
 using LegendPay.Interfaces.Auth;
 using LegendPay.Interfaces.Transaction;
 using LegendPay.Models;
+using LegendPay.Models.ViewModels.UserDashboard;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -16,8 +17,6 @@ namespace LegendPay.Controllers
 
 
         public HomeController(
-                IEmailService emailService,
-                IOtpService otpService,
                 IAuthService authService,
                 IWalletService walletService,
                 ILogger<HomeController> logger)
@@ -51,30 +50,43 @@ namespace LegendPay.Controllers
             if (user == null) return RedirectToAction("Login", "Auth");
 
             //If the wallet background creation originally failed, retry
-            if (string.IsNullOrEmpty(user.AccountNumber)) // should be customerId
+            if (string.IsNullOrEmpty(user.CustomerId)) // should be customerId
             {
                 bool provisionSuccess = await _authService.TryProvisionWalletAsync(user);
                 if (!provisionSuccess)
                 {
-                    ViewBag.FullName = $"{user.FirstName} {user.LastName}";
-                    ViewBag.Balance = "Unavailable";
-                    ViewBag.AccountNumber = "Pending Activation";
-                    ViewBag.CustomerId = "Pending Activation";
-                    ViewBag.BankName = "Unavailable";
+                    var pendingVm = new WalletDashboardViewModel
+                    {
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Balance = 0,
+                        AccountNumber = "Pending Activation",
+                        CustomerId = "Pending Activation",
+                        BankName = "Unavailable"
+                    };
 
-                    return View();
+                    return View(pendingVm);
                 }
             }
 
-            var balance = await _authService.GetUserBalanceAsync(user.Email);
+            var balance = await _walletService.GetBalanceAsync(user.CustomerId);
+            if (balance.HasValue && balance.Value != user.Balance)
+            {
+                user.Balance = balance.Value;
+                await _authService.UpdateUserAsync(user);
+            }
 
-            ViewBag.FullName = $"{user.FirstName} {user.LastName}";
-            ViewBag.Balance = balance.HasValue ? balance.Value.ToString("N2") : "0.00";
-            ViewBag.AccountNumber = user.AccountNumber; 
-            ViewBag.BankName = user.BankName;
-            ViewBag.CustomerId = user.CustomerId;
+            var vm = new WalletDashboardViewModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Balance = user.Balance, //balance.HasValue ? balance.Value.ToString("N2") : "0.00"
+                AccountNumber = user.AccountNumber,
+                BankName = user.BankName,
+                CustomerId = user.CustomerId
+            };
 
-            return View("HomePage");
+            return View("HomePage", vm);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

@@ -174,12 +174,19 @@ namespace LegendPay.Services.Account
 
         public async Task<decimal?> GetUserBalanceAsync(string email)
         {
-            var user = await GetUserByEmailAsync(email);
+            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null || string.IsNullOrEmpty(user.CustomerId))
                 return null;
 
-            return await _walletService.GetBalanceAsync(user.CustomerId);
+            var externalBalance = await _walletService.GetBalanceAsync(user.CustomerId);
+            return externalBalance;
+        }
+
+        public async Task UpdateUserAsync(UserAccount user)
+        {
+            _context.UserAccounts.Update(user);
+            await _context.SaveChangesAsync();
         }
 
         public async Task SignOutUserAsync(HttpContext httpContext) =>
