@@ -33,11 +33,11 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a class="nav-item active" href="#">
+            <a class="nav-item" href="@Url.Action("HomePage", "Home")">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
                 <span class="nav-label">Overview</span>
             </a>
-            <a class="nav-item" href="#">
+            <a class="nav-item" href="@Url.Action("PayBills", "Home")">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                 <span class="nav-label">Transactions</span>
             </a>
@@ -120,21 +120,21 @@
                             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
                             Fund Wallet
                         </button>
-                        <button class="balance-btn pay">
+                        <a href="@Url.Action("PayBills", "Home")" class="balance-btn pay" style="text-decoration:none;">
                             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" /><circle cx="12" cy="12" r="2" /></svg>
                             Pay Bill
-                        </button>
+                        </a>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
                 <div class="quick-actions">
-                    <div class="action-card">
+                    <a href="@Url.Action("PayBills", "Home")" class="action-card" style="text-decoration:none; color:inherit;">
                         <div class="action-icon">
                             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
                         </div>
                         <span>Pay Bill</span>
-                    </div>
+                    </a>
                     <div class="action-card">
                         <div class="action-icon">
                             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" /><line x1="12" y1="18" x2="12" y2="18" stroke-linecap="round" stroke-width="3" /></svg>
