@@ -19,5 +19,8 @@ namespace LegendPay.Interfaces.Auth
         Task<bool> TryProvisionWalletAsync(UserAccount user);
         Task<Wallet?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10);
         Task<UserDashboardViewModel> GetUserDashboardAsync(UserAccount user);
+        Task<SubscriptionsViewModel> GetSubscriptionsAsync(Guid userId);
+        Task<BillHistoryViewModel> GetBillHistoryAsync(Guid userId, string? range, string? biller, string? amount, int page, int pageSize);
+        Task<ReceiptViewModel?> GetBillReceiptAsync(Guid billId, Guid userId);
     }
 }

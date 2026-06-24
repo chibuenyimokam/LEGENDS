@@ -73,9 +73,33 @@ namespace LegendPay.Controllers
             return View(model);
         }
 
-        public IActionResult Receipt()
+        [Authorize]
+        public async Task<IActionResult> History(string? range, string? biller, string? amount, int page = 1)
         {
-            return View();
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _authService.GetBillHistoryAsync(user.Id, range, biller, amount, page, 10);
+
+            return View(model);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Receipt(Guid id)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _authService.GetBillReceiptAsync(id, user.Id);
+            if (model == null) return RedirectToAction("History");
+
+            return View(model);
         }
 
         public IActionResult Onboarding()
@@ -98,6 +122,20 @@ namespace LegendPay.Controllers
             }
 
             var model = await _authService.GetUserDashboardAsync(user);
+
+            return View(model);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Subscriptions()
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _authService.GetSubscriptionsAsync(user.Id);
 
             return View(model);
         }
