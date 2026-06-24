@@ -74,6 +74,26 @@ namespace LegendPay.Controllers
         }
 
         [Authorize]
+        public async Task<IActionResult> PayBills()
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+
+            var model = new PayBillsViewModel
+            {
+                AvailableBalance = wallet?.Balance ?? 0m,
+                RecentFavorites = new List<RecentBillerViewModel>()
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
         public async Task<IActionResult> History(string? range, string? biller, string? amount, int page = 1)
         {
             var userEmail = User.Identity?.Name;

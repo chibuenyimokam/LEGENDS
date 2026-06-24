@@ -1,4 +1,5 @@
-﻿@model LegendPay.Models.ViewModels.UserSupportChatViewModel
+﻿@using LegendPay.Helpers
+@model LegendPay.Models.ViewModels.UserSupportChatViewModel
 @{
     Layout = null;
 }
@@ -23,6 +24,13 @@
             <span class="nav-badge">PRIORITY SUPPORT</span>
         </div>
         <div class="support-nav-actions">
+
+            <a asp-controller="Home" asp-action="HomePage" class="nav-icon-btn" title="Back to Dashboard" style="display:flex;align-items:center;gap:6px;width:auto;padding:0 12px;text-decoration:none;color:inherit;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                <span style="font-size:14px;font-weight:600;">Dashboard</span>
+            </a>
 
             <!-- Notification Bell -->
             <div class="notif-wrapper" id="notifWrapper">
@@ -110,7 +118,7 @@
                             <div class="convo-item @(isActive ? "active" : "")" data-subject="@chat.Subject.ToLower()">
                                 <div class="convo-meta">
                                     <span class="convo-ticket">TKT-@chat.Id.ToString().Substring(0, 5).ToUpper()</span>
-                                    <span class="convo-date">@chat.UpdatedAt.ToString("MMM dd, HH:mm")</span>
+                                    <span class="convo-date">@WatTime.FromUtc(chat.UpdatedAt).ToString("MMM dd, HH:mm")</span>
                                 </div>
                                 <div class="convo-subject">@chat.Subject</div>
                                 @if (lastMsg != null)
@@ -227,7 +235,7 @@
                                     }
                                 </div>
                                 <span class="msg-time">
-                                    @message.CreatedAt.ToString("hh:mm tt")
+                                    @WatTime.FromUtc(message.CreatedAt).ToString("hh:mm tt")
                                     @if (isUser)
                                     {
                                         <span class="read-receipt">• READ ✓✓</span>

@@ -10,6 +10,8 @@ using LegendPay.Interfaces.Admin;
 using LegendPay.Services.Admin;
 using Microsoft.AspNetCore.SignalR;
 using LegendPay.Hubs;
+using LegendPay.Interfaces;
+using LegendPay.Services;
 
 namespace LegendPay
 {
@@ -46,7 +48,12 @@ namespace LegendPay
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
-            
+            builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
+            builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
+            builder.Services.AddScoped<IUserSupportChatService, UserSupportChatService>();
+            builder.Services.AddScoped<IAdminSupportChatService, AdminSupportChatService>();
+            builder.Services.AddSignalR();
+
 
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();
