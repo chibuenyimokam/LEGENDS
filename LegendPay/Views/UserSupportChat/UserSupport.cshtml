@@ -1,0 +1,361 @@
+﻿@model LegendPay.Models.ViewModels.UserSupportChatViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support — LegendPay</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/UserSupport.css" asp-append-version="true" />
+</head>
+<body>
+
+    <!-- ── TOP NAV ── -->
+    <nav class="support-nav">
+        <div class="support-nav-brand">
+            <img src="/screenicon/Background.svg" alt="LegendPay" class="nav-logo" />
+            <span class="nav-brand-name">LegendPay</span>
+            <span class="nav-badge">PRIORITY SUPPORT</span>
+        </div>
+        <div class="support-nav-actions">
+
+            <!-- Notification Bell -->
+            <div class="notif-wrapper" id="notifWrapper">
+                <button class="nav-icon-btn" id="notifBell" title="Notifications">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    <span class="notif-dot" id="notifDot" style="display:none;"></span>
+                </button>
+                <!-- Notification Dropdown -->
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div class="notif-dropdown-header">
+                        <span>Notifications</span>
+                        <button class="mark-all-read-btn" id="markAllReadBtn">Mark all read</button>
+                    </div>
+                    <div class="notif-list" id="notifList">
+                        <div class="notif-empty">No new notifications</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help -->
+            <button class="nav-icon-btn" title="Help">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+            </button>
+
+            <!-- Avatar -->
+            <div class="nav-avatar" title="@Model.UserName">
+                @(Model.UserName?.Length > 0 ? Model.UserName[0].ToString().ToUpper() : "U")
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── MAIN WRAPPER ── -->
+    <div class="support-wrapper">
+
+        <!-- ── LEFT PANEL (My Conversations) ── -->
+        <div class="conversations-panel">
+
+            <div class="conversations-panel-header">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                My Conversations
+            </div>
+
+            <div class="conversations-search">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" id="searchConvos" placeholder="Search conversations..." />
+            </div>
+
+            <div class="conversation-list" id="conversationList">
+                @if (Model.AllChats == null || !Model.AllChats.Any())
+                {
+                    <div class="convo-empty">
+                        No conversations yet.<br />Click <strong>New Dispute</strong> to start one.
+                    </div>
+                }
+                else
+                {
+                    foreach (var chat in Model.AllChats)
+                    {
+                        var isActive = Model.ActiveChat?.Id == chat.Id;
+                        var badgeClass = chat.Status switch
+                        {
+                            "Open" => "badge-open",
+                            "InProgress" => "badge-inprogress",
+                            "Resolved" => "badge-resolved",
+                            "Closed" => "badge-closed",
+                            _ => "badge-open"
+                        };
+                        var statusLabel = chat.Status == "InProgress" ? "In Progress" : chat.Status;
+                        var lastMsg = chat.Messages?.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
+
+                        <a href="@Url.Action("OpenChat", "UserSupportChat", new { chatId = chat.Id })"
+                           class="convo-link">
+                            <div class="convo-item @(isActive ? "active" : "")" data-subject="@chat.Subject.ToLower()">
+                                <div class="convo-meta">
+                                    <span class="convo-ticket">TKT-@chat.Id.ToString().Substring(0, 5).ToUpper()</span>
+                                    <span class="convo-date">@chat.UpdatedAt.ToString("MMM dd, HH:mm")</span>
+                                </div>
+                                <div class="convo-subject">@chat.Subject</div>
+                                @if (lastMsg != null)
+                                {
+                                    <div class="convo-preview">@(lastMsg.MessageText.Length > 45 ? lastMsg.MessageText.Substring(0, 45) + "…" : lastMsg.MessageText)</div>
+                                }
+                                <span class="status-badge @badgeClass">@statusLabel</span>
+                            </div>
+                        </a>
+                    }
+                }
+            </div>
+
+            <div class="conversations-panel-footer">
+                <button class="new-dispute-btn" id="newDisputeBtn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    New Dispute
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ── RIGHT CHAT PANEL ── -->
+        <div class="chat-panel">
+
+            @if (Model.ActiveChat == null)
+            {
+                <div class="chat-empty-state">
+                    <div class="empty-icon">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                    </div>
+                    <p class="empty-title">No conversation selected</p>
+                    <p class="empty-sub">Select a conversation from the left or start a new dispute</p>
+                    <button class="new-dispute-btn-inline" id="newDisputeBtnInline">+ New Dispute</button>
+                </div>
+            }
+            else
+            {
+                var statusPillClass = Model.ActiveChat.Status switch
+                {
+                    "Open" => "open",
+                    "InProgress" => "inprogress",
+                    "Resolved" => "resolved",
+                    "Closed" => "closed",
+                    _ => "open"
+                };
+                var statusPillLabel = Model.ActiveChat.Status == "InProgress" ? "In Progress" : Model.ActiveChat.Status;
+
+                <!-- Chat Header -->
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <div class="ticket-subject">@Model.ActiveChat.Subject</div>
+                        <div class="ticket-meta">
+                            <span>Support Tier: <span class="support-tier">24/7 Concierge</span></span>
+                        </div>
+                    </div>
+                    <span class="status-pill @statusPillClass" id="statusPill">@statusPillLabel</span>
+                </div>
+
+                <!-- Attachment Preview Bar -->
+                <div class="attachment-preview-bar" id="attachmentPreviewBar" style="display:none;">
+                    <div class="attachment-preview-inner">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                        </svg>
+                        <span id="attachmentFileName">No file selected</span>
+                        <button type="button" class="attachment-remove-btn" id="attachmentRemoveBtn">&times;</button>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div class="messages-container" id="messagesContainer">
+
+                    <div class="date-separator">
+                        @Model.ActiveChat.CreatedAt.ToString("dddd, MMMM dd").ToUpper()
+                    </div>
+
+                    @foreach (var message in Model.Messages)
+                    {
+                        var isUser = message.Sender == "User";
+                        <div class="msg-row @(isUser ? "user-msg" : "")">
+                            <div class="msg-avatar @(isUser ? "avatar-user" : "avatar-agent")">
+                                @if (isUser)
+                                {
+                                    @(Model.UserName?.Length > 0 ? Model.UserName[0].ToString().ToUpper() : "U")
+                                }
+                                else
+                                {
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z" />
+                                        <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                                    </svg>
+                                }
+                            </div>
+                            <div class="msg-content">
+                                <div class="msg-bubble">
+                                    @message.MessageText
+                                    @if (!string.IsNullOrEmpty(message.AttachmentPath))
+                                    {
+                                        <div class="msg-attachment">
+                                            <a href="@message.AttachmentPath" target="_blank" class="attachment-link">
+                                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                                                </svg>
+                                                View Attachment
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                                <span class="msg-time">
+                                    @message.CreatedAt.ToString("hh:mm tt")
+                                    @if (isUser)
+                                    {
+                                        <span class="read-receipt">• READ ✓✓</span>
+                                    }
+                                    else
+                                    {
+                                        <span>• SUPPORT AGENT</span>
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+                <!-- Hidden chat id -->
+                <input type="hidden" id="chatIdInput" value="@Model.ActiveChat.Id" />
+
+                <!-- Message Input Area -->
+                <div class="message-input-area">
+                    <form asp-action="SendMessage" asp-controller="UserSupportChat"
+                          method="post" enctype="multipart/form-data" id="sendMessageForm">
+                        <input type="hidden" name="chatId" value="@Model.ActiveChat.Id" />
+                        <input type="hidden" name="messageText" id="messageTextHidden" />
+
+                        <div class="input-row">
+                            <label class="attach-label" for="attachmentInput" title="Attach file">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                                </svg>
+                            </label>
+                            <input type="file" id="attachmentInput" name="attachment" style="display:none;"
+                                   accept="image/*,.pdf,.doc,.docx,.txt" />
+
+                            <input type="text" id="messageInput" placeholder="Type your message here..."
+                                   autocomplete="off" />
+
+                            <!-- Emoji Button -->
+                            <div class="emoji-wrapper">
+                                <button type="button" class="emoji-btn" id="emojiBtn" title="Emoji">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                                        <line x1="9" y1="9" x2="9.01" y2="9" />
+                                        <line x1="15" y1="9" x2="15.01" y2="9" />
+                                    </svg>
+                                </button>
+                                <!-- Emoji Picker -->
+                                <div class="emoji-picker" id="emojiPicker">
+                                    <div class="emoji-picker-header">
+                                        <span>😊</span> Pick an emoji
+                                    </div>
+                                    <div class="emoji-grid" id="emojiGrid"></div>
+                                </div>
+                            </div>
+
+                            <button type="button" class="send-btn" id="sendBtn" title="Send message">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="input-footer">
+                        <span>
+                            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            END-TO-END ENCRYPTED SUPPORT
+                        </span>
+                        <span class="agent-online">
+                            <span class="online-dot"></span> AGENT ONLINE
+                        </span>
+                    </div>
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+    <!-- ── NEW DISPUTE MODAL ── -->
+    <div class="modal-overlay" id="disputeModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Start a New Dispute</h3>
+                <button type="button" class="modal-close-btn" id="modalCloseBtn">&times;</button>
+            </div>
+            <p class="modal-desc">Describe the issue you're experiencing and our support team will assist you.</p>
+            <form asp-action="NewDispute" asp-controller="UserSupportChat"
+                  method="post" id="newDisputeForm">
+                <label class="modal-label">Subject</label>
+                <input type="text" id="subjectInput" name="subject"
+                       placeholder="e.g. Failed DSTV Payment, Wrong Amount Debited" maxlength="100" />
+                <div class="modal-char-count"><span id="subjectCharCount">0</span>/100</div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-cancel-btn" id="modalCancelBtn">Cancel</button>
+                    <button type="button" class="modal-submit-btn" id="modalSubmitBtn">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Submit Dispute
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── TOAST NOTIFICATION ── -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- LegendPay Footer -->
+    <div class="support-footer">
+        <span>© 2024 LegendPay. Licensed by the Central Bank of Nigeria.</span>
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Regulatory Disclosure</a>
+            <a href="#">Contact Support</a>
+        </div>
+    </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+        <script src="~/js/UserSupport.js" asp-append-version="true"></script>
+   
+
+</body>
+</html>
