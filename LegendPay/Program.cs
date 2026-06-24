@@ -1,11 +1,13 @@
 using LegendPay.Interfaces;
 using LegendPay.Models;
-using LegendPay.Models.Data;    
+using LegendPay.Models.Data;
 using LegendPay.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using LegendPay.Interfaces.Admin;
 using LegendPay.Services.Admin;
+using Microsoft.AspNetCore.SignalR;
+using LegendPay.Hubs;
 
 namespace LegendPay
 {
@@ -33,6 +35,9 @@ namespace LegendPay
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
             builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
+            builder.Services.AddScoped<IUserSupportChatService, UserSupportChatService>();
+            builder.Services.AddScoped<IAdminSupportChatService, AdminSupportChatService>();
+            builder.Services.AddSignalR();
 
             //cookie authentication
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -65,6 +70,7 @@ namespace LegendPay
 
 
             app.MapStaticAssets();
+            app.MapHub<SupportChatHub>("/supportChatHub");
             app.MapControllerRoute(
                 name: "default",
                 /*pattern: "{controller=Home}/{action=Index}/{id?}")*/
