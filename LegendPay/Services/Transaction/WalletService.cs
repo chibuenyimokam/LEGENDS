@@ -89,6 +89,23 @@ namespace LegendPay.Services.Transaction
             return result;
         }
 
+        public async Task<CreditResponse?> CreditWalletAsync(CreditRequest creditRequest, CancellationToken cancellationToken = default)
+        {
+            var payload = new
+            {
+                Amount = creditRequest.Amount,
+                CustomerId = creditRequest.CustomerId,
+                Description = creditRequest.Description,
+                TraceId = $"TIDL{Guid.NewGuid().ToString("N")[..8]}"
+            };
+            var result = await PostAsync<CreditResponse>("api/Credit", payload, cancellationToken);
+            if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
+                return null;
+
+            return result;
+        }
+
+
         public async Task<decimal?> GetBalanceAsync(string customerId, CancellationToken cancellationToken = default)
         {
             var payload = new { CustomerId = customerId };

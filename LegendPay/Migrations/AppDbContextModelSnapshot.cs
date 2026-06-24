@@ -679,6 +679,10 @@ namespace LegendPay.Migrations
                     b.Property<string>("AccountNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("Balance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("BankName")
                         .HasColumnType("nvarchar(max)");
 
