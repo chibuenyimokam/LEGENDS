@@ -6,6 +6,10 @@ using LegendPay.Services.Account;
 using LegendPay.Services.Transaction;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using LegendPay.Interfaces.Admin;
+using LegendPay.Services.Admin;
+using Microsoft.AspNetCore.SignalR;
+using LegendPay.Hubs;
 
 namespace LegendPay
 {
@@ -62,6 +66,7 @@ namespace LegendPay
             app.UseAuthorization();
 
             app.MapStaticAssets();
+            app.MapHub<SupportChatHub>("/supportChatHub");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Onboarding}/{id?}")
