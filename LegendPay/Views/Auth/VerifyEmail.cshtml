@@ -1,68 +1,164 @@
-﻿@model LegendPay.Models.ViewModels.VerifyEmailViewModel
-
+@model LegendPay.Models.ViewModels.VerifyEmailViewModel
 @{
     ViewData["Title"] = "Verify Email";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+
+    var invalid = !ViewContext.ModelState.IsValid;
+    var boxState = invalid
+        ? "border-error text-error"
+        : "border-surface-variant text-on-surface focus:border-primary";
+    var resent = string.Equals(Context.Request.Query["resent"], "true", StringComparison.OrdinalIgnoreCase);
 }
 
-<link rel="stylesheet" href="~/css/Auth/verify-email.css" asp-append-version="true" />
+<style>
+    .otp-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 51, 105, 0.2);
+    }
 
-<div class="verification-wrapper">
-    <div class="verification-card">
-
-        <h2 class="verification-title">Verify your email</h2>
-        <p class="verification-subtitle">
-            We sent a 6-digit code to your email <br />
-            <span class="user-email">@Model.Email</span>
-        </p>
-
-        <form asp-controller="Auth" asp-action="VerifyEmail" method="post" autocomplete="off" id="otpForm">
-            <input type="hidden" asp-for="Email" />
-            <input type="hidden" asp-for="OtpCode" id="hiddenOtpCode" />
-
-            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3 text-start"></div>
-
-            <div class="otp-box-container">
-                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required autofocus />
-                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
-                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
-                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
-                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
-                <input type="text" class="otp-input" maxlength="1" pattern="\d*" inputmode="numeric" required />
-            </div>
-
-            <div class="text-center mb-3">
-                <span asp-validation-for="OtpCode" class="text-danger small"></span>
-            </div>
-
-            <button type="submit" class="btn-verify">
-                Verify <span class="arrow-icon">&rarr;</span>
-            </button>
-        </form>
-
-        <div class="timer-badge-container">
-            <div class="timer-badge">
-                <i class="bi bi-alarm-fill me-1"></i> Resend in <span id="countdown">&nbsp;00:58</span>
-            </div>
-        </div>
-
-        <div class="resend-container">
-            <p class="resend-text">
-                Didn't receive the code? <a asp-action="ResendOtp" asp-route-email="@Model.Email" id="resendLink" class="resend-link disabled-link">Resend</a>
-            </p>
-        </div>
-        @if (Context.Request.Query["resent"] == "true")
-        {
-            <div class="text-center mt-2">
-                <span class="text-success small fw-medium">A new OTP code has been sent successfully!</span>
-            </div>
+    @@keyframes shake {
+        0%, 100% {
+            transform: translateX(0);
         }
 
+        10%, 30%, 50%, 70%, 90% {
+            transform: translateX(-5px);
+        }
+
+        20%, 40%, 60%, 80% {
+            transform: translateX(5px);
+        }
+    }
+
+    .animate-shake {
+        animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+    }
+</style>
+
+<div class="w-full max-w-md bg-surface-container-lowest border border-outline-variant p-8 rounded-xl shadow-lg relative z-10 @(invalid ? "animate-shake" : "")">
+    <div class="flex justify-center mb-6">
+        <div class="w-16 h-16 rounded-xl bg-primary-container/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-[32px] text-primary" style="font-variation-settings: 'FILL' 1;">mark_email_read</span>
+        </div>
     </div>
+
+    <div class="text-center mb-8">
+        <h1 class="font-headline text-[32px] font-bold text-on-surface leading-tight tracking-tight mb-2">Check your email</h1>
+        <p class="font-body text-[16px] text-on-surface-variant">
+            We've sent a 6-digit verification code to <br />
+            <span class="font-semibold text-on-surface">@(string.IsNullOrWhiteSpace(Model.Email) ? "your email address" : Model.Email)</span>
+        </p>
+    </div>
+
+    <form asp-controller="Auth" asp-action="VerifyEmail" method="post" autocomplete="off" id="otpForm" class="space-y-6">
+        <input type="hidden" asp-for="Email" />
+        <input type="hidden" asp-for="OtpCode" id="hiddenOtpCode" />
+
+        <div class="space-y-2">
+            <label class="font-label text-[14px] font-semibold text-on-surface-variant ml-1">Verification Code</label>
+            <div class="flex justify-between gap-2 sm:gap-3">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="\d*" required autofocus class="otp-input w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold border-2 rounded-lg bg-surface-container-lowest focus:ring-0 transition-colors @boxState" />
+                <input type="text" maxlength="1" inputmode="numeric" pattern="\d*" required class="otp-input w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold border-2 rounded-lg bg-surface-container-lowest focus:ring-0 transition-colors @boxState" />
+                <input type="text" maxlength="1" inputmode="numeric" pattern="\d*" required class="otp-input w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold border-2 rounded-lg bg-surface-container-lowest focus:ring-0 transition-colors @boxState" />
+                <input type="text" maxlength="1" inputmode="numeric" pattern="\d*" required class="otp-input w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold border-2 rounded-lg bg-surface-container-lowest focus:ring-0 transition-colors @boxState" />
+                <input type="text" maxlength="1" inputmode="numeric" pattern="\d*" required class="otp-input w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold border-2 rounded-lg bg-surface-container-lowest focus:ring-0 transition-colors @boxState" />
+                <input type="text" maxlength="1" inputmode="numeric" pattern="\d*" required class="otp-input w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold border-2 rounded-lg bg-surface-container-lowest focus:ring-0 transition-colors @boxState" />
+            </div>
+
+            @if (invalid)
+            {
+                <div class="flex items-center gap-1.5 mt-2 ml-1">
+                    <span class="material-symbols-outlined text-[16px] text-error">error</span>
+                    <div asp-validation-summary="All" class="font-label text-[12px] font-medium text-error [&_ul]:list-none [&_ul]:m-0 [&_ul]:p-0"></div>
+                </div>
+            }
+        </div>
+
+        <button type="submit" class="w-full h-12 bg-primary text-on-primary font-semibold rounded-lg hover:bg-primary-container transition-all duration-200 shadow-md flex items-center justify-center gap-2">
+            Confirm email
+        </button>
+
+        <div class="pt-4 text-center">
+            <p class="font-label text-[14px] text-on-surface-variant">
+                Didn't receive the email?
+                <a id="resendLink" asp-controller="Auth" asp-action="ResendOtp" asp-route-email="@Model.Email" class="ml-1 font-semibold text-outline pointer-events-none cursor-not-allowed">Resend code<span id="countdown"></span></a>
+            </p>
+            @if (resent)
+            {
+                <p class="font-label text-[12px] font-medium text-[#008751] mt-3">A new verification code has been sent successfully.</p>
+            }
+        </div>
+    </form>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    <script src="~/js/Auth/verify-email.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            const inputs = Array.from(document.querySelectorAll('.otp-input'));
+            const hidden = document.getElementById('hiddenOtpCode');
+            const form = document.getElementById('otpForm');
+
+            function sync() {
+                hidden.value = inputs.map(i => i.value).join('');
+            }
+
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    if (!/^\d*$/.test(e.target.value)) {
+                        e.target.value = '';
+                        return;
+                    }
+                    if (e.target.value && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                    sync();
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+
+                input.addEventListener('paste', (e) => {
+                    const data = (e.clipboardData || window.clipboardData).getData('text').trim();
+                    if (/^\d{6}$/.test(data)) {
+                        inputs.forEach((inp, i) => inp.value = data[i]);
+                        inputs[inputs.length - 1].focus();
+                        sync();
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            if (form) {
+                form.addEventListener('submit', () => sync());
+            }
+
+            const link = document.getElementById('resendLink');
+            const countdown = document.getElementById('countdown');
+            let remaining = 60;
+
+            function render() {
+                const m = Math.floor(remaining / 60);
+                const s = String(remaining % 60).padStart(2, '0');
+                countdown.textContent = ` (${m}:${s})`;
+            }
+
+            if (link && countdown) {
+                render();
+                const timer = setInterval(() => {
+                    remaining--;
+                    if (remaining <= 0) {
+                        clearInterval(timer);
+                        countdown.textContent = '';
+                        link.classList.remove('text-outline', 'pointer-events-none', 'cursor-not-allowed');
+                        link.classList.add('text-secondary');
+                    } else {
+                        render();
+                    }
+                }, 1000);
+            }
+        })();
+    </script>
 }

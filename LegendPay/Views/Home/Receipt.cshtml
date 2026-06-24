@@ -1,0 +1,146 @@
+@model LegendPay.Models.ViewModels.UserDashboard.ReceiptViewModel
+@{
+    ViewData["Title"] = "Transaction Receipt";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>LegendPay | Receipt @Model.ReferenceId</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "background": "#f9fafb",
+                      "surface": "#ffffff",
+                      "primary": "#0b4a8f",
+                      "primary-container": "#d1e4ff",
+                      "on-surface": "#111827",
+                      "on-surface-variant": "#4b5563",
+                      "slate-50": "#f8fafc",
+                      "slate-100": "#f1f5f9",
+                      "slate-200": "#e2e8f0"
+              }
+            }
+          }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        @@media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: #ffffff;
+            }
+
+            .receipt-card {
+                box-shadow: none !important;
+                border: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-on-surface min-h-screen flex flex-col items-center py-12 px-4">
+    <div class="w-full max-w-md flex justify-between items-center mb-6 no-print">
+        <a asp-controller="Home" asp-action="History" class="flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Back to History
+        </a>
+        <span class="text-xl font-bold text-primary tracking-tight">LegendPay</span>
+    </div>
+
+    <div class="receipt-card w-full max-w-md bg-surface border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
+        <div class="bg-slate-50 border-b border-slate-200 px-8 py-6">
+            <h1 class="text-lg font-bold text-primary">Transaction Receipt</h1>
+            <p class="text-sm text-on-surface-variant">@Model.CreatedAt.ToString("MMM d, yyyy • h:mm tt")</p>
+        </div>
+
+        <div class="p-8">
+            <div class="flex flex-col items-center text-center mb-8">
+                <div class="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-white text-[40px]" style="font-variation-settings: 'FILL' 1;">@Model.Icon</span>
+                </div>
+                <h2 class="text-xl font-bold text-on-surface">@Model.BillerName</h2>
+                @if (Model.IsSuccess)
+                {
+                    <div class="mt-2 inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200">
+                        <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        <span class="text-xs font-bold uppercase tracking-tight">Payment Successful</span>
+                    </div>
+                }
+                else if (Model.IsPending)
+                {
+                    <div class="mt-2 inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">
+                        <span class="material-symbols-outlined text-[16px]">schedule</span>
+                        <span class="text-xs font-bold uppercase tracking-tight">Payment Pending</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="mt-2 inline-flex items-center gap-1.5 bg-red-50 text-red-700 px-3 py-1 rounded-full border border-red-200">
+                        <span class="material-symbols-outlined text-[16px]">error</span>
+                        <span class="text-xs font-bold uppercase tracking-tight">@Model.Status</span>
+                    </div>
+                }
+            </div>
+
+            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6 space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-on-surface-variant font-medium">Reference ID</span>
+                    <span class="text-sm font-mono font-bold text-on-surface">@Model.ReferenceId</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-on-surface-variant font-medium">Meter / Account</span>
+                    <span class="text-sm font-bold text-on-surface">@Model.AccountReference</span>
+                </div>
+            </div>
+
+            <div>
+                <h5 class="text-[10px] font-bold text-primary border-b border-slate-200 pb-2 mb-4 uppercase tracking-widest">Financial Breakdown</h5>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-on-surface-variant">Payment Method</span>
+                        <span class="text-sm font-semibold text-on-surface">@(string.IsNullOrWhiteSpace(Model.PaymentMethod) ? "—" : Model.PaymentMethod)</span>
+                    </div>
+                    <div class="flex justify-between pt-3 border-t border-dashed border-slate-300">
+                        <span class="text-lg font-bold text-primary">Amount Paid</span>
+                        <span class="text-lg font-bold text-primary">₦@Model.Amount.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-8 py-6 border-t border-slate-200 grid grid-cols-2 gap-3 no-print">
+            <button onclick="window.print()" type="button" class="px-4 py-3 bg-primary text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#083b72] transition-all">
+                <span class="material-symbols-outlined text-[20px]">download</span>
+                Download PDF
+            </button>
+            <a asp-controller="Home" asp-action="History" class="px-4 py-3 border border-primary text-primary rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+                <span class="material-symbols-outlined text-[20px]">list</span>
+                All Transactions
+            </a>
+        </div>
+    </div>
+
+    <p class="text-xs text-on-surface-variant mt-6 text-center max-w-md">© @DateTime.Now.Year LegendPay. Licensed by the Central Bank of Nigeria.</p>
+</body>
+</html>

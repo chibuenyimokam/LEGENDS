@@ -1,30 +1,252 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@using System.Globalization
+@model LegendPay.Models.ViewModels.UserDashboard.UserDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["AccountType"] = Model.AccountType;
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    const double donutRadius = 42;
+    var circumference = 2 * Math.PI * donutRadius;
+    var segmentGap = 4.0;
+    string[] palette = { "#0f172a", "#4b5563", "#94a3b8", "#0b4a8f", "#64748b", "#cbd5e1" };
+    var billProgressSegments = 3;
+    var billProgressFilled = Math.Min(Model.PendingBillsCount, billProgressSegments);
+}
+@functions {
+    private static string Inv(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private static string Compact(decimal value)
+    {
+        if (value >= 1_000_000m) return "₦" + (value / 1_000_000m).ToString("0.#", CultureInfo.InvariantCulture) + "m";
+        if (value >= 1_000m) return "₦" + (value / 1_000m).ToString("0.#", CultureInfo.InvariantCulture) + "k";
+        return "₦" + value.ToString("0", CultureInfo.InvariantCulture);
+    }
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="p-10 space-y-10 max-w-7xl">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Overview</h2>
+            <p class="text-sm text-on-surface-variant mt-0.5">Welcome back, here's what's happening with your account.</p>
+        </div>
+        <div class="flex p-1 bg-slate-100 rounded-lg">
+            <button class="flex items-center gap-2 px-4 py-1.5 bg-surface shadow-sm rounded-md text-xs font-semibold text-slate-900">
+                <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+                Pay a Bill
+            </button>
+            <button class="flex items-center gap-2 px-4 py-1.5 hover:text-slate-900 text-xs font-semibold text-on-surface-variant transition-colors">
+                <span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                Schedule
+            </button>
+            <button class="flex items-center gap-2 px-4 py-1.5 hover:text-slate-900 text-xs font-semibold text-on-surface-variant transition-colors">
+                <span class="material-symbols-outlined text-[16px]">person_add</span>
+                Add Payee
+            </button>
+        </div>
+    </div>
+
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-surface border border-slate-200 p-7 rounded-xl flex flex-col justify-between">
+            <div>
+                <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest opacity-60 mb-2">Wallet Balance</p>
+                <div class="flex items-center gap-2">
+                    <h2 id="walletBalance" data-amount="₦@Model.WalletBalance.ToString("N2")" class="text-3xl font-bold text-slate-900 tracking-tight">₦@Model.WalletBalance.ToString("N2")</h2>
+                    <button id="balanceToggle" type="button" aria-label="Toggle balance visibility" class="material-symbols-outlined text-[20px] leading-none text-on-surface-variant hover:text-slate-900 transition-colors cursor-pointer">visibility</button>
+                </div>
+            </div>
+            <div class="mt-8">
+                <a asp-controller="Home" asp-action="FundWallet" class="block text-center w-full bg-primary text-white py-2 rounded-lg text-xs font-bold hover:bg-[#083b72] transition-colors">Fund Wallet</a>
+            </div>
+        </div>
+
+        <div class="bg-surface border border-slate-200 p-7 rounded-xl flex flex-col justify-between">
+            <div>
+                <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest opacity-60 mb-2">Legend Points</p>
+                <h2 class="text-3xl font-bold text-slate-900 tracking-tight">@Model.LegendPoints.ToString("N0") <span class="text-base font-medium text-on-surface-variant">pts</span></h2>
+            </div>
+            <div class="mt-8">
+                <a class="text-xs text-primary font-bold hover:underline flex items-center gap-1" href="#">Redeem points <span class="material-symbols-outlined text-[14px]">arrow_forward</span></a>
+            </div>
+        </div>
+
+        <div class="bg-surface border border-slate-200 p-7 rounded-xl">
+            <div class="flex justify-between items-start mb-2">
+                <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest opacity-60">Pending Bills</p>
+                @if (Model.PendingBillsCount > 0)
+                {
+                    <span class="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold tracking-tight uppercase">Urgent</span>
+                }
+            </div>
+            <h2 class="text-3xl font-bold text-slate-900 tracking-tight">@Model.PendingBillsCount @(Model.PendingBillsCount == 1 ? "bill" : "bills")</h2>
+            <p class="text-sm font-medium text-on-surface-variant mt-1">₦@Model.PendingBillsTotal.ToString("N2") total</p>
+            <div class="flex gap-1.5 mt-6">
+                @for (var i = 0; i < billProgressSegments; i++)
+                {
+                    <div class="h-1.5 flex-1 rounded-full @(i < billProgressFilled ? "bg-red-500" : "bg-slate-200")"></div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-12">
+        <div class="xl:col-span-2 space-y-6">
+            <div class="flex justify-between items-baseline">
+                <h3 class="text-lg font-bold text-slate-900">Upcoming Bills</h3>
+                <a class="text-xs text-primary font-bold hover:underline" href="#">View all schedule</a>
+            </div>
+            <div class="bg-surface border border-slate-200 rounded-xl overflow-hidden">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                            <th class="px-8 py-3.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Biller</th>
+                            <th class="px-8 py-3.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Nickname</th>
+                            <th class="px-8 py-3.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Amount</th>
+                            <th class="px-8 py-3.5 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
+                            <th class="px-8 py-3.5 text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @if (Model.UpcomingBills.Any())
+                        {
+                            @foreach (var bill in Model.UpcomingBills)
+                            {
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-8 py-5">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-600">@bill.Badge</div>
+                                            <span class="text-sm font-semibold text-slate-900">@bill.BillerName</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-8 py-5 text-sm text-on-surface-variant">@bill.Nickname</td>
+                                    <td class="px-8 py-5 text-right font-semibold text-sm text-slate-900">₦@bill.Amount.ToString("N2")</td>
+                                    <td class="px-8 py-5">
+                                        <span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-tight">@bill.Status</span>
+                                    </td>
+                                    <td class="px-8 py-5 text-right flex items-center justify-end pr-10">
+                                        <a href="#" class="text-primary text-xs font-bold px-3 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition-colors whitespace-nowrap">Pay now</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td class="px-8 py-12 text-center text-sm text-on-surface-variant" colspan="5">No upcoming bills. You're all caught up.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="flex justify-between items-baseline">
+                <h3 class="text-lg font-bold text-slate-900">Spending</h3>
+                <a class="text-xs text-primary font-bold hover:underline" href="#">View details</a>
+            </div>
+            <div class="bg-surface border border-slate-200 rounded-xl p-8 flex flex-col items-center">
+                <div class="relative w-40 h-40 mb-8">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" fill="transparent" r="42" stroke="#f1f5f9" stroke-width="8"></circle>
+                        @{
+                            double cursor = 0;
+                        }
+                        @for (var i = 0; i < Model.SpendingBreakdown.Count; i++)
+                        {
+                            var slice = Model.SpendingBreakdown[i];
+                            var full = slice.Percentage / 100.0 * circumference;
+                            var arc = Math.Max(full - segmentGap, 0.1);
+                            var dashArray = $"{Inv(arc)} {Inv(circumference - arc)}";
+                            var dashOffset = Inv(-cursor);
+                            cursor += full;
+                            <circle cx="50" cy="50" fill="transparent" r="42" stroke="@palette[i % palette.Length]" stroke-dasharray="@dashArray" stroke-dashoffset="@dashOffset" stroke-linecap="round" stroke-width="8"></circle>
+                        }
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60">Total</span>
+                        <span class="text-xl font-bold text-slate-900">@Compact(Model.TotalSpending)</span>
+                    </div>
+                </div>
+                <div class="w-full space-y-4">
+                    @if (Model.SpendingBreakdown.Any())
+                    {
+                        @for (var i = 0; i < Model.SpendingBreakdown.Count; i++)
+                        {
+                            var slice = Model.SpendingBreakdown[i];
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full" style="background-color: @palette[i % palette.Length];"></div>
+                                    <span class="text-xs font-medium text-on-surface-variant">@slice.Category</span>
+                                </div>
+                                <span class="text-xs font-bold text-slate-900">@slice.Percentage.ToString("0")%</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-xs font-medium text-on-surface-variant text-center">No spending recorded this month.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="space-y-6">
+        <h3 class="text-lg font-bold text-slate-900">Upcoming Renewals</h3>
+        @if (Model.UpcomingRenewals.Any())
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                @foreach (var renewal in Model.UpcomingRenewals)
+                {
+                    <div class="bg-surface border border-slate-200 rounded-xl p-6 flex justify-between items-center hover:border-slate-300 transition-colors group">
+                        <div class="flex items-center gap-5">
+                            <div class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded border border-slate-100 font-bold text-[10px] text-slate-600">@renewal.Badge</div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-900">@renewal.BillerName</h4>
+                                <p class="text-[11px] text-on-surface-variant font-medium mt-0.5">@renewal.NextDueDate.ToString("MMM d") • ₦@renewal.Amount.ToString("N2")</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1.5">
+                            <span class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-tighter">Auto</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input class="sr-only peer" type="checkbox" @(renewal.IsAutoPayEnabled ? "checked" : "") />
+                                <div class="w-8 h-[18px] bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-3.5 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="bg-surface border border-slate-200 rounded-xl p-8 text-center text-sm text-on-surface-variant">No upcoming renewals scheduled.</div>
+        }
+    </section>
 </div>
-<body> 
-    @if (ViewBag.Balance != null)
-    {
-        <form asp-controller="Account" asp-action="LogOut" method="post" id="logoutForm" class="navbar-right">
-            <ul>
-                <li>
-                    Hello @ViewBag.FullName!
-                    Available balance: @ViewBag.Balance
-                    WalletId: @ViewBag.WalletId
-                    CustomerId: @ViewBag.CustomerId
-                    Bank Name: @ViewBag.BankName
-                    Account Number: @ViewBag.AccountNumber
-                </li>
-                <li>
-                    <button class="btn btn-link nav-link text-dark" asp-controller="Auth" asp-action="LogOut" type="submit">Logout</button>
-                </li>
-            </ul>
 
-        </form>
+@section Scripts {
+    <script>
+        (function () {
+            const KEY = 'lp.balanceHidden';
+            const balance = document.getElementById('walletBalance');
+            const toggle = document.getElementById('balanceToggle');
+            if (!balance || !toggle) return;
 
-    }   
-</body>
+            const mask = '₦••••••';
+
+            function apply(hidden) {
+                balance.textContent = hidden ? mask : balance.dataset.amount;
+                toggle.textContent = hidden ? 'visibility_off' : 'visibility';
+            }
+
+            let hidden = sessionStorage.getItem(KEY) === '1';
+            apply(hidden);
+
+            toggle.addEventListener('click', () => {
+                hidden = !hidden;
+                sessionStorage.setItem(KEY, hidden ? '1' : '0');
+                apply(hidden);
+            });
+        })();
+    </script>
+}
