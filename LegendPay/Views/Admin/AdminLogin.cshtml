@@ -1,0 +1,152 @@
+﻿@model LegendPay.Models.ViewModels.AdminLoginViewModel
+
+@{
+    Layout = null;
+    bool showOtp = ViewBag.ShowOtp ?? false;
+    string adminEmail = ViewBag.AdminEmail ?? "";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login — LegendPay</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/Admin/AdminLogin.css" />
+</head>
+<body>
+
+    <div class="admin-page">
+
+        <div class="admin-brand">
+            <div class="admin-brand-top">
+                <img src="/screenicon/Background.svg" alt="LegendPay Logo" class="brand-img" />
+                <span class="admin-brand-name">LegendPay</span>
+            </div>
+            <p class="admin-brand-label">Admin Portal</p>
+        </div>
+
+        <div class="admin-card">
+
+            <h2 class="card-title">Login</h2>
+            <p class="card-subtitle">Welcome back, Administrator. Please sign in to continue.</p>
+
+            @if (ViewBag.ErrorMessage != null)
+            {
+                <div class="alert-error">@ViewBag.ErrorMessage</div>
+            }
+
+            @if (ViewBag.SuccessMessage != null)
+            {
+                <div class="alert-success">@ViewBag.SuccessMessage</div>
+            }
+
+            <form asp-action="Login" asp-controller="Admin" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="form-group">
+                    <label class="form-label">Email address</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                <polyline points="22,6 12,13 2,6" />
+                            </svg>
+                        </span>
+                        @if (showOtp)
+                        {
+                            <input asp-for="Email" class="form-input" placeholder="admin@legendpay.com" disabled />
+                        }
+                        else
+                        {
+                            <input asp-for="Email" class="form-input" placeholder="admin@legendpay.com" />
+                        }
+                    </div>
+                    <span asp-validation-for="Email" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-row">
+                        <label class="form-label">Password</label>
+                        <a href="#" class="forgot-link">Forgot Password?</a>
+                    </div>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                        </span>
+                        @if (showOtp)
+                        {
+                            <input asp-for="Password" type="password" class="form-input" placeholder="••••••••••••" id="passwordInput" disabled />
+                        }
+                        else
+                        {
+                            <input asp-for="Password" type="password" class="form-input" placeholder="••••••••••••" id="passwordInput" />
+                        }
+                        <button type="button" class="toggle-password" onclick="togglePassword()">
+                            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Password" class="field-error"></span>
+                </div>
+
+                @if (!showOtp)
+                {
+                    <button type="submit" class="btn-signin">Sign In →</button>
+                }
+
+            </form>
+
+            @if (showOtp)
+            {
+                <form asp-action="VerifyOtp" asp-controller="Admin" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="email" value="@adminEmail" />
+
+                    <div class="form-group">
+                        <label class="form-label">2FA Code</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                </svg>
+                            </span>
+                            <input type="text" name="twoFactorCode" class="form-input otp-input" placeholder="000 000" maxlength="6" />
+                        </div>
+                        <p class="hint-text">Enter the 6-digit code sent to your email.</p>
+                    </div>
+
+                    <button type="submit" class="btn-signin">Verify & Sign In →</button>
+
+                </form>
+            }
+
+            <hr class="divider" />
+            <a asp-controller="Home" asp-action="Onboarding" class="return-link">← Return to User Portal</a>
+
+        </div>
+
+        <div class="admin-footer">
+            <div class="secure-badge">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Secure encrypted connection established.
+            </div>
+            <div class="footer-meta">
+                System Version: v2.0.42-stable<br />
+                Last System Update: 06 June 2026, 14:32 WAT
+            </div>
+        </div>
+
+    </div>
+
+    <script src="~/js/Admin/AdminLogin.js"></script>
+</body>
+</html>

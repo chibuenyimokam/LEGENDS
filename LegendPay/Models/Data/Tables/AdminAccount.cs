@@ -32,5 +32,7 @@ namespace LegendPay.Models.Data.Tables
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string? TwoFactorCode { get; set; }
+        public DateTime? TwoFactorExpiration { get; set; }
     }
 }
