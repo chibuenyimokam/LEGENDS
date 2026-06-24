@@ -146,7 +146,7 @@
                 <span class="material-symbols-outlined">account_balance_wallet</span>
                 <span>Fund Wallet</span>
             </a>
-            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+            <a asp-controller="Home" asp-action="PayBills" class="@NavClass("Home", "PayBills")">
                 <span class="material-symbols-outlined">payments</span>
                 <span>Pay a Bill</span>
             </a>
@@ -173,7 +173,7 @@
                 <span class="material-symbols-outlined">group</span>
                 <span>Beneficiaries</span>
             </a>
-            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+            <a asp-controller="UserSupportChat" asp-action="UserSupport" class="@NavClass("UserSupportChat", "UserSupport")">
                 <span class="material-symbols-outlined">contact_support</span>
                 <span>Support</span>
             </a>

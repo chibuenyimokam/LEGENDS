@@ -1,4 +1,5 @@
 ﻿using LegendPay.Enums;
+using LegendPay.Helpers;
 using LegendPay.Hubs;
 using LegendPay.Interfaces;
 using LegendPay.Models.Data.Tables;
@@ -25,7 +26,7 @@ namespace LegendPay.Controllers
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim == null)
-                return RedirectToAction("Login", "Accounts");
+                return RedirectToAction("Login", "Auth");
 
             var userId = Guid.Parse(userIdClaim);
 
@@ -45,7 +46,7 @@ namespace LegendPay.Controllers
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim == null)
-                return RedirectToAction("Login", "Accounts");
+                return RedirectToAction("Login", "Auth");
 
             var userId = Guid.Parse(userIdClaim);
 
@@ -79,7 +80,7 @@ namespace LegendPay.Controllers
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim == null)
-                return RedirectToAction("Login", "Accounts");
+                return RedirectToAction("Login", "Auth");
 
             var userId = Guid.Parse(userIdClaim);
 
@@ -99,7 +100,7 @@ namespace LegendPay.Controllers
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim == null)
-                return RedirectToAction("Login", "Accounts");
+                return RedirectToAction("Login", "Auth");
 
             var response = await _supportChatService.SendMessageAsync(
                 chatId,
@@ -113,7 +114,7 @@ namespace LegendPay.Controllers
                     .SendAsync("ReceiveMessage",
                         MessageSender.User.ToString(),
                         messageText,
-                        response.Data.CreatedAt.ToString("hh:mm tt"));
+                        WatTime.FromUtc(response.Data.CreatedAt).ToString("hh:mm tt"));
 
                 var chatResponse = await _supportChatService.GetChatAsync(chatId);
                 if (chatResponse.Success && chatResponse.Data.Messages.Count == 3)
@@ -124,13 +125,13 @@ namespace LegendPay.Controllers
                         .SendAsync("ReceiveMessage",
                             MessageSender.Admin.ToString(),
                             messages[1].MessageText,
-                            messages[1].CreatedAt.ToString("hh:mm tt"));
+                            WatTime.FromUtc(messages[1].CreatedAt).ToString("hh:mm tt"));
 
                     await _hubContext.Clients.Group(chatId.ToString())
                         .SendAsync("ReceiveMessage",
                             MessageSender.Admin.ToString(),
                             messages[2].MessageText,
-                            messages[2].CreatedAt.ToString("hh:mm tt"));
+                            WatTime.FromUtc(messages[2].CreatedAt).ToString("hh:mm tt"));
                 }
             }
 
