@@ -1,0 +1,142 @@
+@model LegendPay.Models.ViewModels.UserDashboard.BillHistoryViewModel
+@{
+    ViewData["Title"] = "History";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="p-10 space-y-8 max-w-7xl">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h2 class="text-2xl font-bold text-on-surface tracking-tight">Bill History &amp; Receipts</h2>
+            <p class="text-sm text-on-surface-variant mt-1">View, track, and download records of all your utility and service payments.</p>
+        </div>
+
+        <form asp-controller="Home" asp-action="History" method="get" class="flex flex-wrap gap-3 items-end">
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-on-surface-variant ml-1">Date Range</label>
+                <select name="range" class="bg-surface border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none">
+                    <option value="30d" selected="@(Model.Range == "30d" ? "selected" : null)">Last 30 Days</option>
+                    <option value="3m" selected="@(Model.Range == "3m" ? "selected" : null)">Last 3 Months</option>
+                    <option value="ytd" selected="@(Model.Range == "ytd" ? "selected" : null)">Year to Date</option>
+                    <option value="all" selected="@(Model.Range == "all" || string.IsNullOrEmpty(Model.Range) ? "selected" : null)">All Time</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-on-surface-variant ml-1">Biller</label>
+                <select name="biller" class="bg-surface border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none">
+                    <option value="all" selected="@(string.IsNullOrEmpty(Model.Biller) || Model.Biller == "all" ? "selected" : null)">All Billers</option>
+                    @foreach (var b in Model.Billers)
+                    {
+                        <option value="@b" selected="@(Model.Biller == b ? "selected" : null)">@b</option>
+                    }
+                </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-on-surface-variant ml-1">Amount</label>
+                <select name="amount" class="bg-surface border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none">
+                    <option value="any" selected="@(string.IsNullOrEmpty(Model.Amount) || Model.Amount == "any" ? "selected" : null)">Any Amount</option>
+                    <option value="u5000" selected="@(Model.Amount == "u5000" ? "selected" : null)">₦0 - ₦5,000</option>
+                    <option value="5001-20000" selected="@(Model.Amount == "5001-20000" ? "selected" : null)">₦5,001 - ₦20,000</option>
+                    <option value="20000p" selected="@(Model.Amount == "20000p" ? "selected" : null)">₦20,000+</option>
+                </select>
+            </div>
+            <button type="submit" class="self-end px-4 py-2.5 bg-primary text-white rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#083b72] active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-[18px]">filter_list</span>
+                Apply Filters
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-surface rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Date &amp; Time</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Biller</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Identifier</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Amount</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @if (Model.Transactions.Any())
+                    {
+                        @foreach (var txn in Model.Transactions)
+                        {
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <p class="text-sm font-semibold text-on-surface">@txn.CreatedAt.ToString("MMM d, yyyy")</p>
+                                    <p class="text-xs text-on-surface-variant">@txn.CreatedAt.ToString("h:mm tt")</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
+                                            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">@txn.Icon</span>
+                                        </div>
+                                        <span class="text-sm font-bold text-on-surface">@txn.BillerName</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-sm text-on-surface-variant">@txn.AccountReference</td>
+                                <td class="px-6 py-4 font-bold text-sm text-on-surface">₦@txn.Amount.ToString("N2")</td>
+                                <td class="px-6 py-4">
+                                    @if (txn.IsSuccess)
+                                    {
+                                        <span class="px-2.5 py-1 bg-green-100 text-green-700 text-[11px] font-bold rounded uppercase tracking-wider border border-green-200">Success</span>
+                                    }
+                                    else if (txn.IsPending)
+                                    {
+                                        <span class="px-2.5 py-1 bg-amber-100 text-amber-700 text-[11px] font-bold rounded uppercase tracking-wider border border-amber-200">Pending</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2.5 py-1 bg-red-100 text-red-700 text-[11px] font-bold rounded uppercase tracking-wider border border-red-200">@txn.Status</span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a asp-controller="Home" asp-action="Receipt" asp-route-id="@txn.Id" class="text-primary font-bold text-sm hover:underline">View Receipt</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td class="px-6 py-12 text-center text-sm text-on-surface-variant" colspan="6">No transactions found for the selected filters.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+            <p class="text-xs text-on-surface-variant font-medium">Showing @Model.ShownCount of @Model.TotalCount transactions</p>
+            <div class="flex gap-2">
+                @if (Model.HasPrevious)
+                {
+                    <a asp-controller="Home" asp-action="History" asp-route-range="@Model.Range" asp-route-biller="@Model.Biller" asp-route-amount="@Model.Amount" asp-route-page="@(Model.Page - 1)" class="p-2 border border-slate-200 rounded hover:bg-slate-100 flex items-center">
+                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </a>
+                }
+                else
+                {
+                    <span class="p-2 border border-slate-200 rounded opacity-30 flex items-center">
+                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </span>
+                }
+                @if (Model.HasNext)
+                {
+                    <a asp-controller="Home" asp-action="History" asp-route-range="@Model.Range" asp-route-biller="@Model.Biller" asp-route-amount="@Model.Amount" asp-route-page="@(Model.Page + 1)" class="p-2 border border-slate-200 rounded hover:bg-slate-100 flex items-center">
+                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </a>
+                }
+                else
+                {
+                    <span class="p-2 border border-slate-200 rounded opacity-30 flex items-center">
+                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
