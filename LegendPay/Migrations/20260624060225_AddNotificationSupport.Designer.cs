@@ -4,6 +4,7 @@ using LegendPay.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LegendPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624060225_AddNotificationSupport")]
+    partial class AddNotificationSupport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -99,11 +102,11 @@ namespace LegendPay.Migrations
                         {
                             Id = new Guid("c3d4e5f6-a7b8-9012-cdef-123456789012"),
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "chibuenyimokam@gmail.com",
+                            Email = "$2a$12$CzlvE3HbR/LZa6RF.O2V0O0R5pL/nzpctbJMQMaltYh7II1JvCXTy",
                             FirstName = "Chibuenyim",
                             IsActive = true,
                             LastName = "Okam",
-                            Password = "$2a$12$CzlvE3HbR/LZa6RF.O2V0O0R5pL/nzpctbJMQMaltYh7II1JvCXTy",
+                            Password = "your-bcrypt-hash-here",
                             Role = "Admin"
                         });
                 });
@@ -717,17 +720,8 @@ namespace LegendPay.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AccountNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BankName")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("CustomerId")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -762,9 +756,6 @@ namespace LegendPay.Migrations
                         .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
-
-                    b.Property<string>("WalletId")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
