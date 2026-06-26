@@ -17,6 +17,8 @@ namespace LegendPay.Controllers
 
 
         public HomeController(
+                IEmailService emailService,
+                IOtpService otpService,
                 IAuthService authService,
                 IWalletService walletService,
                 ILogger<HomeController> logger)
@@ -34,6 +36,91 @@ namespace LegendPay.Controllers
         {
             return View();
         }
+        [Authorize]
+        public async Task<IActionResult> FundWallet()
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 10);
+
+            var model = new WalletDashboardViewModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                CustomerId = user.CustomerId ?? string.Empty,
+                AccountNumber = wallet?.AccountNumber ?? user.AccountNumber ?? string.Empty,
+                BankName = wallet?.BankName ?? user.BankName ?? string.Empty,
+                WalletBalance = user.Balance,
+                RecentTransactions = wallet?.WalletTransactions?
+                    .Select(t => new RecentTransactionViewModel
+                    {
+                        TransactionId = t.ExternalReference ?? t.Id.ToString(),
+                        Description = t.Description ?? t.Source ?? t.Type,
+                        Amount = t.Amount,
+                        Type = t.Type,
+                        Date = t.CreatedAt,
+                        Status = t.Status
+                    })
+                    .ToList() ?? new List<RecentTransactionViewModel>()
+            };
+
+            ViewData["KycTier"] = model.KycTier;
+
+            return View(model);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> PayBills()
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+
+            var model = new PayBillsViewModel
+            {
+                AvailableBalance = wallet?.Balance ?? 0m,
+                RecentFavorites = new List<RecentBillerViewModel>()
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> History(string? range, string? biller, string? amount, int page = 1)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _authService.GetBillHistoryAsync(user.Id, range, biller, amount, page, 10);
+
+            return View(model);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Receipt(Guid id)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _authService.GetBillReceiptAsync(id, user.Id);
+            if (model == null) return RedirectToAction("History");
+
+            return View(model);
+        }
 
         public IActionResult Onboarding()
         {
@@ -49,44 +136,28 @@ namespace LegendPay.Controllers
             var user = await _authService.GetUserByEmailAsync(userEmail);
             if (user == null) return RedirectToAction("Login", "Auth");
 
-            //If the wallet background creation originally failed, retry
-            if (string.IsNullOrEmpty(user.CustomerId)) // should be customerId
+            if (string.IsNullOrEmpty(user.AccountNumber))
             {
-                bool provisionSuccess = await _authService.TryProvisionWalletAsync(user);
-                if (!provisionSuccess)
-                {
-                    var pendingVm = new WalletDashboardViewModel
-                    {
-                        FirstName = user.FirstName,
-                        LastName = user.LastName,
-                        Balance = 0,
-                        AccountNumber = "Pending Activation",
-                        CustomerId = "Pending Activation",
-                        BankName = "Unavailable"
-                    };
-
-                    return View(pendingVm);
-                }
+                await _authService.TryProvisionWalletAsync(user);
             }
 
-            var balance = await _walletService.GetBalanceAsync(user.CustomerId);
-            if (balance.HasValue && balance.Value != user.Balance)
-            {
-                user.Balance = balance.Value;
-                await _authService.UpdateUserAsync(user);
-            }
+            var model = await _authService.GetUserDashboardAsync(user);
 
-            var vm = new WalletDashboardViewModel
-            {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Balance = user.Balance, //balance.HasValue ? balance.Value.ToString("N2") : "0.00"
-                AccountNumber = user.AccountNumber,
-                BankName = user.BankName,
-                CustomerId = user.CustomerId
-            };
+            return View(model);
+        }
 
-            return View("HomePage", vm);
+        [Authorize]
+        public async Task<IActionResult> Subscriptions()
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _authService.GetSubscriptionsAsync(user.Id);
+
+            return View(model);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

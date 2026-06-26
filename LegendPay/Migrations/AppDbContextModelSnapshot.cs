@@ -59,12 +59,53 @@ namespace LegendPay.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("TwoFactorCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("TwoFactorExpiration")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
                         .IsUnique();
 
                     b.ToTable("AdminAccounts");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "nwaeze.adaku@gmail.com",
+                            FirstName = "Adaku",
+                            IsActive = true,
+                            LastName = "Nwaeze",
+                            Password = "$2a$12$1x0FKmuHNzklamegKSwrSusPA45X1XWIvnMmtRbiwSuATHHILsnle",
+                            Role = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2c3d4e5-f6a7-8901-bcde-f12345678901"),
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "programmingwithKami@gmail.com",
+                            FirstName = "Mitchel",
+                            IsActive = true,
+                            LastName = "Aziken",
+                            Password = "$2a$12$D1.b9QgzLVlmP/9m7.GAhOX/FknZ/lFIhO7kbh.66gwp2HY1sZdHe",
+                            Role = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("c3d4e5f6-a7b8-9012-cdef-123456789012"),
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "chibuenyimokam@gmail.com",
+                            FirstName = "Chibuenyim",
+                            IsActive = true,
+                            LastName = "Okam",
+                            Password = "$2a$12$CzlvE3HbR/LZa6RF.O2V0O0R5pL/nzpctbJMQMaltYh7II1JvCXTy",
+                            Role = "Admin"
+                        });
                 });
 
             modelBuilder.Entity("LegendPay.Models.Data.Tables.Beneficiary", b =>
@@ -746,21 +787,23 @@ namespace LegendPay.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccountNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Balance")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("BankName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("StaticAccountNumber")
+                    b.Property<string>("CustomerId")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("UserAccountId")
                         .HasColumnType("uniqueidentifier");
@@ -807,10 +850,15 @@ namespace LegendPay.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
+                    b.Property<Guid?>("UserAccountId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("WalletId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserAccountId");
 
                     b.HasIndex("WalletId");
 
@@ -1021,6 +1069,10 @@ namespace LegendPay.Migrations
 
             modelBuilder.Entity("LegendPay.Models.Data.Tables.WalletTransaction", b =>
                 {
+                    b.HasOne("LegendPay.Models.Data.Tables.UserAccount", null)
+                        .WithMany("WalletTransactions")
+                        .HasForeignKey("UserAccountId");
+
                     b.HasOne("LegendPay.Models.Data.Tables.Wallet", "Wallet")
                         .WithMany("WalletTransactions")
                         .HasForeignKey("WalletId")
@@ -1078,6 +1130,8 @@ namespace LegendPay.Migrations
 
                     b.Navigation("Wallet")
                         .IsRequired();
+
+                    b.Navigation("WalletTransactions");
                 });
 
             modelBuilder.Entity("LegendPay.Models.Data.Tables.Wallet", b =>
