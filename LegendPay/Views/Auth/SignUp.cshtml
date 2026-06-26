@@ -1,135 +1,293 @@
-﻿@using LegendPay.Models.ViewModels
+@using LegendPay.Models.ViewModels
 @model LegendPay.Models.ViewModels.SignUpViewModel
-
 @{
-    ViewData["Title"] = "SignUp";
+    ViewData["Title"] = "Register";
     Layout = null;
 }
-
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Create an Account — LegendPay</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/css/Auth/signup.css" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Register | LegendPay</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#181c20",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "outline-variant": "#e0bec5",
+                    "tertiary-container": "#9e2c62",
+                    "tertiary-fixed-dim": "#ffb0cc",
+                    "surface-dim": "#d7dadf",
+                    "primary-fixed": "#d6e3ff",
+                    "on-secondary-fixed-variant": "#194781",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#eef1f6",
+                    "surface-container-high": "#e5e8ee",
+                    "outline": "#8c7076",
+                    "on-surface-variant": "#594046",
+                    "surface-base": "#FFFFFF",
+                    "secondary-fixed": "#d6e3ff",
+                    "on-tertiary-fixed": "#3e0020",
+                    "surface-container-low": "#f1f4f9",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#a9c8ff",
+                    "background": "#f7f9ff",
+                    "secondary-fixed-dim": "#a9c8ff",
+                    "secondary": "#365f9a",
+                    "error-red": "#D32F2F",
+                    "primary-fixed-dim": "#a9c8ff",
+                    "inverse-surface": "#2d3135",
+                    "surface-container-highest": "#e0e3e8",
+                    "on-secondary-container": "#1f4b85",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-container": "#ffbed4",
+                    "tertiary-fixed": "#ffd9e4",
+                    "primary-container": "#0b4a8f",
+                    "surface-muted": "#F8F9FA",
+                    "surface": "#f7f9ff",
+                    "on-tertiary-fixed-variant": "#86174f",
+                    "on-surface": "#181c20",
+                    "on-secondary-fixed": "#001b3d",
+                    "tertiary": "#7f104a",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#01468b",
+                    "primary": "#0b4a8f",
+                    "secondary-container": "#96bdff",
+                    "error-container": "#ffdad6",
+                    "surface-container": "#ebeef3",
+                    "on-primary-fixed": "#001b3d",
+                    "naira-green": "#008751",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#f7f9ff",
+                    "on-primary-container": "#ffffff",
+                    "surface-variant": "#e0e3e8",
+                    "surface-tint": "#0b4a8f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "stack-md": "12px",
+                    "stack-sm": "4px",
+                    "base": "8px",
+                    "margin-mobile": "16px",
+                    "stack-lg": "24px",
+                    "margin-desktop": "40px",
+                    "container-max": "1200px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "currency-display": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "currency-display": ["36px", {"lineHeight": "44px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+        body {
+            background-color: #F8F9FA;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .strength-bar {
+            height: 4px;
+            transition: all 0.3s ease;
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+    <header class="w-full h-16 px-6 md:px-margin-desktop flex items-center justify-center absolute top-0 z-10">
+        <div class="max-w-container-max w-full flex justify-center">
+            <a asp-controller="Home" asp-action="Onboarding" class="font-headline-md text-headline-md font-bold tracking-tight text-primary">LegendPay</a>
+        </div>
+    </header>
 
-    <div class="signup-page">
-
-        <div class="signup-card">
-
-        
-            <a asp-controller="Home" asp-action="Onboarding" class="back-link">
-                ← BACK
-            </a>
-
-        
-            <div class="signup-header">
-                <div class="signup-logo">
-                    <img src="/screenicon/Background.svg" alt="LegendPay Logo" />
-                </div>
-                <div>
-                    <h1 class="signup-title">Create an account</h1>
-                    <p class="signup-subtitle">Join the future of Nigerian digital payments.</p>
-                </div>
+    <main class="flex-grow flex items-center justify-center px-4 py-20 relative" style="background-color: #f9fafb;">
+        <div class="w-full max-w-[480px] bg-white shadow-lg rounded-lg p-8 border border-gray-200 z-20">
+            <div class="mb-stack-lg text-center">
+                <h1 class="text-3xl font-bold text-[#002D62] mb-2">Join LegendPay</h1>
+                <p class="text-gray-500 text-base">Create your account to start seamless transactions.</p>
             </div>
 
-            <!-- Validation summary -->
-            <div asp-validation-summary="ModelOnly" class="error-summary"></div>
+            <div asp-validation-summary="ModelOnly" class="text-error text-sm mb-4 [&_ul]:list-none [&_ul]:p-0 [&_ul]:m-0"></div>
 
-        
-            <form asp-action="SignUp" method="post">
-
-                <div class="form-group">
-                    <label class="form-label">FIRST NAME</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon">&#128100;</span>
-                        <input asp-for="FirstName" class="form-input" placeholder="First name" />
-                    </div>
-                    <span asp-validation-for="FirstName" class="field-error"></span>
+            <form asp-controller="Auth" asp-action="SignUp" method="post" id="registrationForm" class="space-y-stack-md">
+                <div class="space-y-base">
+                    <label class="block text-sm font-semibold text-[#111827] mb-1" asp-for="FirstName">First Name</label>
+                    <input asp-for="FirstName" class="w-full px-4 py-2 bg-white border border-[#d1d5db] rounded-lg text-sm focus:ring-2 focus:ring-[#002D62] focus:border-transparent outline-none transition-all" placeholder="John" />
+                    <span asp-validation-for="FirstName" class="text-error text-xs"></span>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">LAST NAME</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon">&#128100;</span>
-                        <input asp-for="LastName" class="form-input" placeholder="Last name" />
-                    </div>
-                    <span asp-validation-for="LastName" class="field-error"></span>
+                <div class="space-y-base">
+                    <label class="block text-sm font-semibold text-[#111827] mb-1" asp-for="LastName">Last Name</label>
+                    <input asp-for="LastName" class="w-full px-4 py-2 bg-white border border-[#d1d5db] rounded-lg text-sm focus:ring-2 focus:ring-[#002D62] focus:border-transparent outline-none transition-all" placeholder="Doe" />
+                    <span asp-validation-for="LastName" class="text-error text-xs"></span>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">PHONE NUMBER</label>
-                    <div class="input-wrapper phone-wrapper">
-                        <span class="phone-code">+234</span>
-                        <span class="phone-divider"></span>
-                        <input asp-for="PhoneNumber" class="form-input phone-input" placeholder="801 234 5678" />
-                    </div>
-                    <span asp-validation-for="PhoneNumber" class="field-error"></span>
+                <div class="space-y-base">
+                    <label class="block text-sm font-semibold text-[#111827] mb-1" asp-for="Email">Email Address</label>
+                    <input asp-for="Email" class="w-full px-4 py-2 bg-white border border-[#d1d5db] rounded-lg text-sm focus:ring-2 focus:ring-[#002D62] focus:border-transparent outline-none transition-all" placeholder="john@example.com" type="email" />
+                    <span asp-validation-for="Email" class="text-error text-xs"></span>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">EMAIL ADDRESS</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon">&#9993;</span>
-                        <input asp-for="Email" class="form-input" placeholder="example@legendpay.com" />
-                    </div>
-                    <span asp-validation-for="Email" class="field-error"></span>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label class="form-label">PASSWORD</label>
-                        <div class="input-wrapper">
-                            <input asp-for="Password" type="password" class="form-input" placeholder="  ••••••••" />
+                <div class="space-y-base">
+                    <label class="block text-sm font-semibold text-[#111827] mb-1" asp-for="PhoneNumber">Phone Number</label>
+                    <div class="flex">
+                        <div class="flex items-center px-3 bg-surface-container border border-surface-container-highest border-r-0 rounded-l-lg space-x-2">
+                            <div class="w-6 h-4 bg-[#008751] relative">
+                                <div class="absolute left-1/3 w-1/3 h-full bg-white"></div>
+                            </div>
+                            <span class="font-body-md text-body-md text-on-surface-variant">+234</span>
                         </div>
-                        <span asp-validation-for="Password" class="field-error"></span>
+                        <input asp-for="PhoneNumber" class="w-full px-4 py-2 bg-white border border-[#d1d5db] rounded-r-lg text-sm focus:ring-2 focus:ring-[#002D62] focus:border-transparent outline-none transition-all" placeholder="801 234 5678" type="tel" />
                     </div>
-                    <div class="form-group half">
-                        <label class="form-label">CONFIRM</label>
-                        <div class="input-wrapper">
-                            <input asp-for="ConfirmPassword" type="password" class="form-input" placeholder="  ••••••••" />
-                        </div>
-                        <span asp-validation-for="ConfirmPassword" class="field-error"></span>
-                    </div>
+                    <span asp-validation-for="PhoneNumber" class="text-error text-xs"></span>
                 </div>
 
-            
-                <div class="wallet-notice" id="walletNotice">
-                    <div class="wallet-checkbox" id="walletCheckbox" onclick="toggleWallet()">
-                        <span class="checkmark" id="checkmark" style="display:none;">&#10003;</span>
+                <div class="space-y-base">
+                    <div class="flex justify-between items-end">
+                        <label class="block text-sm font-semibold text-[#111827] mb-1" asp-for="Password">Password</label>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant" id="strengthText">Minimum 8 characters</span>
                     </div>
-                    <div class="wallet-text">
-                        <strong>Auto-wallet created on signup — wallet ID assigned instantly.</strong>
-                        <p>Start sending and receiving funds immediately without extra verification steps.</p>
+                    <div class="relative">
+                        <input asp-for="Password" class="w-full px-4 py-2 bg-white border border-[#d1d5db] rounded-lg text-sm focus:ring-2 focus:ring-[#002D62] focus:border-transparent outline-none transition-all" placeholder="••••••••" type="password" />
+                        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors" onclick="togglePassword()" type="button">
+                            <span class="material-symbols-outlined" id="eyeIcon">visibility</span>
+                        </button>
                     </div>
+                    <div class="w-full bg-surface-container-highest rounded-full h-1 mt-2">
+                        <div class="strength-bar w-0 bg-error rounded-full" id="strengthBar"></div>
+                    </div>
+                    <span asp-validation-for="Password" class="text-error text-xs"></span>
                 </div>
 
-                <button type="submit" class="btn-create">Create account ›</button>
+                <input asp-for="ConfirmPassword" type="hidden" />
 
+                <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-center space-x-3">
+                    <span class="material-symbols-outlined text-blue-500 text-xl">info</span>
+                    <p class="text-sm text-blue-700">Auto-wallet created on signup for instant transactions.</p>
+                </div>
+
+                <div class="pt-stack-md">
+                    <button class="w-full py-3 bg-[#002D62] text-white font-semibold rounded-lg hover:bg-[#001f44] transition-colors shadow-sm active:scale-[0.98]" type="submit">
+                        Create account
+                    </button>
+                </div>
             </form>
 
-            <p class="login-link">Have an account? <a asp-controller="Auth" asp-action="Login">Log in</a></p>
-
+            <div class="mt-stack-lg text-center">
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                    Already have an account?
+                    <a class="text-secondary font-label-md hover:underline transition-all" asp-controller="Auth" asp-action="Login">Log in</a>
+                </p>
+            </div>
         </div>
+    </main>
 
-    
-        <div class="signup-footer">
-            <p class="brand-name">LegendPay</p>
-            <p class="security-note">SECURE 256-BIT ENCRYPTION &nbsp;&nbsp; CBN LICENSED BILLER</p>
-        </div>
+    <footer class="w-full py-stack-md px-6 text-center border-t border-surface-container-highest bg-surface-muted">
+        <p class="font-label-sm text-label-sm text-on-surface-variant">© @DateTime.Now.Year LegendPay. Licensed by the Central Bank of Nigeria.</p>
+    </footer>
 
-    </div>
-
-    @section Scripts {
-        @{
-            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('Password');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility';
+            }
         }
-    }
 
-    <script src="~/js/Auth/signup.js"></script> 
+        (function () {
+            const passwordInput = document.getElementById('Password');
+            const confirmInput = document.getElementById('ConfirmPassword');
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            if (!passwordInput) return;
+
+            passwordInput.addEventListener('input', () => {
+                const val = passwordInput.value;
+                if (confirmInput) confirmInput.value = val;
+
+                let strength = 0;
+                if (val.length > 0) strength = 1;
+                if (val.length >= 8) strength = 2;
+                if (val.length >= 10 && /[A-Z]/.test(val) && /[0-9]/.test(val)) strength = 3;
+                if (val.length >= 12 && /[^A-Za-z0-9]/.test(val)) strength = 4;
+
+                switch (strength) {
+                    case 0:
+                        strengthBar.style.width = '0%';
+                        strengthText.textContent = 'Minimum 8 characters';
+                        strengthText.className = 'font-label-sm text-label-sm text-on-surface-variant';
+                        break;
+                    case 1:
+                        strengthBar.style.width = '25%';
+                        strengthBar.className = 'strength-bar bg-error rounded-full';
+                        strengthText.textContent = 'Weak';
+                        strengthText.className = 'font-label-sm text-label-sm text-error';
+                        break;
+                    case 2:
+                        strengthBar.style.width = '50%';
+                        strengthBar.className = 'strength-bar bg-orange-400 rounded-full';
+                        strengthText.textContent = 'Fair';
+                        strengthText.className = 'font-label-sm text-label-sm text-orange-600';
+                        break;
+                    case 3:
+                        strengthBar.style.width = '75%';
+                        strengthBar.className = 'strength-bar bg-secondary-container rounded-full';
+                        strengthText.textContent = 'Strong';
+                        strengthText.className = 'font-label-sm text-label-sm text-secondary';
+                        break;
+                    case 4:
+                        strengthBar.style.width = '100%';
+                        strengthBar.className = 'strength-bar bg-naira-green rounded-full';
+                        strengthText.textContent = 'Very Strong';
+                        strengthText.className = 'font-label-sm text-label-sm text-naira-green';
+                        break;
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

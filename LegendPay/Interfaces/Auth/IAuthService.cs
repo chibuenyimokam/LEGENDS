@@ -1,5 +1,6 @@
 ﻿using LegendPay.Models.Data.Tables;
 using LegendPay.Models.ViewModels;
+using LegendPay.Models.ViewModels.UserDashboard;
 using System.Globalization;
 
 namespace LegendPay.Interfaces.Auth
@@ -17,5 +18,10 @@ namespace LegendPay.Interfaces.Auth
         Task UpdateUserAsync(UserAccount user);
         Task<decimal?> GetUserBalanceAsync(string email);
         Task<bool> TryProvisionWalletAsync(UserAccount user);
+        Task<UserAccount?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10);
+        Task<UserDashboardViewModel> GetUserDashboardAsync(UserAccount user);
+        Task<SubscriptionsViewModel> GetSubscriptionsAsync(Guid userId);
+        Task<BillHistoryViewModel> GetBillHistoryAsync(Guid userId, string? range, string? biller, string? amount, int page, int pageSize);
+        Task<ReceiptViewModel?> GetBillReceiptAsync(Guid billId, Guid userId);
     }
 }

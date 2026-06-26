@@ -64,6 +64,8 @@ namespace LegendPay.Models.Data.Tables
         public ICollection<Beneficiary>? Beneficiaries { get; set; }
         public ICollection<ScheduledPayment>? ScheduledPayments { get; set; }
         public ICollection<SupportChat>? SupportChats { get; set; }
+        public ICollection<WalletTransaction>? WalletTransactions { get; set; }
+
 
     }
 }

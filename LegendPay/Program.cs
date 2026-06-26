@@ -6,6 +6,12 @@ using LegendPay.Services.Account;
 using LegendPay.Services.Transaction;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using LegendPay.Interfaces.Admin;
+using LegendPay.Services.Admin;
+using Microsoft.AspNetCore.SignalR;
+using LegendPay.Hubs;
+using LegendPay.Interfaces;
+using LegendPay.Services;
 
 namespace LegendPay
 {
@@ -23,7 +29,7 @@ namespace LegendPay
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromMinutes(10);
+                options.IdleTimeout = TimeSpan.FromSeconds(40);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
@@ -42,7 +48,12 @@ namespace LegendPay
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
-            
+            builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
+            builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
+            builder.Services.AddScoped<IUserSupportChatService, UserSupportChatService>();
+            builder.Services.AddScoped<IAdminSupportChatService, AdminSupportChatService>();
+            builder.Services.AddSignalR();
+
 
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();
@@ -62,6 +73,7 @@ namespace LegendPay
             app.UseAuthorization();
 
             app.MapStaticAssets();
+            app.MapHub<SupportChatHub>("/supportChatHub");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Onboarding}/{id?}")

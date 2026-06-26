@@ -40,25 +40,28 @@ namespace LegendPay.Controllers
                 return BadRequest("Credit operation failed at CoralPay: " + creditResponse?.ResponseHeader?.ResponseCode);
             }
 
-            var freshBalance = await _walletService.GetBalanceAsync(request.CustomerId);
+            //var freshBalance = await _walletService.GetBalanceAsync(request.CustomerId);
 
-            if (!freshBalance.HasValue)
-            {
-                return StatusCode(500, "Credit succeeded but failed to fetch updated balance.");
-            }
+
+
+            //if (!freshBalance.HasValue)
+            //{
+            //    return StatusCode(500, "Credit succeeded but failed to fetch updated balance.");
+            //}
 
             var localUser = _context.UserAccounts.FirstOrDefault(u => u.CustomerId == request.CustomerId);
 
             if (localUser != null)
             {
-                localUser.Balance = freshBalance.Value;
+                localUser.Balance = creditResponse.Balance;
                 await _context.SaveChangesAsync();
             }
+            
 
             return Ok(new
             {
                 message = "Credit successful",
-                newBalance = freshBalance.Value,
+                newBalance = creditResponse.Balance,
                 coralPayResponse = creditResponse
             });
         }

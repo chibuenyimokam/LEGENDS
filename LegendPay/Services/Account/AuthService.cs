@@ -4,6 +4,7 @@ using LegendPay.Models;
 using LegendPay.Models.Data;
 using LegendPay.Models.Data.Tables;
 using LegendPay.Models.ViewModels;
+using LegendPay.Models.ViewModels.UserDashboard;
 using LegendPay.Models.WalletStation.Request;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -71,6 +72,7 @@ namespace LegendPay.Services.Account
 
                     _logger.LogInformation("Sending wallet request: {@WalletRequest}", walletRequest);
                     var wallet = await _walletService.CreateWalletAsync(walletRequest);
+                    
                     //_logger.LogInformation("Wallet response: {@WalletResponse}", wallet);
 
                     if (wallet?.AccountDetails != null)
@@ -79,7 +81,16 @@ namespace LegendPay.Services.Account
                         user.AccountNumber = wallet.AccountDetails.AccountNumber;
                         user.BankName = wallet.AccountDetails.BankName;
 
-                        _context.UserAccounts.Update(user);
+                        var newWallet = new Wallet
+                        {
+                            UserAccountId = user.Id,
+                            CustomerId = wallet.AccountDetails.CustomerId,
+                            AccountNumber = wallet.AccountDetails.AccountNumber,
+                            BankName = wallet.AccountDetails.BankName,
+                            Balance = 0.00m
+                        };
+
+                        _context.Wallets.Add(newWallet);
                         await _context.SaveChangesAsync();
 
                         _logger.LogInformation("Wallet details added to transaction for user: {Email}", user.Email);
@@ -158,6 +169,7 @@ namespace LegendPay.Services.Account
         {
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Email),
                 new Claim(ClaimTypes.GivenName, user.FirstName),
                 new Claim(ClaimTypes.Surname, user.LastName),
@@ -170,6 +182,219 @@ namespace LegendPay.Services.Account
             await httpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity));
+        }
+
+        public async Task<UserAccount?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10) =>
+            await _context.UserAccounts
+                .AsNoTracking()
+                .Include(u => u.WalletTransactions!
+                    .OrderByDescending(t => t.CreatedAt)
+                    .Take(recentCount))
+                .FirstOrDefaultAsync(u => u.Id == userId); //was cutomer id
+
+        public async Task<UserDashboardViewModel> GetUserDashboardAsync(UserAccount user)
+        {
+            var userId = user.Id;
+            var now = DateTime.UtcNow;
+
+            var userAccount = await _context.Wallets.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserAccountId == userId);
+
+            var legendPoint = await _context.LegendPoints.AsNoTracking()
+                .FirstOrDefaultAsync(lp => lp.UserAccountId == userId);
+
+            var pendingBills = await _context.Bills.AsNoTracking()
+                .Where(b => b.UserAccountId == userId && b.Status == "Pending")
+                .OrderBy(b => b.CreatedAt)
+                .ToListAsync();
+
+            var spending = await _context.SpendingRecords.AsNoTracking()
+                .Where(s => s.UserAccountId == userId && s.Year == now.Year && s.Month == now.Month)
+                .ToListAsync();
+
+            var renewals = await _context.Subscriptions.AsNoTracking()
+                .Where(s => s.UserAccountId == userId && s.Status == "Active")
+                .OrderBy(s => s.NextDueDate)
+                .Take(6)
+                .ToListAsync();
+
+            var totalSpending = spending.Sum(s => s.TotalSpent);
+
+            return new UserDashboardViewModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Balance = user.Balance,
+                LegendPoints = legendPoint == null ? 0 : legendPoint.TotalPoints - legendPoint.RedeemedPoints,
+                PendingBillsCount = pendingBills.Count,
+                PendingBillsTotal = pendingBills.Sum(b => b.Amount),
+                TotalSpending = totalSpending,
+                UpcomingBills = pendingBills
+                    .Take(5)
+                    .Select(b => new DashboardBillViewModel
+                    {
+                        Id = b.Id,
+                        BillerName = b.BillerName,
+                        Nickname = b.AccountReference,
+                        Amount = b.Amount,
+                        Status = b.Status
+                    })
+                    .ToList(),
+                SpendingBreakdown = spending
+                    .GroupBy(s => s.BillerCategory)
+                    .Select(g => new SpendingSliceViewModel
+                    {
+                        Category = g.Key,
+                        Amount = g.Sum(x => x.TotalSpent),
+                        Percentage = totalSpending > 0
+                            ? (double)(g.Sum(x => x.TotalSpent) / totalSpending) * 100
+                            : 0
+                    })
+                    .OrderByDescending(s => s.Amount)
+                    .ToList(),
+                UpcomingRenewals = renewals
+                    .Select(s => new RenewalViewModel
+                    {
+                        Id = s.Id,
+                        BillerName = s.BillerName,
+                        NextDueDate = s.NextDueDate,
+                        Amount = s.Amount,
+                        IsAutoPayEnabled = s.IsAutoPayEnabled
+                    })
+                    .ToList()
+            };
+        }
+
+        public async Task<SubscriptionsViewModel> GetSubscriptionsAsync(Guid userId)
+        {
+            var subscriptions = await _context.Subscriptions.AsNoTracking()
+                .Where(s => s.UserAccountId == userId && s.Status == "Active")
+                .OrderBy(s => s.NextDueDate)
+                .ToListAsync();
+
+            var items = subscriptions
+                .Select(s => new SubscriptionItemViewModel
+                {
+                    Id = s.Id,
+                    BillerName = s.BillerName,
+                    BillerCategory = s.BillerCategory,
+                    Amount = s.Amount,
+                    NextDueDate = s.NextDueDate,
+                    RenewalIntervalDays = s.RenewalIntervalDays,
+                    IsAutoPayEnabled = s.IsAutoPayEnabled,
+                    Status = s.Status
+                })
+                .ToList();
+
+            var totalMonthly = subscriptions.Sum(s =>
+                s.RenewalIntervalDays <= 0 ? s.Amount : s.Amount * 30m / s.RenewalIntervalDays);
+
+            DateTime? nextDue = subscriptions.Count > 0 ? subscriptions.Min(s => s.NextDueDate) : null;
+            var overlap = nextDue.HasValue
+                ? subscriptions.Count(s => s.NextDueDate.Date == nextDue.Value.Date)
+                : 0;
+
+            return new SubscriptionsViewModel
+            {
+                Subscriptions = items,
+                TotalMonthlySpend = Math.Round(totalMonthly, 0),
+                ActiveCount = subscriptions.Count,
+                NextBillDue = nextDue,
+                OverlapCount = overlap
+            };
+        }
+
+        public async Task<BillHistoryViewModel> GetBillHistoryAsync(Guid userId, string? range, string? biller, string? amount, int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var now = DateTime.UtcNow;
+            var query = _context.Bills.AsNoTracking().Where(b => b.UserAccountId == userId);
+
+            DateTime? from = range switch
+            {
+                "30d" => now.AddDays(-30),
+                "3m" => now.AddMonths(-3),
+                "ytd" => new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                _ => null
+            };
+            if (from.HasValue)
+                query = query.Where(b => b.CreatedAt >= from.Value);
+
+            if (!string.IsNullOrWhiteSpace(biller) && biller != "all")
+                query = query.Where(b => b.BillerName == biller);
+
+            query = amount switch
+            {
+                "u5000" => query.Where(b => b.Amount <= 5000m),
+                "5001-20000" => query.Where(b => b.Amount > 5000m && b.Amount <= 20000m),
+                "20000p" => query.Where(b => b.Amount > 20000m),
+                _ => query
+            };
+
+            var total = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(b => b.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(b => new BillHistoryItemViewModel
+                {
+                    Id = b.Id,
+                    BillerName = b.BillerName,
+                    BillerCategory = b.BillerCategory,
+                    AccountReference = b.AccountReference,
+                    Amount = b.Amount,
+                    Status = b.Status,
+                    CreatedAt = b.CreatedAt
+                })
+                .ToListAsync();
+
+            var billers = await _context.Bills.AsNoTracking()
+                .Where(b => b.UserAccountId == userId)
+                .Select(b => b.BillerName)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToListAsync();
+
+            return new BillHistoryViewModel
+            {
+                Transactions = items,
+                TotalCount = total,
+                Page = page,
+                PageSize = pageSize,
+                Billers = billers,
+                Range = range,
+                Biller = biller,
+                Amount = amount
+            };
+        }
+
+        public async Task<ReceiptViewModel?> GetBillReceiptAsync(Guid billId, Guid userId)
+        {
+            var bill = await _context.Bills.AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == billId && b.UserAccountId == userId);
+
+            if (bill == null) return null;
+
+            var reference = bill.ConfirmationToken
+                ?? bill.BilleroneRefrence
+                ?? bill.VergeRefrence
+                ?? $"LP-{bill.Id.ToString("N")[..10].ToUpperInvariant()}";
+
+            return new ReceiptViewModel
+            {
+                Id = bill.Id,
+                BillerName = bill.BillerName,
+                BillerCategory = bill.BillerCategory,
+                AccountReference = bill.AccountReference,
+                ReferenceId = reference,
+                Amount = bill.Amount,
+                Status = bill.Status,
+                PaymentMethod = bill.PaymentMethod,
+                CreatedAt = bill.CreatedAt
+            };
         }
 
         public async Task<decimal?> GetUserBalanceAsync(string email)
