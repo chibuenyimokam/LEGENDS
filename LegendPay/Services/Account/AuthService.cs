@@ -40,6 +40,8 @@ namespace LegendPay.Services.Account
 
         public async Task<UserAccount?> GetUserByEmailAsync(string email) =>
             await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
+        public async Task<UserAccount?> GetUserByIdAsync(Guid userId) =>
+            await _context.UserAccounts.FirstOrDefaultAsync(u => u.Id == userId);
 
         public async Task<UserAccount?> CreateAndSaveUserAsync(SignUpViewModel model, string initialOtp)
         {

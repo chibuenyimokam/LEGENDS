@@ -13,6 +13,7 @@ namespace LegendPay.Interfaces.Auth
         Task SignOutUserAsync(HttpContext httpContext);
 
         Task<UserAccount?> GetUserByEmailAsync(string email);
+        Task<UserAccount?> GetUserByIdAsync(Guid userId);
         Task<UserAccount?>CreateAndSaveUserAsync(SignUpViewModel model, string initialotp);
         Task<UserAccount?> ValidateLoginCredentialsAsync(string identifier, string plainPassword);
         Task UpdateUserAsync(UserAccount user);
