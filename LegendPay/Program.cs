@@ -29,7 +29,7 @@ namespace LegendPay
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromSeconds(40);
+                options.IdleTimeout = TimeSpan.FromMinutes(10);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
@@ -56,7 +56,17 @@ namespace LegendPay
 
 
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie();
+            .AddCookie(options =>
+            {
+                options.LoginPath = "/Auth/Login";
+                options.LogoutPath = "/Auth/Logout";
+                options.AccessDeniedPath = "/Auth/Login";
+                options.Cookie.Name = ".LegendPayAuth";
+                options.ExpireTimeSpan = TimeSpan.FromDays(1); //time user stays logged in
+                options.SlidingExpiration = true; //instructs the server to re-issue a
+                //new authentication cookie with a fresh expiration date whenever
+                //a user makes a request while past the halfway point of the set ExpireTimeSpan
+            });
 
             var app = builder.Build();
 
@@ -67,8 +77,9 @@ namespace LegendPay
             }
 
             app.UseHttpsRedirection();
-            app.UseSession();
             app.UseRouting();
+            app.UseSession();
+
             app.UseAuthentication();
             app.UseAuthorization();
 
