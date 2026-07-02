@@ -23,8 +23,7 @@ namespace LegendPay.Services.Transaction
             _password = config["WalletStation:Password"]!;
         }
 
-        // Fetches a fresh token from CoralPay. Only called by WalletTokenCache
-        // when the cached token is missing or expired.
+        
         private async Task<(string Token, DateTime Expiry)> FetchTokenFromApiAsync()
         {
             var payload = new AuthenticationRequest
