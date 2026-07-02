@@ -1,0 +1,279 @@
+﻿@model LegendPay.Models.ViewModels.UserDashboard.ElectricityDetailsViewModel
+@{
+    ViewData["Title"] = "Enter Bill Details";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="p-10 space-y-8 max-w-4xl">
+
+    <!-- Page heading -->
+    <div>
+        <h2 class="text-2xl font-bold text-on-surface tracking-tight">Electricity Bill</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Enter your meter details to continue.</p>
+    </div>
+
+    <!-- 4-step progress bar -->
+    <div class="bg-surface border border-slate-200 rounded-2xl p-6">
+        <div class="flex items-center justify-between">
+
+            <!-- Step 1 — completed -->
+            <div class="flex flex-col items-center gap-1.5 flex-1">
+                <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                    <span class="material-symbols-outlined text-[16px]">check</span>
+                </div>
+                <span class="text-xs font-medium text-on-surface-variant">Select Biller</span>
+            </div>
+
+            <div class="flex-1 h-px bg-primary mx-2"></div>
+
+            <!-- Step 2 — active -->
+            <div class="flex flex-col items-center gap-1.5 flex-1">
+                <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">2</div>
+                <span class="text-xs font-semibold text-primary">Enter Details</span>
+            </div>
+
+            <div class="flex-1 h-px bg-slate-200 mx-2"></div>
+
+            <!-- Step 3 -->
+            <div class="flex flex-col items-center gap-1.5 flex-1">
+                <div class="w-8 h-8 rounded-full bg-slate-100 text-on-surface-variant flex items-center justify-center text-sm font-bold">3</div>
+                <span class="text-xs font-medium text-on-surface-variant">Review &amp; Pay</span>
+            </div>
+
+            <div class="flex-1 h-px bg-slate-200 mx-2"></div>
+
+            <!-- Step 4 -->
+            <div class="flex flex-col items-center gap-1.5 flex-1">
+                <div class="w-8 h-8 rounded-full bg-slate-100 text-on-surface-variant flex items-center justify-center text-sm font-bold">4</div>
+                <span class="text-xs font-medium text-on-surface-variant">Done</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Main form card -->
+    <div class="bg-surface border border-slate-200 rounded-2xl p-8 space-y-6">
+
+        <!-- Selected biller header -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-yellow-50 border border-yellow-100 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-yellow-600">bolt</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Electricity Bill</p>
+                    <p class="text-sm font-semibold text-on-surface">@Model.BillerFullName (Prepaid)</p>
+                </div>
+            </div>
+            <a href="@Url.Action("ElectricityBillers", "Home")"
+                   class="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
+                <span class="material-symbols-outlined text-[14px]">edit</span>
+                Change Biller
+            </a>
+        </div>
+
+        <div class="border-t border-slate-100"></div>
+
+        <!-- Meter number input -->
+        <div class="space-y-2">
+            <div class="flex items-center justify-between">
+                <label class="text-sm font-semibold text-on-surface">Meter / Account Number</label>
+                <span class="text-xs text-on-surface-variant">Ex: 0142 5589 104</span>
+            </div>
+            <div class="relative">
+                <input id="meterInput"
+                       type="text"
+                       placeholder="Enter meter number"
+                       class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none pr-28"
+                       oninput="resetVerification()" />
+                <button onclick="verifyMeter()"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-white text-xs font-semibold px-4 py-1.5 rounded-lg hover:bg-primary/90 transition-colors">
+                    Verify
+                </button>
+            </div>
+            <!-- Verified badge (hidden until verified) -->
+            <div id="verifiedBadge" class="hidden">
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1 rounded-full">
+                    <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    VERIFIED
+                </span>
+            </div>
+        </div>
+
+        <!-- Customer info (hidden until verified) -->
+        <div id="customerInfo" class="hidden bg-green-50 border border-green-100 rounded-xl px-5 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-green-700 text-[16px]">person</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-green-700 uppercase tracking-widest">Customer Name</p>
+                        <p id="customerName" class="text-sm font-bold text-on-surface uppercase">@Model.CustomerName</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Location</p>
+                    <p id="customerLocation" class="text-xs font-semibold text-on-surface">@Model.BillerLocation</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Amount input -->
+        <div id="amountSection" class="space-y-3 hidden">
+            <label class="text-sm font-semibold text-on-surface">Amount to Pay</label>
+            <div class="flex items-center gap-2 border border-slate-200 rounded-xl px-4 py-3 focus-within:ring-1 focus-within:ring-primary">
+                <span class="text-sm font-bold text-on-surface-variant">₦</span>
+                <input id="amountInput"
+                       type="number"
+                       min="100"
+                       placeholder="0.00"
+                       class="flex-1 outline-none text-sm text-on-surface bg-transparent" />
+            </div>
+            <!-- Quick amount buttons -->
+            <div class="flex gap-2 flex-wrap">
+                @foreach (var amount in new[] { "5,000", "10,000", "25,000", "50,000" })
+                {
+                    <button onclick="setAmount('@amount')"
+                            class="px-4 py-1.5 border border-slate-200 rounded-full text-xs font-semibold text-on-surface hover:border-primary hover:text-primary transition-colors">
+                        ₦@amount
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Save as beneficiary -->
+        <div id="beneficiarySection" class="hidden flex items-start justify-between gap-4 pt-2">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-on-surface-variant text-[20px] mt-0.5">bookmark</span>
+                <div>
+                    <p class="text-sm font-semibold text-on-surface">Save as beneficiary</p>
+                    <p class="text-xs text-on-surface-variant">Auto-fill this bill for future payments</p>
+                </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer mt-1">
+                <input type="checkbox" id="saveBeneficiary" class="sr-only peer" />
+                <div class="w-10 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:bg-primary transition-colors"></div>
+                <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4"></div>
+            </label>
+        </div>
+
+        <!-- Continue button -->
+        <div id="continueSection" class="hidden pt-2 space-y-3">
+            <button onclick="continueToReview()"
+                    class="w-full bg-primary text-white font-semibold py-3.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+                Continue to Review
+                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
+            <p class="text-center text-xs text-on-surface-variant flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">lock</span>
+                Secure encrypted transaction by LegendPay
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Info cards at bottom -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+            <span class="material-symbols-outlined text-blue-600 text-[18px] mt-0.5">info</span>
+            <p class="text-xs text-blue-700">Ensure you enter the correct meter number. Electricity tokens are generated immediately after payment.</p>
+        </div>
+        <div class="bg-green-50 border border-green-100 rounded-xl p-4 flex items-start gap-3">
+            <span class="material-symbols-outlined text-green-600 text-[18px] mt-0.5">payments</span>
+            <p class="text-xs text-green-700">You will earn 2% cashback in LegendPoints for this utility payment.</p>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        // Biller → location mapping
+        const billerLocationMap = {
+            'IKEDC':  'Lagos, Nigeria',
+            'EKEDC':  'Lagos, Nigeria',
+            'AEDC':   'Abuja, Nigeria',
+            'IBEDC':  'Ibadan, Nigeria',
+            'EEDC':   'Enugu, Nigeria',
+            'PHEDC':  'Port Harcourt, Nigeria',
+            'KAEDCO': 'Kaduna, Nigeria',
+            'JEDC':   'Jos, Nigeria',
+            'BEDC':   'Benin City, Nigeria',
+            'YEDC':   'Yola, Nigeria',
+            'KEDCO':  'Kano, Nigeria'
+        };
+
+        const billerName   = '@Model.BillerName';
+        const customerName = '@Model.CustomerName';
+        const billerLocation = billerLocationMap[billerName] || 'Nigeria';
+
+        function verifyMeter() {
+            const meter = document.getElementById('meterInput').value.trim();
+            if (meter.length < 6) {
+                alert('Please enter a valid meter number.');
+                return;
+            }
+
+            
+            //  Replace this mock block with real API call when ready
+            // e.g:
+            // const res = await fetch('/api/electricity/verify', {
+            //     method: 'POST',
+            //     body: JSON.stringify({ meterNumber: meter, biller: billerName })
+            // });
+            // const data = await res.json();
+            // document.getElementById('customerName').textContent = data.customerName;
+            // document.getElementById('customerLocation').textContent = data.location;
+            
+
+            // MOCK — remove below when real API is integrated
+            document.getElementById('customerName').textContent = customerName;
+            document.getElementById('customerLocation').textContent = billerLocation;
+            // END MOCK
+
+            document.getElementById('verifiedBadge').classList.remove('hidden');
+            document.getElementById('customerInfo').classList.remove('hidden');
+            document.getElementById('amountSection').classList.remove('hidden');
+            document.getElementById('beneficiarySection').classList.remove('hidden');
+            document.getElementById('continueSection').classList.remove('hidden');
+        }
+
+        function resetVerification() {
+            document.getElementById('verifiedBadge').classList.add('hidden');
+            document.getElementById('customerInfo').classList.add('hidden');
+            document.getElementById('amountSection').classList.add('hidden');
+            document.getElementById('beneficiarySection').classList.add('hidden');
+            document.getElementById('continueSection').classList.add('hidden');
+        }
+
+        function setAmount(val) {
+            document.getElementById('amountInput').value = val.replace(',', '');
+        }
+
+        function continueToReview() {
+            const meter  = document.getElementById('meterInput').value.trim();
+            const amount = document.getElementById('amountInput').value.trim();
+            const save   = document.getElementById('saveBeneficiary').checked;
+
+            if (!amount || parseFloat(amount) < 100) {
+                alert('Please enter a valid amount (minimum ₦100).');
+                return;
+            }
+
+            const params = new URLSearchParams({
+                billerName:      '@Model.BillerName',
+                billerFullName:  '@Model.BillerFullName',
+                billerLocation:  '@Model.BillerLocation',
+                meterNumber:     meter,
+                customerName:    '@Model.CustomerName',
+                amount:          amount,
+                saveBeneficiary: save
+            });
+
+
+            // TODO: Pass these values to Step 3 (Review & Pay)
+            window.location.href = `/Home/ElectricityReview?billerName=@Model.BillerName&billerFullName=@Model.BillerFullName&meterNumber=${encodeURIComponent(meter)}&amount=${amount}&saveBeneficiary=${save}`;
+        }
+    </script>
+}

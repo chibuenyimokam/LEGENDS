@@ -158,7 +158,7 @@ namespace LegendPay.Controllers
 
                     await _authService.SignInUserAsync(HttpContext, user);
 
-                    return RedirectToAction("Dashboard", "Home");
+                    return RedirectToAction("HomePage", "Home");
                 }
                 else
                 {

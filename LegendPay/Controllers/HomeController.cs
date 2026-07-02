@@ -166,101 +166,148 @@ namespace LegendPay.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Dashboard()
-        {
-            var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
-            if (string.IsNullOrEmpty(email))
-                return RedirectToAction("Login");
-
-            var user = await _authService.GetUserByEmailAsync(email);
-            if (user == null)
-                return RedirectToAction("Login");
-
-            var balance = await _walletService.GetBalanceAsync(user.CustomerId);
-
-            var model = new UserDashboardViewModel
-            {
-                AccountInfo = new AccountInfoViewModel
-                {
-                    UserName = $"{user.FirstName} {user.LastName}",
-                    AvailableBalance = balance ?? 0,
-                    WalletId = user.WalletId ?? "N/A"
-                },
-                LegendPoints = new LegendPointsViewModel
-                {
-                    CurrentPoints = user.LegendPoint?.TotalPoints ?? 0,
-                    GoalPoints = 5000,
-                    AmountToNextReward = 500
-                },
-                RecentActivities = new List<RecentActivityViewModel>(),
-                UpcomingRenewals = new List<UpcomingRenewalViewModel>()
-            };
-
-            return View("HomePage", model);
-        }
 
         [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> PayBills()
+        public async Task<IActionResult> ElectricityBillers()
         {
-            var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
-            if (string.IsNullOrEmpty(email))
-                return RedirectToAction("Login", "Auth");
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
 
-            var user = await _authService.GetUserByEmailAsync(email);
-            if (user == null)
-                return RedirectToAction("Login", "Auth");
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
 
-            var balance = await _walletService.GetBalanceAsync(user.CustomerId);
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
 
+            // Reuse PayBillsViewModel just for the wallet balance (same pattern as PayBills action)
             var model = new PayBillsViewModel
             {
-                UserName = $"{user.FirstName} {user.LastName}",
-                WalletId = user.WalletId ?? "N/A",
-                AvailableBalance = balance ?? 0,
-
-                // Empty until SavedBillers/Favorites table is built
-                RecentFavorites = new List<RecentBillerViewModel>(),
-
-                Categories = new List<BillCategoryViewModel>
-                {
-                    new() {
-                        Name = "Airtime", ColorClass = "cat-pink",
-                        SvgIcon = "<svg fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><rect x='5' y='2' width='14' height='20' rx='2'/><line x1='12' y1='18' x2='12' y2='18' stroke-linecap='round' stroke-width='3'/></svg>"
-                    },
-                    new() {
-                        Name = "Internet/Data", ColorClass = "cat-blue",
-                        SvgIcon = "<svg fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><path d='M5 12.55a11 11 0 0114.08 0'/><path d='M1.42 9a16 16 0 0121.16 0'/><path d='M8.53 16.11a6 6 0 016.95 0'/><circle cx='12' cy='20' r='1' fill='currentColor'/></svg>"
-                    },
-                    new() {
-                        Name = "Electricity", ColorClass = "cat-yellow",
-                        SvgIcon = "<svg fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>"
-                    },
-                    new() {
-                        Name = "Digital TV", ColorClass = "cat-purple",
-                        SvgIcon = "<svg fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><rect x='2' y='7' width='20' height='15' rx='2'/><polyline points='17 2 12 7 7 2'/></svg>"
-                    },
-                    new() {
-                        Name = "Games", ColorClass = "cat-violet",
-                        SvgIcon = "<svg fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><line x1='6' y1='12' x2='10' y2='12'/><line x1='8' y1='10' x2='8' y2='14'/><circle cx='15' cy='11' r='1' fill='currentColor'/><circle cx='17' cy='13' r='1' fill='currentColor'/><path d='M6 20h12a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z'/></svg>"
-                    },
-                    new() {
-                        Name = "Education", ColorClass = "cat-green",
-                        SvgIcon = "<svg fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><path d='M22 10v6M2 10l10-5 10 5-10 5z'/><path d='M6 12v5c3 3 9 3 12 0v-5'/></svg>"
-                    },
-                    new() {
-                        Name = "Transport", ColorClass = "cat-red",
-                        SvgIcon = "<svg fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><rect x='1' y='3' width='15' height='13' rx='2'/><path d='M16 8h4l3 3v5h-7V8z'/><circle cx='5.5' cy='18.5' r='2.5'/><circle cx='18.5' cy='18.5' r='2.5'/></svg>"
-                    },
-                    new() {
-                        Name = "Other Utilities", ColorClass = "cat-gray",
-                        SvgIcon = "<svg fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><circle cx='12' cy='12' r='1' fill='currentColor'/><circle cx='19' cy='12' r='1' fill='currentColor'/><circle cx='5' cy='12' r='1' fill='currentColor'/></svg>"
-                    },
-                }
+                AvailableBalance = wallet?.Balance ?? 0m,
+                RecentFavorites = new List<RecentBillerViewModel>()
             };
 
             return View(model);
         }
+
+        [Authorize]
+        public async Task<IActionResult> ElectricityDetails(string billerName, string billerFullName)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            // Map biller short name to location
+            var locationMap = new Dictionary<string, string>
+    {
+        { "IKEDC",  "Lagos, Nigeria"         },
+        { "EKEDC",  "Lagos, Nigeria"         },
+        { "AEDC",   "Abuja, Nigeria"         },
+        { "IBEDC",  "Ibadan, Nigeria"        },
+        { "EEDC",   "Enugu, Nigeria"         },
+        { "PHEDC",  "Port Harcourt, Nigeria" },
+        { "KAEDCO", "Kaduna, Nigeria"        },
+        { "JEDC",   "Jos, Nigeria"           },
+        { "BEDC",   "Benin City, Nigeria"    },
+        { "YEDC",   "Yola, Nigeria"          },
+        { "KEDCO",  "Kano, Nigeria"          },
+    };
+
+            var model = new ElectricityDetailsViewModel
+            {
+                BillerName = billerName,
+                BillerFullName = billerFullName,
+                BillerLocation = locationMap.TryGetValue(billerName, out var loc) ? loc : "Nigeria",
+                CustomerName = $"{user.FirstName} {user.LastName}"
+            };
+
+            return View(model);
+        }
+
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ElectricityReview(
+            string billerName, string billerFullName, string billerLocation,
+            string meterNumber, string customerName, decimal amount, bool saveBeneficiary)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+
+            var model = new ElectricityReviewViewModel
+            {
+                BillerName = billerName,
+                BillerFullName = billerFullName,
+                BillerLocation = billerLocation,
+                MeterNumber = meterNumber,
+                CustomerName = customerName,
+                Amount = amount,
+                WalletBalance = wallet?.Balance ?? 0m,
+                SaveBeneficiary = saveBeneficiary
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> ElectricityPayment(ElectricityReviewViewModel model)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+            var balance = wallet?.Balance ?? 0m;
+
+            if (balance < model.Amount)
+            {
+                // Redirect back to review with error
+                TempData["PaymentError"] = "Your wallet balance is not sufficient for this transaction. Please fund your wallet and try again.";
+                return RedirectToAction("ElectricityReview", new
+                {
+                    billerName = model.BillerName,
+                    billerFullName = model.BillerFullName,
+                    billerLocation = model.BillerLocation,
+                    meterNumber = model.MeterNumber,
+                    customerName = model.CustomerName,
+                    amount = model.Amount,
+                    saveBeneficiary = model.SaveBeneficiary
+                });
+            }
+
+            
+            // TODO: Replace mock below with real payment API call when integrated
+            // e.g: var result = await _billPaymentService.PayElectricityAsync
+            // MOCK — generate fake token and transaction ref
+
+            var rng = new Random();
+            string GenerateToken() =>
+                string.Join(" ", Enumerable.Range(0, 5).Select(_ => rng.Next(1000, 9999).ToString()));
+
+            var successModel = new ElectricitySuccessViewModel
+            {
+                BillerName = model.BillerName,
+                BillerFullName = model.BillerFullName,
+                MeterNumber = model.MeterNumber,
+                Amount = model.Amount,
+                PaidAt = DateTime.Now,
+                TransactionRef = $"LP-{rng.Next(1000000, 9999999)}-X",
+                ElectricityToken = GenerateToken(),
+                UnitValue = Math.Round(model.Amount / 86, 1),  // rough kWh estimate
+                PointsEarned = (int)(model.Amount * 0.02m)
+            };
+            // END MOCK
+
+            return View("ElectricitySuccess", successModel);
+        }
+
     }
 }
