@@ -14,18 +14,20 @@ namespace LegendPay.Controllers
         private readonly IAuthService _authService;
         private readonly IWalletService _walletService;
         private readonly ILogger<HomeController> _logger;
+        private readonly IBillerOneService _billerOneService;
+        
 
 
         public HomeController(
-                IEmailService emailService,
-                IOtpService otpService,
                 IAuthService authService,
                 IWalletService walletService,
+                IBillerOneService billerOneService,
                 ILogger<HomeController> logger)
         {
             _authService = authService;
             _walletService = walletService;
             _logger = logger;
+            _billerOneService = billerOneService;
         }
         public IActionResult Index()
         {
@@ -105,15 +107,55 @@ namespace LegendPay.Controllers
             var user = await _authService.GetUserByIdAsync(userId.Value);
             if (user == null) return RedirectToAction("Login", "Auth");
 
+            var categoriesResponse = await _billerOneService.GetCategoriesAsync();
             var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+            var billersResponse = await _billerOneService.GetBillersAsync();
 
             var model = new PayBillsViewModel
             {
                 AvailableBalance = wallet?.Balance ?? 0m,
-                RecentFavorites = new List<RecentBillerViewModel>()
+                RecentFavorites = new List<RecentBillerViewModel>(),
+                Categories = categoriesResponse?.CategoryList?
+                .Select(c => new BillerCategoryViewModel
+                {
+                    Category = c.Category,
+                    LogoUrl = c.LogoUrl,
+                    IconName = MapCategoryToIcon(c.Category)
+                })
+                .ToList() ?? new List<BillerCategoryViewModel>(),
+
+                Billers = billersResponse?.Billers?
+                .Select(b => new BillerViewModel
+                {
+                    Category = b.Category,
+                    BillerName = b.BillerName,
+                    BillerId = b.BillerId,
+                    LogoPath = b.LogoPath,
+                    Description = b.Description,
+                    AmountInVerification = b.AmountInVerification,
+                    ReferenceIdVerifiable = b.ReferenceIdVerifiable
+                })
+                .ToList() ?? new List<BillerViewModel>()
             };
 
             return View(model);
+        }
+        // Helper method to map BillerOne categories to Material Icons
+        private string MapCategoryToIcon(string category)
+        {
+            return category?.ToUpper() switch
+            {
+                "ELECTRICITY" => "bolt",
+                "AIRTIME" => "smartphone",
+                "DIGITALTV" => "tv",
+                "GAMES" => "sports_esports",
+                "EDUCATION" => "school",
+                "TRANSPORT" => "commute",
+                "INTERNATIONAL AIRTIME" => "public",
+                "EVENTS AND LIFESTYLE" => "event",
+                "INSURANCE" => "shield",
+                _ => "receipt_long"
+            };
         }
 
         [Authorize]

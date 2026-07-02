@@ -34,6 +34,7 @@ namespace LegendPay
                 options.Cookie.IsEssential = true;
             });
             builder.Services.AddSingleton<WalletTokenCache>();
+            builder.Services.AddHttpClient<IBillerOneService, BillerOneService>();
 
             builder.Services.AddHttpClient<IWalletService, WalletService>((serviceProvider, client) =>
             {
