@@ -15,7 +15,6 @@ namespace LegendPay.Controllers
         private readonly IWalletService _walletService;
         private readonly ILogger<HomeController> _logger;
 
-
         public HomeController(
                 IEmailService emailService,
                 IOtpService otpService,
@@ -27,6 +26,7 @@ namespace LegendPay.Controllers
             _walletService = walletService;
             _logger = logger;
         }
+
         public IActionResult Index()
         {
             return View();
@@ -126,7 +126,7 @@ namespace LegendPay.Controllers
         {
             return View();
         }
-        // this means only authenticated users can access this page
+
         [Authorize]
         public async Task<IActionResult> HomePage()
         {
@@ -165,5 +165,149 @@ namespace LegendPay.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+
+        [Authorize]
+        public async Task<IActionResult> ElectricityBillers()
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+
+            // Reuse PayBillsViewModel just for the wallet balance (same pattern as PayBills action)
+            var model = new PayBillsViewModel
+            {
+                AvailableBalance = wallet?.Balance ?? 0m,
+                RecentFavorites = new List<RecentBillerViewModel>()
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> ElectricityDetails(string billerName, string billerFullName)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            // Map biller short name to location
+            var locationMap = new Dictionary<string, string>
+    {
+        { "IKEDC",  "Lagos, Nigeria"         },
+        { "EKEDC",  "Lagos, Nigeria"         },
+        { "AEDC",   "Abuja, Nigeria"         },
+        { "IBEDC",  "Ibadan, Nigeria"        },
+        { "EEDC",   "Enugu, Nigeria"         },
+        { "PHEDC",  "Port Harcourt, Nigeria" },
+        { "KAEDCO", "Kaduna, Nigeria"        },
+        { "JEDC",   "Jos, Nigeria"           },
+        { "BEDC",   "Benin City, Nigeria"    },
+        { "YEDC",   "Yola, Nigeria"          },
+        { "KEDCO",  "Kano, Nigeria"          },
+    };
+
+            var model = new ElectricityDetailsViewModel
+            {
+                BillerName = billerName,
+                BillerFullName = billerFullName,
+                BillerLocation = locationMap.TryGetValue(billerName, out var loc) ? loc : "Nigeria",
+                CustomerName = $"{user.FirstName} {user.LastName}"
+            };
+
+            return View(model);
+        }
+
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ElectricityReview(
+            string billerName, string billerFullName, string billerLocation,
+            string meterNumber, string customerName, decimal amount, bool saveBeneficiary)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+
+            var model = new ElectricityReviewViewModel
+            {
+                BillerName = billerName,
+                BillerFullName = billerFullName,
+                BillerLocation = billerLocation,
+                MeterNumber = meterNumber,
+                CustomerName = customerName,
+                Amount = amount,
+                WalletBalance = wallet?.Balance ?? 0m,
+                SaveBeneficiary = saveBeneficiary
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> ElectricityPayment(ElectricityReviewViewModel model)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+            var balance = wallet?.Balance ?? 0m;
+
+            if (balance < model.Amount)
+            {
+                // Redirect back to review with error
+                TempData["PaymentError"] = "Your wallet balance is not sufficient for this transaction. Please fund your wallet and try again.";
+                return RedirectToAction("ElectricityReview", new
+                {
+                    billerName = model.BillerName,
+                    billerFullName = model.BillerFullName,
+                    billerLocation = model.BillerLocation,
+                    meterNumber = model.MeterNumber,
+                    customerName = model.CustomerName,
+                    amount = model.Amount,
+                    saveBeneficiary = model.SaveBeneficiary
+                });
+            }
+
+            
+            // TODO: Replace mock below with real payment API call when integrated
+            // e.g: var result = await _billPaymentService.PayElectricityAsync
+            // MOCK — generate fake token and transaction ref
+
+            var rng = new Random();
+            string GenerateToken() =>
+                string.Join(" ", Enumerable.Range(0, 5).Select(_ => rng.Next(1000, 9999).ToString()));
+
+            var successModel = new ElectricitySuccessViewModel
+            {
+                BillerName = model.BillerName,
+                BillerFullName = model.BillerFullName,
+                MeterNumber = model.MeterNumber,
+                Amount = model.Amount,
+                PaidAt = DateTime.Now,
+                TransactionRef = $"LP-{rng.Next(1000000, 9999999)}-X",
+                ElectricityToken = GenerateToken(),
+                UnitValue = Math.Round(model.Amount / 86, 1),  // rough kWh estimate
+                PointsEarned = (int)(model.Amount * 0.02m)
+            };
+            // END MOCK
+
+            return View("ElectricitySuccess", successModel);
+        }
+
     }
 }

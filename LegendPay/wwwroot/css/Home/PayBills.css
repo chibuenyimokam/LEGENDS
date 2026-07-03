@@ -1,0 +1,394 @@
+﻿/* 
+   PayBills.css  —  wwwroot/css/Home/PayBills.css
+   Sidebar + collapse come FREE from UserDashboard.css.
+   This file only styles the Pay Bills page content.
+
+*/
+
+/* ── Page wrapper (sits inside .main like .content does) ── */
+.pb-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ── Top bar ── */
+.pb-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.pb-topbar-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    width: 300px;
+}
+
+    .pb-topbar-search svg {
+        color: var(--text-light);
+        flex-shrink: 0;
+    }
+
+    .pb-topbar-search input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.85rem;
+        color: var(--text-main);
+        width: 100%;
+        font-family: 'Inter', sans-serif;
+    }
+
+        .pb-topbar-search input::placeholder {
+            color: var(--text-light);
+        }
+
+.pb-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pb-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+
+    .pb-icon-btn:hover {
+        background: var(--off-white);
+    }
+
+.pb-user-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pb-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--white);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pb-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.pb-user-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.pb-user-tier {
+    font-size: 0.65rem;
+    color: var(--text-light);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+/* ── Page content area ── */
+.pb-content {
+    padding: 36px 40px;
+    max-width: 860px;
+}
+
+/* ── Heading ── */
+.pb-heading h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.4px;
+    margin-bottom: 4px;
+}
+
+.pb-heading p {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+}
+
+/* ── Biller search ── */
+.pb-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+    .pb-search-wrap svg {
+        color: var(--text-light);
+        flex-shrink: 0;
+    }
+
+.pb-search {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+}
+
+    .pb-search::placeholder {
+        color: var(--text-light);
+    }
+
+/* ── Sections ── */
+.pb-section {
+    margin-bottom: 32px;
+}
+
+.pb-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.pb-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.pb-cat-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.pb-manage-link {
+    font-size: 0.8rem;
+    color: var(--blue);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+    .pb-manage-link:hover {
+        text-decoration: underline;
+    }
+
+/* ── Favorites ── */
+.pb-favorites {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.fav-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+    .fav-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: #c7d2fe;
+    }
+
+.fav-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.fav-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.fav-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.fav-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.fav-acct {
+    font-size: 0.72rem;
+    color: var(--text-light);
+}
+
+.fav-card-bottom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fav-meta {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    flex: 1;
+}
+
+.fav-tag {
+    font-size: 0.68rem;
+    background: var(--off-white);
+    color: var(--text-muted);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: 500;
+}
+
+.fav-arrow {
+    color: var(--text-light);
+    margin-left: auto;
+}
+
+/* ── Category grid ── */
+.pb-categories {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.cat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+}
+
+    .cat-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+        border-color: var(--blue);
+    }
+
+.cat-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .cat-icon-wrap svg {
+        width: 26px;
+        height: 26px;
+    }
+
+.cat-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+/* ── Category colour tokens (matching Figma) ── */
+.cat-pink {
+    background: #FCE7F3;
+    color: #DB2777;
+}
+
+.cat-blue {
+    background: #DBEAFE;
+    color: #2563EB;
+}
+
+.cat-yellow {
+    background: #FEF3C7;
+    color: #D97706;
+}
+
+.cat-purple {
+    background: #EDE9FE;
+    color: #7C3AED;
+}
+
+.cat-violet {
+    background: #F5D0FE;
+    color: #9333EA;
+}
+
+.cat-green {
+    background: #D1FAE5;
+    color: #059669;
+}
+
+.cat-red {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.cat-gray {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+    .pb-favorites,
+    .pb-categories {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pb-content {
+        padding: 24px 20px;
+    }
+}
