@@ -40,6 +40,8 @@ namespace LegendPay.Services.Account
 
         public async Task<UserAccount?> GetUserByEmailAsync(string email) =>
             await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
+        public async Task<UserAccount?> GetUserByIdAsync(Guid userId) =>
+            await _context.UserAccounts.FirstOrDefaultAsync(u => u.Id == userId);
 
         public async Task<UserAccount?> CreateAndSaveUserAsync(SignUpViewModel model, string initialOtp)
         {
@@ -72,6 +74,7 @@ namespace LegendPay.Services.Account
 
                     _logger.LogInformation("Sending wallet request: {@WalletRequest}", walletRequest);
                     var wallet = await _walletService.CreateWalletAsync(walletRequest);
+                    
                     //_logger.LogInformation("Wallet response: {@WalletResponse}", wallet);
 
                     if (wallet?.AccountDetails != null)
@@ -80,7 +83,16 @@ namespace LegendPay.Services.Account
                         user.AccountNumber = wallet.AccountDetails.AccountNumber;
                         user.BankName = wallet.AccountDetails.BankName;
 
-                        _context.UserAccounts.Update(user);
+                        var newWallet = new Wallet
+                        {
+                            UserAccountId = user.Id,
+                            CustomerId = wallet.AccountDetails.CustomerId,
+                            AccountNumber = wallet.AccountDetails.AccountNumber,
+                            BankName = wallet.AccountDetails.BankName,
+                            Balance = 0.00m
+                        };
+
+                        _context.Wallets.Add(newWallet);
                         await _context.SaveChangesAsync();
 
                         _logger.LogInformation("Wallet details added to transaction for user: {Email}", user.Email);
@@ -174,21 +186,21 @@ namespace LegendPay.Services.Account
                 new ClaimsPrincipal(claimsIdentity));
         }
 
-        public async Task<Wallet?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10) =>
-            await _context.Wallets
+        public async Task<UserAccount?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10) =>
+            await _context.UserAccounts
                 .AsNoTracking()
-                .Include(w => w.WalletTransactions!
+                .Include(u => u.WalletTransactions!
                     .OrderByDescending(t => t.CreatedAt)
                     .Take(recentCount))
-                .FirstOrDefaultAsync(w => w.UserAccountId == userId);
+                .FirstOrDefaultAsync(u => u.Id == userId); //was cutomer id
 
         public async Task<UserDashboardViewModel> GetUserDashboardAsync(UserAccount user)
         {
             var userId = user.Id;
             var now = DateTime.UtcNow;
 
-            var wallet = await _context.Wallets.AsNoTracking()
-                .FirstOrDefaultAsync(w => w.UserAccountId == userId);
+            var userAccount = await _context.Wallets.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserAccountId == userId);
 
             var legendPoint = await _context.LegendPoints.AsNoTracking()
                 .FirstOrDefaultAsync(lp => lp.UserAccountId == userId);
@@ -214,7 +226,7 @@ namespace LegendPay.Services.Account
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                WalletBalance = wallet?.Balance ?? 0m,
+                Balance = user.Balance,
                 LegendPoints = legendPoint == null ? 0 : legendPoint.TotalPoints - legendPoint.RedeemedPoints,
                 PendingBillsCount = pendingBills.Count,
                 PendingBillsTotal = pendingBills.Sum(b => b.Amount),
@@ -389,12 +401,19 @@ namespace LegendPay.Services.Account
 
         public async Task<decimal?> GetUserBalanceAsync(string email)
         {
-            var user = await GetUserByEmailAsync(email);
+            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null || string.IsNullOrEmpty(user.CustomerId))
                 return null;
 
-            return await _walletService.GetBalanceAsync(user.CustomerId);
+            var externalBalance = await _walletService.GetBalanceAsync(user.CustomerId);
+            return externalBalance;
+        }
+
+        public async Task UpdateUserAsync(UserAccount user)
+        {
+            _context.UserAccounts.Update(user);
+            await _context.SaveChangesAsync();
         }
 
         public async Task SignOutUserAsync(HttpContext httpContext) =>
