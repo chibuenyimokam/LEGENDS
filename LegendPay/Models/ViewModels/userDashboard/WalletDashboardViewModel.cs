@@ -34,17 +34,16 @@ namespace LegendPay.Models.ViewModels.UserDashboard
         public string CustomerId { get; set; }
         public string AccountNumber { get; set; }
         public string BankName { get; set; }
-        public decimal Balance { get; set; }
+        public decimal WalletBalance { get; set; }
 
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string FullName => $"{FirstName} {LastName}";
 
-        // Optional display helpers
         public string KycTier { get; set; } = "Tier 2 Verified";
         public string WeeklyChangeLabel { get; set; } = "+12.5% this week";
 
-        // Formatted account number e.g. "803 123 4567"
+        // Formatted account number  "803 123 4567"
         public string AccountNumberFormatted =>
             string.IsNullOrWhiteSpace(AccountNumber)
                 ? AccountNumber

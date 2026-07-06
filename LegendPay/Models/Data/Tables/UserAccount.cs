@@ -51,6 +51,9 @@ namespace LegendPay.Models.Data.Tables
         public string? AccountNumber { get; set; } 
         public string? BankName { get; set; }
 
+        [Precision(18, 2)]
+        public decimal Balance { get; set; } = 0.00m; //just added
+
         // Navigation Properties
         public Wallet Wallet { get; set; }
         public LegendPoint LegendPoint { get; set; }
@@ -61,6 +64,8 @@ namespace LegendPay.Models.Data.Tables
         public ICollection<Beneficiary>? Beneficiaries { get; set; }
         public ICollection<ScheduledPayment>? ScheduledPayments { get; set; }
         public ICollection<SupportChat>? SupportChats { get; set; }
+        public ICollection<WalletTransaction>? WalletTransactions { get; set; }
+
 
     }
 }

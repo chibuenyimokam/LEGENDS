@@ -7,7 +7,7 @@ namespace LegendPay.Models.ViewModels.UserDashboard
         public string FullName => $"{FirstName} {LastName}".Trim();
         public string AccountType { get; set; } = "Personal Account";
 
-        public decimal WalletBalance { get; set; }
+        public decimal Balance { get; set; }
         public int LegendPoints { get; set; }
 
         public int PendingBillsCount { get; set; }
