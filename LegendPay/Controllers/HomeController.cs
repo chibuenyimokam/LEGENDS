@@ -15,7 +15,7 @@ namespace LegendPay.Controllers
         private readonly IWalletService _walletService;
         private readonly ILogger<HomeController> _logger;
         private readonly IBillerOneService _billerOneService;
-        
+
 
 
         public HomeController(
@@ -184,7 +184,7 @@ namespace LegendPay.Controllers
 
             return View(model);
         }
-       
+
 
         [Authorize]
         public async Task<IActionResult> Subscriptions()
