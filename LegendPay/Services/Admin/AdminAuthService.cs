@@ -1,6 +1,6 @@
 ﻿using LegendPay.Interfaces.Admin;
 using LegendPay.Models;
-using LegendPay.Models.ViewModels;
+using LegendPay.Models.ViewModels.Auth;
 using LegendPay.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;

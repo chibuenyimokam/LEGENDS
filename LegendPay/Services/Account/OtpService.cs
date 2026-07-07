@@ -43,5 +43,12 @@ namespace LegendPay.Services.Account
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public bool IsOtpValid(UserAccount account, string enteredOtp)
+        {
+            return account.OtpCode == enteredOtp 
+                && account.OtpExpiration.HasValue
+                && account.OtpExpiration > DateTime.Now;
+        }
     }
 }

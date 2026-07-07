@@ -4,6 +4,7 @@ using LegendPay.Models;
 using LegendPay.Models.Data;
 using LegendPay.Models.Data.Tables;
 using LegendPay.Models.ViewModels;
+using LegendPay.Models.ViewModels.Auth;
 using LegendPay.Services;
 using LegendPay.Services.Account;
 using Microsoft.AspNetCore.Authorization;
@@ -150,7 +151,47 @@ namespace LegendPay.Controllers
             return RedirectToAction("VerifyEmail", new { resent = true });
         }
 
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
 
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _authService.GetUserByEmailAsync(model.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "User not found");
+                return View(model);
+            }
+
+            var otp = _otpService.GenerateOtp();
+            await _otpService.ConfigureUserOtpAsync(user, otp);
+            await _emailService.SendOtpEmailAsync(user.Email, otp);
+
+        TempData["VerificationEmail"] = user.Email;
+            return RedirectToAction("ResetPassword");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var success = await _authService.ResetPasswordAsync(model.Email, model.OtpCode, model.NewPassword);
+            if (!success)
+            {
+                ModelState.AddModelError("", "Invalid OTP or email");
+                return View(model);
+            }
+            return RedirectToAction("Login");
+        }
         public IActionResult Login()
         {
             var redirectResult = RedirectIfAuthenticated();

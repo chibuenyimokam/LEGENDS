@@ -1,6 +1,6 @@
 ﻿using LegendPay.Models.Data.Tables;
 
-namespace LegendPay.Models.ViewModels
+namespace LegendPay.Models.ViewModels.Admin
 {
     public class AdminSupportInboxViewModel
     {

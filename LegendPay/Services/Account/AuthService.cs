@@ -3,7 +3,7 @@ using LegendPay.Interfaces.Transaction;
 using LegendPay.Models;
 using LegendPay.Models.Data;
 using LegendPay.Models.Data.Tables;
-using LegendPay.Models.ViewModels;
+using LegendPay.Models.ViewModels.Auth;
 using LegendPay.Models.ViewModels.UserDashboard;
 using LegendPay.Models.WalletStation.Request;
 using Microsoft.AspNetCore.Authentication;
@@ -184,6 +184,17 @@ namespace LegendPay.Services.Account
             await httpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity));
+        }
+        public async Task<bool> ResetPasswordAsync(string email, string otp, string newPassword)
+        {
+            var user = await GetUserByEmailAsync(email);
+            if (user == null) return false;
+            if (!_otpService.IsOtpValid(user, otp)) return false;
+            user.Password = HashPassword(newPassword);
+            user.OtpCode = null;
+            user.OtpExpiration = null;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<UserAccount?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10) =>

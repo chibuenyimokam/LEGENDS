@@ -7,7 +7,7 @@ namespace LegendPay.Interfaces.Auth
         string GenerateOtp();
         Task ConfigureUserOtpAsync(UserAccount account, string otp);
         Task<bool> ValidateUserOtpAsync(string email, string enteredOtp);
+        bool IsOtpValid(UserAccount account, string enteredOtp);
 
     }
-   
-    }
+}

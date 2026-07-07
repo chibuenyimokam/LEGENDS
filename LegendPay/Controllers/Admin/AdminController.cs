@@ -1,5 +1,5 @@
 ﻿using LegendPay.Interfaces.Admin;
-using LegendPay.Models.ViewModels;
+using LegendPay.Models.ViewModels.Auth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LegendPay.Controllers.Admin

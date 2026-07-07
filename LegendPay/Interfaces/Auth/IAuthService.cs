@@ -1,5 +1,5 @@
 ﻿using LegendPay.Models.Data.Tables;
-using LegendPay.Models.ViewModels;
+using LegendPay.Models.ViewModels.Auth;
 using LegendPay.Models.ViewModels.UserDashboard;
 using System.Globalization;
 
@@ -24,5 +24,6 @@ namespace LegendPay.Interfaces.Auth
         Task<SubscriptionsViewModel> GetSubscriptionsAsync(Guid userId);
         Task<BillHistoryViewModel> GetBillHistoryAsync(Guid userId, string? range, string? biller, string? amount, int page, int pageSize);
         Task<ReceiptViewModel?> GetBillReceiptAsync(Guid billId, Guid userId);
+        Task<bool> ResetPasswordAsync(string email, string otp, string newPassword);
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LegendPay.Models.ViewModels
+namespace LegendPay.Models.ViewModels.Auth
 {
     public class SignUpViewModel
     {
