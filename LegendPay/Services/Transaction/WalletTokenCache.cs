@@ -11,10 +11,10 @@
         private DateTime _expiry = DateTime.MinValue;
 
         private bool IsValid =>
-            _token != null && DateTime.UtcNow < _expiry.AddMinutes(-5);
+            _token != null && DateTime.Now < _expiry.AddDays(-1);
 
         /// Returns the cached token if still valid, otherwise acquires the lock,
-        /// double-checks, and calls <paramref name="fetchTokenFactory"/> exactly once
+        /// double-checks, and calls<paramref name="fetchTokenFactory"/> exactly once
         /// even when many concurrent requests arrive simultaneously (prevents cache stampede).
         public async Task<string> GetOrRefreshAsync(
             Func<Task<(string Token, DateTime Expiry)>> fetchTokenFactory,

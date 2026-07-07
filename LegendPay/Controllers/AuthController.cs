@@ -1,5 +1,6 @@
 ﻿using LegendPay.Interfaces.Auth;
 using LegendPay.Interfaces.Transaction;
+using LegendPay.Models;
 using LegendPay.Models.Data;
 using LegendPay.Models.Data.Tables;
 using LegendPay.Models.ViewModels;
@@ -15,7 +16,6 @@ namespace LegendPay.Controllers
 {
     public class AuthController : Controller
     {
-        // References to the database context and injected services
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
         private readonly IAuthService _authService;
@@ -37,6 +37,15 @@ namespace LegendPay.Controllers
             _logger = logger;
         }
 
+        private IActionResult RedirectIfAuthenticated()
+        {
+            if (User.Identity?.IsAuthenticated ?? false)
+            {
+                return RedirectToAction("HomePage", "Home");
+            }
+            return null;
+        }
+
         public IActionResult Index()
         {
             return View();
@@ -44,8 +53,15 @@ namespace LegendPay.Controllers
 
         public IActionResult SignUp()
         {
+            var redirectResult = RedirectIfAuthenticated();
+            if (redirectResult != null)
+            {
+                return redirectResult;
+            }
             return View(new SignUpViewModel());
         }
+
+        
 
         [HttpPost]
         public async Task<IActionResult> SignUp(SignUpViewModel model)
@@ -125,7 +141,7 @@ namespace LegendPay.Controllers
             }
             var newOtp = _otpService.GenerateOtp();
 
-            _otpService.ConfigureUserOtp(account, newOtp);
+            await _otpService.ConfigureUserOtpAsync(account, newOtp);
 
             await _emailService.SendOtpEmailAsync(account.Email, newOtp);
 
@@ -137,12 +153,18 @@ namespace LegendPay.Controllers
 
         public IActionResult Login()
         {
+            var redirectResult = RedirectIfAuthenticated();
+            if (redirectResult != null)
+            {
+                return redirectResult;
+            }
             return View(new LoginViewModel());
         }
 
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
+           
             if (ModelState.IsValid)
             {
                 
@@ -166,9 +188,11 @@ namespace LegendPay.Controllers
                     ModelState.AddModelError("", "Invalid email or password");
                 }
             }
+
             return View(model);
         }
 
+     
         public async Task<IActionResult> Logout()
         {
             await _authService.SignOutUserAsync(HttpContext); 
