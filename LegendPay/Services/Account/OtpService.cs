@@ -19,11 +19,12 @@ namespace LegendPay.Services.Account
             return new Random().Next(100000, 999999).ToString();
         }
 
-        public void ConfigureUserOtp(UserAccount account, string otp)
+        public async Task ConfigureUserOtpAsync(UserAccount account, string otp)
         {
             account.OtpCode = otp;
             account.OtpExpiration = DateTime.Now.AddMinutes(10);
             account.IsEmailVerified = false;
+            await _context.SaveChangesAsync();
         }
 
         public async Task<bool> ValidateUserOtpAsync(string email, string enteredOtp)

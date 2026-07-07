@@ -4,11 +4,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const hiddenOtpInput = document.getElementById("hiddenOtpCode");
     const form = document.getElementById("otpForm");
 
-    // Auto-focus management and shifting selection right/left
     inputs.forEach((input, index) => {
         input.addEventListener("input", (e) => {
             const value = e.target.value;
-            // Prevent non-numeric key entries
             if (!/^\d*$/.test(value)) {
                 e.target.value = "";
                 return;
@@ -19,14 +17,12 @@ document.addEventListener("DOMContentLoaded", function () {
             updateHiddenInput();
         });
 
-        // Shift focus back on backspace keypress
         input.addEventListener("keydown", (e) => {
             if (e.key === "Backspace" && !e.target.value && index > 0) {
                 inputs[index - 1].focus();
             }
         });
 
-        // Intercept standard full 6-digit paste event strings
         input.addEventListener("paste", (e) => {
             if (index === 0) {
                 const pasteData = (e.clipboardData || window.clipboardData).getData("text").trim();
@@ -42,7 +38,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Combines segmented box values into the model input property
     function updateHiddenInput() {
         let otpValue = "";
         inputs.forEach(input => {
@@ -51,7 +46,6 @@ document.addEventListener("DOMContentLoaded", function () {
         hiddenOtpInput.value = otpValue;
     }
 
-    // Block submission fires if form digits are incomplete
     form.addEventListener("submit", function (e) {
         updateHiddenInput();
         if (hiddenOtpInput.value.length !== 6) {
@@ -60,7 +54,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // 2. Countdown Timer functionality matching image layout (00:58)
     let totalSeconds = 58;
     const countdownElement = document.getElementById("countdown");
     const resendLink = document.getElementById("resendLink");
@@ -80,7 +73,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const badgeContainer = document.querySelector(".timer-badge-container");
             if (badgeContainer) badgeContainer.style.display = "none";
 
-            // Remove the CSS blockades so the anchor tag works normally
             resendLink.classList.remove("disabled-link");
             resendLink.style.color = "#0052cc";
             resendLink.style.cursor = "pointer";

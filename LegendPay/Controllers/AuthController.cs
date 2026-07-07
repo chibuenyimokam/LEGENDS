@@ -16,7 +16,6 @@ namespace LegendPay.Controllers
 {
     public class AuthController : Controller
     {
-        // References to the database context and injected services
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
         private readonly IAuthService _authService;
@@ -142,7 +141,7 @@ namespace LegendPay.Controllers
             }
             var newOtp = _otpService.GenerateOtp();
 
-            _otpService.ConfigureUserOtp(account, newOtp);
+            await _otpService.ConfigureUserOtpAsync(account, newOtp);
 
             await _emailService.SendOtpEmailAsync(account.Email, newOtp);
 
