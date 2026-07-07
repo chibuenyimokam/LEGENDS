@@ -42,7 +42,6 @@ namespace LegendPay.Controllers
         {
             return View();
         }
-        // this means only authenticated users can access this page
         [Authorize]
         public async Task<IActionResult> HomePage()
         {
@@ -140,7 +139,6 @@ namespace LegendPay.Controllers
 
             return View(model);
         }
-        // Helper method to map BillerOne categories to Material Icons
         private string MapCategoryToIcon(string category)
         {
             return category?.ToUpper() switch

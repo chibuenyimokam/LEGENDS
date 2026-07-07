@@ -58,7 +58,7 @@ namespace LegendPay.Services.Account
                     PhoneNumber = model.PhoneNumber
                 };
 
-                _otpService.ConfigureUserOtp(user, initialOtp);
+                await _otpService.ConfigureUserOtpAsync(user, initialOtp); //edit here
                 _context.UserAccounts.Add(user);
 
                 await _context.SaveChangesAsync();
