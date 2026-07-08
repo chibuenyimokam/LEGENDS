@@ -74,11 +74,36 @@
                 foreach (var msg in Model.Messages)
                 {
                     var isAdmin = msg.Sender == "Admin";
+                    var hasAttachment = !string.IsNullOrEmpty(msg.AttachmentPath);
+                    var isImage = hasAttachment && (msg.AttachmentPath!.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+                        || msg.AttachmentPath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                        || msg.AttachmentPath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                        || msg.AttachmentPath.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)
+                        || msg.AttachmentPath.EndsWith(".webp", StringComparison.OrdinalIgnoreCase));
                     <div class="flex @(isAdmin ? "justify-end" : "justify-start")">
                         <div class="max-w-[75%]">
-                            <div class="@(isAdmin ? "bg-primary text-white" : "bg-white border border-slate-200 text-slate-800") rounded-xl px-4 py-2.5 text-sm shadow-sm">
-                                @msg.MessageText
-                            </div>
+                            @if (!string.IsNullOrWhiteSpace(msg.MessageText))
+                            {
+                                <div class="@(isAdmin ? "bg-primary text-white" : "bg-white border border-slate-200 text-slate-800") rounded-xl px-4 py-2.5 text-sm shadow-sm">
+                                    @msg.MessageText
+                                </div>
+                            }
+                            @if (hasAttachment)
+                            {
+                                <a href="@msg.AttachmentPath" target="_blank" rel="noopener" class="block mt-1.5">
+                                    @if (isImage)
+                                    {
+                                        <img src="@msg.AttachmentPath" alt="Attachment" class="max-w-[220px] max-h-56 rounded-lg border border-slate-200 object-cover" />
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-sm hover:bg-slate-50 transition-colors">
+                                            <span class="material-symbols-outlined text-[18px] text-primary">attach_file</span>
+                                            View attachment
+                                        </span>
+                                    }
+                                </a>
+                            }
                             <p class="text-[11px] text-on-surface-variant/70 mt-1 @(isAdmin ? "text-right" : "text-left")">
                                 @(isAdmin ? "You" : name) • @WatTime.FromUtc(msg.CreatedAt).ToString("dd MMM, HH:mm")
                             </p>
