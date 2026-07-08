@@ -48,8 +48,10 @@ namespace LegendPay.Models.Data.Tables
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? WalletId { get; set; }      
         public string? CustomerId { get; set; }    //might not be needed
-        public string? AccountNumber { get; set; } 
+        public string? AccountNumber { get; set; }
         public string? BankName { get; set; }
+
+        public decimal Balance { get; set; } = 0.00m;
 
         // Navigation Properties
         public Wallet Wallet { get; set; }
