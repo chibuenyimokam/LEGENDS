@@ -9,5 +9,6 @@ namespace LegendPay.Interfaces.Admin
         Task<ServiceResponse<SupportChat>> GetChatAsync(Guid chatId);
         Task<ServiceResponse<SupportMessage>> SendReplyAsync(Guid chatId, Guid adminAccountId, string messageText);
         Task<ServiceResponse<SupportChat>> UpdateChatStatusAsync(Guid chatId, string newStatus);
+        Task<int> GetAwaitingReplyCountAsync();
     }
 }

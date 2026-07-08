@@ -211,10 +211,10 @@
                     badge.classList.remove('hidden');
                     list.innerHTML = `
                         <a href="${disputesUrl}" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
-                            <span class="material-symbols-outlined text-[20px] text-primary mt-0.5">gavel</span>
+                            <span class="material-symbols-outlined text-[20px] text-primary mt-0.5">forum</span>
                             <div class="flex-1">
-                                <p class="text-sm text-slate-800 font-medium">${count} open dispute${count === 1 ? '' : 's'} awaiting response</p>
-                                <p class="text-[11px] text-primary mt-1 font-semibold">Review now →</p>
+                                <p class="text-sm text-slate-800 font-medium">${count} ticket${count === 1 ? '' : 's'} awaiting your reply</p>
+                                <p class="text-[11px] text-primary mt-1 font-semibold">Open disputes →</p>
                             </div>
                         </a>`;
                 } else {

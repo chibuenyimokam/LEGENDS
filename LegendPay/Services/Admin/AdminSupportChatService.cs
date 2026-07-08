@@ -77,6 +77,13 @@ namespace LegendPay.Services.Admin
 
                 _context.SupportMessages.Add(message);
 
+                _context.Notifications.Add(new Notification
+                {
+                    UserAccountId = chat.UserAccountId,
+                    Type = "SupportReply",
+                    Message = $"Support replied to your ticket \"{chat.Subject}\". Tap to view the conversation."
+                });
+
                 chat.UpdatedAt = DateTime.UtcNow;
                 if (chat.Status == SupportChatStatus.Open.ToString())
                     chat.Status = SupportChatStatus.InProgress.ToString();
@@ -89,6 +96,22 @@ namespace LegendPay.Services.Admin
             {
                 return ServiceResponse<SupportMessage>.FailureResponse($"An error occurred: {ex.Message}");
             }
+        }
+
+        public async Task<int> GetAwaitingReplyCountAsync()
+        {
+            var openChats = await _context.SupportChats
+                .Where(c => c.Status != "Closed" && c.Status != "Resolved")
+                .Select(c => new
+                {
+                    LastSender = c.Messages!
+                        .OrderByDescending(m => m.CreatedAt)
+                        .Select(m => m.Sender)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return openChats.Count(c => c.LastSender == "User");
         }
 
         public async Task<ServiceResponse<SupportChat>> UpdateChatStatusAsync(Guid chatId, string newStatus)
