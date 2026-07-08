@@ -99,8 +99,7 @@ namespace LegendPay.Controllers.Admin
         [HttpGet]
         public async Task<IActionResult> OpenCount()
         {
-            var response = await _adminSupportChatService.GetAllChatsAsync("Open");
-            var count = response.Success && response.Data != null ? response.Data.Count : 0;
+            var count = await _adminSupportChatService.GetAwaitingReplyCountAsync();
             return Json(new { count });
         }
 
