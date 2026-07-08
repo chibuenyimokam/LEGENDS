@@ -142,6 +142,64 @@ namespace LegendPay.Controllers
         }
 
 
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var otp = _otpService.GenerateOtp();
+            var exists = await _authService.GeneratePasswordResetAsync(model.Email, otp);
+
+            if (exists)
+            {
+                try
+                {
+                    await _emailService.SendOtpEmailAsync(model.Email, otp);
+                }
+                catch (Exception)
+                {
+                    TempData["OtpEmailFailed"] = true;
+                }
+            }
+
+            TempData["ResetEmail"] = model.Email;
+            return RedirectToAction("ResetPassword");
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword()
+        {
+            var email = TempData["ResetEmail"] as string;
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("ForgotPassword");
+
+            return View(new ResetPasswordViewModel { Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var success = await _authService.ResetPasswordAsync(model.Email, model.OtpCode, model.NewPassword);
+            if (!success)
+            {
+                ModelState.AddModelError("", "Invalid or expired code. Please request a new one.");
+                return View(model);
+            }
+
+            TempData["PasswordReset"] = true;
+            return RedirectToAction("Login");
+        }
+
         public IActionResult Login()
         {
             return View(new LoginViewModel());

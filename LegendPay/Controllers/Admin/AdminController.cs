@@ -88,6 +88,51 @@ namespace LegendPay.Controllers.Admin
         }
 
         [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View("~/Views/Admin/AdminForgotPassword.cshtml", new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View("~/Views/Admin/AdminForgotPassword.cshtml", model);
+
+            await _adminAuthService.ForgotPasswordAsync(model.Email);
+
+            TempData["AdminResetEmail"] = model.Email;
+            return RedirectToAction("ResetPassword");
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword()
+        {
+            var email = TempData["AdminResetEmail"] as string;
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("ForgotPassword");
+
+            return View("~/Views/Admin/AdminResetPassword.cshtml", new ResetPasswordViewModel { Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View("~/Views/Admin/AdminResetPassword.cshtml", model);
+
+            var response = await _adminAuthService.ResetPasswordAsync(model.Email, model.OtpCode, model.NewPassword);
+            if (!response.Success)
+            {
+                ModelState.AddModelError("", response.Message);
+                return View("~/Views/Admin/AdminResetPassword.cshtml", model);
+            }
+
+            TempData["AdminPasswordReset"] = true;
+            return RedirectToAction("Login");
+        }
+
+        [HttpGet]
         [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> Dashboard()
         {
