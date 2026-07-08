@@ -281,7 +281,12 @@
                 SupportReply: '/UserSupportChat/UserSupport'
             };
 
-            function linkFor(type) { return links[type] || '/Home/HomePage'; }
+            function linkFor(n) {
+                if (n.type === 'SupportReply' && n.referenceId) {
+                    return '/UserSupportChat/OpenChat?chatId=' + n.referenceId;
+                }
+                return links[n.type] || '/Home/HomePage';
+            }
 
             function renderCount(count) {
                 if (count > 0) {
@@ -311,7 +316,7 @@
                         return;
                     }
                     list.innerHTML = items.map(n => `
-                        <a href="${linkFor(n.type)}" data-id="${n.id}" class="notif-item flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors ${n.isRead ? '' : 'bg-blue-50/40'}">
+                        <a href="${linkFor(n)}" data-id="${n.id}" class="notif-item flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors ${n.isRead ? '' : 'bg-blue-50/40'}">
                             <span class="material-symbols-outlined text-[20px] text-primary mt-0.5">${icons[n.type] || 'notifications'}</span>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm text-slate-800 leading-snug">${n.message}</p>
