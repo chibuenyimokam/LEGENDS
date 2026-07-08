@@ -58,6 +58,7 @@ namespace LegendPay.Controllers
                     n.Type,
                     n.Message,
                     n.IsRead,
+                    n.ReferenceId,
                     Time = n.CreatedAt.ToString("hh:mm tt"),
                     Date = n.CreatedAt.ToString("MMM dd")
                 })
