@@ -124,17 +124,15 @@ function submitMessage() {
     const input = document.getElementById('messageInput');
     const hidden = document.getElementById('messageTextHidden');
     const chatId = document.getElementById('chatIdInput')?.value;
+    const hasFile = attachmentInput && attachmentInput.files && attachmentInput.files.length > 0;
 
-    if (!input || !chatId || input.value.trim() === '') return;
+    if (!input || !chatId) return;
+    if (input.value.trim() === '' && !hasFile) return;
 
     hidden.value = input.value.trim();
-    input.value = '';
 
     // Close emoji picker
     document.getElementById('emojiPicker')?.classList.remove('show');
-
-    // Reset attachment bar
-    hideAttachmentBar();
 
     document.getElementById('sendMessageForm').submit();
 }
