@@ -45,16 +45,22 @@ namespace LegendPay.Controllers
             var user = await _authService.GetUserByEmailAsync(userEmail);
             if (user == null) return RedirectToAction("Login", "Auth");
 
+            if (string.IsNullOrEmpty(user.AccountNumber))
+            {
+                await _authService.TryProvisionWalletAsync(user);
+            }
+
             var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 10);
+            var ledgerBalance = await _authService.GetLedgerBalanceAsync(user);
 
             var model = new WalletDashboardViewModel
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 CustomerId = user.CustomerId ?? string.Empty,
-                AccountNumber = wallet?.AccountNumber ?? user.AccountNumber ?? string.Empty,
-                BankName = wallet?.BankName ?? user.BankName ?? string.Empty,
-                Balance = wallet?.Balance ?? 0m,
+                AccountNumber = user.AccountNumber ?? wallet?.AccountNumber ?? string.Empty,
+                BankName = user.BankName ?? wallet?.BankName ?? string.Empty,
+                Balance = ledgerBalance,
                 RecentTransactions = wallet?.WalletTransactions?
                     .Select(t => new RecentTransactionViewModel
                     {
@@ -82,11 +88,9 @@ namespace LegendPay.Controllers
             var user = await _authService.GetUserByEmailAsync(userEmail);
             if (user == null) return RedirectToAction("Login", "Auth");
 
-            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
-
             var model = new PayBillsViewModel
             {
-                AvailableBalance = wallet?.Balance ?? 0m,
+                AvailableBalance = await _authService.GetLedgerBalanceAsync(user),
                 RecentFavorites = new List<RecentBillerViewModel>()
             };
 

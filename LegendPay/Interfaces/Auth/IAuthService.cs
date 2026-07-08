@@ -18,6 +18,7 @@ namespace LegendPay.Interfaces.Auth
         Task<UserAccount?>CreateAndSaveUserAsync(SignUpViewModel model, string initialotp);
         Task<UserAccount?> ValidateLoginCredentialsAsync(string identifier, string plainPassword);
         Task<decimal?> GetUserBalanceAsync(string email);
+        Task<decimal> GetLedgerBalanceAsync(UserAccount user);
         Task<bool> TryProvisionWalletAsync(UserAccount user);
         Task<Wallet?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10);
         Task<UserDashboardViewModel> GetUserDashboardAsync(UserAccount user);
