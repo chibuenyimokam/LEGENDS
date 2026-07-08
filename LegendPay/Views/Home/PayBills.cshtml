@@ -69,7 +69,10 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach (var cat in categories)
             {
-                <a href="@(cat.Name == "Electricity" ? Url.Action("ElectricityBillers", "Home") : "#")" class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
+                <a href="@(cat.Name == "Electricity" ? Url.Action("ElectricityBillers", "Home") :
+                            cat.Name == "Airtime" ? Url.Action("AirtimeDetails", "Home") :
+                            cat.Name == "Internet / Data" ? Url.Action("InternetDetails", "Home") :
+                            cat.Name == "Digital TV" ? Url.Action("DigitalTVBillers", "Home") : "#")"  class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
                     <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                         <span class="material-symbols-outlined">@cat.Icon</span>
                     </div>
