@@ -52,7 +52,7 @@ namespace LegendPay.Controllers
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 CustomerId = user.CustomerId ?? string.Empty,
-                AccountNumber = wallet?.StaticAccountNumber ?? user.AccountNumber ?? string.Empty,
+                AccountNumber = wallet?.AccountNumber ?? user.AccountNumber ?? string.Empty,
                 BankName = wallet?.BankName ?? user.BankName ?? string.Empty,
                 Balance = wallet?.Balance ?? 0m,
                 RecentTransactions = wallet?.WalletTransactions?

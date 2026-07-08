@@ -14,16 +14,16 @@ namespace LegendPay.Models.Data.Tables
         [ForeignKey(nameof(UserAccountId))]
         public UserAccount UserAccount { get; set; }
 
+        public string CustomerId { get; set; }
+
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        public decimal Balance { get; set; } = 0;
+        public decimal Balance { get; set; } = 0.00m;
 
         [Required]
-        [MaxLength(20)]
-        public string StaticAccountNumber { get; set; }
+        public string AccountNumber { get; set; }
 
         [Required]
-        [MaxLength(100)]
         public string BankName { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
