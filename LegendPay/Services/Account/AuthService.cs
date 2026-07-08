@@ -41,6 +41,31 @@ namespace LegendPay.Services.Account
         public async Task<UserAccount?> GetUserByEmailAsync(string email) =>
             await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
 
+        public async Task<bool> GeneratePasswordResetAsync(string email, string otp)
+        {
+            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+                return false;
+
+            user.OtpCode = otp;
+            user.OtpExpiration = DateTime.Now.AddMinutes(10);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ResetPasswordAsync(string email, string otp, string newPassword)
+        {
+            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null || user.OtpCode != otp || user.OtpExpiration == null || user.OtpExpiration < DateTime.Now)
+                return false;
+
+            user.Password = HashPassword(newPassword);
+            user.OtpCode = null;
+            user.OtpExpiration = null;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<UserAccount?> CreateAndSaveUserAsync(SignUpViewModel model, string initialOtp)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
