@@ -195,9 +195,21 @@
                 </div>
             </div>
             <div class="flex items-center gap-5">
-                <button class="p-1.5 text-on-surface-variant hover:text-slate-900 transition-colors">
-                    <span class="material-symbols-outlined">notifications</span>
-                </button>
+                <div class="relative" id="notifWrapper">
+                    <button type="button" id="notifBtn" class="p-1.5 text-on-surface-variant hover:text-slate-900 transition-colors relative" aria-label="Notifications">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span id="notifBadge" class="hidden absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">0</span>
+                    </button>
+                    <div id="notifPanel" class="hidden absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-[60] overflow-hidden">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                            <p class="text-sm font-bold text-slate-900">Notifications</p>
+                            <button type="button" id="notifMarkAll" class="text-[11px] font-semibold text-primary hover:underline">Mark all read</button>
+                        </div>
+                        <div id="notifList" class="max-h-96 overflow-y-auto divide-y divide-slate-50">
+                            <p class="px-4 py-8 text-center text-sm text-on-surface-variant">Loading…</p>
+                        </div>
+                    </div>
+                </div>
                 <div class="flex items-center gap-3 pl-5 border-l border-slate-200">
                     <div class="text-right">
                         <p class="text-sm font-semibold text-slate-900">@fullName</p>
@@ -237,6 +249,92 @@
             toast.style.opacity = '1';
             setTimeout(() => { toast.style.opacity = '0'; }, 2000);
         }
+    </script>
+
+    <script>
+        (function () {
+            const btn = document.getElementById('notifBtn');
+            const panel = document.getElementById('notifPanel');
+            const badge = document.getElementById('notifBadge');
+            const list = document.getElementById('notifList');
+            const markAll = document.getElementById('notifMarkAll');
+            const wrapper = document.getElementById('notifWrapper');
+            if (!btn) return;
+
+            const icons = {
+                WalletFunded: 'account_balance_wallet',
+                BillPaid: 'receipt_long',
+                Reminder: 'schedule',
+                AutoPay: 'autorenew',
+                CashbackCredited: 'redeem',
+                LowBalance: 'warning'
+            };
+
+            function renderCount(count) {
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+
+            async function loadCount() {
+                try {
+                    const res = await fetch('/Notification/GetUnreadCount');
+                    const data = await res.json();
+                    renderCount(data.count || 0);
+                } catch { }
+            }
+
+            async function loadList() {
+                list.innerHTML = '<p class="px-4 py-8 text-center text-sm text-on-surface-variant">Loading…</p>';
+                try {
+                    const res = await fetch('/Notification/GetAll');
+                    const data = await res.json();
+                    const items = data.notifications || [];
+                    if (!items.length) {
+                        list.innerHTML = '<p class="px-4 py-10 text-center text-sm text-on-surface-variant">You\'re all caught up.</p>';
+                        return;
+                    }
+                    list.innerHTML = items.map(n => `
+                        <div class="flex items-start gap-3 px-4 py-3 ${n.isRead ? '' : 'bg-blue-50/40'}">
+                            <span class="material-symbols-outlined text-[20px] text-primary mt-0.5">${icons[n.type] || 'notifications'}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-slate-800 leading-snug">${n.message}</p>
+                                <p class="text-[11px] text-on-surface-variant mt-1">${n.date} • ${n.time}</p>
+                            </div>
+                            ${n.isRead ? '' : '<span class="w-2 h-2 rounded-full bg-blue-500 mt-1.5"></span>'}
+                        </div>`).join('');
+                } catch {
+                    list.innerHTML = '<p class="px-4 py-8 text-center text-sm text-on-surface-variant">Could not load notifications.</p>';
+                }
+            }
+
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const open = !panel.classList.contains('hidden');
+                if (open) { panel.classList.add('hidden'); return; }
+                panel.classList.remove('hidden');
+                loadList();
+            });
+
+            document.addEventListener('click', function (e) {
+                if (wrapper && !wrapper.contains(e.target)) panel.classList.add('hidden');
+            });
+
+            markAll.addEventListener('click', async function (e) {
+                e.stopPropagation();
+                try {
+                    await fetch('/Notification/MarkAllRead', { method: 'POST' });
+                    renderCount(0);
+                    loadList();
+                } catch { }
+            });
+
+            loadCount();
+            setInterval(loadCount, 60000);
+        })();
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

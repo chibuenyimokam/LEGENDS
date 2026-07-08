@@ -96,6 +96,14 @@ namespace LegendPay.Controllers.Admin
             return RedirectToAction("AdminSupport", new { chatId });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> OpenCount()
+        {
+            var response = await _adminSupportChatService.GetAllChatsAsync("Open");
+            var count = response.Success && response.Data != null ? response.Data.Count : 0;
+            return Json(new { count });
+        }
+
         [HttpPost]
         public async Task<IActionResult> UpdateStatus(Guid chatId, string newStatus)
         {
