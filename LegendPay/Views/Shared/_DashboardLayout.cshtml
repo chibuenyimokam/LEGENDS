@@ -267,8 +267,21 @@
                 Reminder: 'schedule',
                 AutoPay: 'autorenew',
                 CashbackCredited: 'redeem',
-                LowBalance: 'warning'
+                LowBalance: 'warning',
+                SupportReply: 'support_agent'
             };
+
+            const links = {
+                WalletFunded: '/Home/FundWallet',
+                CashbackCredited: '/Home/FundWallet',
+                LowBalance: '/Home/FundWallet',
+                BillPaid: '/Home/History',
+                Reminder: '/Home/Subscriptions',
+                AutoPay: '/Home/Subscriptions',
+                SupportReply: '/UserSupportChat/UserSupport'
+            };
+
+            function linkFor(type) { return links[type] || '/Home/HomePage'; }
 
             function renderCount(count) {
                 if (count > 0) {
@@ -298,14 +311,25 @@
                         return;
                     }
                     list.innerHTML = items.map(n => `
-                        <div class="flex items-start gap-3 px-4 py-3 ${n.isRead ? '' : 'bg-blue-50/40'}">
+                        <a href="${linkFor(n.type)}" data-id="${n.id}" class="notif-item flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors ${n.isRead ? '' : 'bg-blue-50/40'}">
                             <span class="material-symbols-outlined text-[20px] text-primary mt-0.5">${icons[n.type] || 'notifications'}</span>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm text-slate-800 leading-snug">${n.message}</p>
                                 <p class="text-[11px] text-on-surface-variant mt-1">${n.date} • ${n.time}</p>
                             </div>
                             ${n.isRead ? '' : '<span class="w-2 h-2 rounded-full bg-blue-500 mt-1.5"></span>'}
-                        </div>`).join('');
+                        </a>`).join('');
+
+                    list.querySelectorAll('.notif-item').forEach(a => {
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            const id = this.getAttribute('data-id');
+                            const href = this.getAttribute('href');
+                            fetch('/Notification/MarkRead/' + id, { method: 'POST' })
+                                .catch(() => { })
+                                .finally(() => { window.location.href = href; });
+                        });
+                    });
                 } catch {
                     list.innerHTML = '<p class="px-4 py-8 text-center text-sm text-on-surface-variant">Could not load notifications.</p>';
                 }
