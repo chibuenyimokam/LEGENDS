@@ -60,7 +60,14 @@ namespace LegendPay.Controllers
                 {
                     var user = await _authService.CreateAndSaveUserAsync(model, otp); 
 
-                    await _emailService.SendOtpEmailAsync(model.Email, otp);
+                    try
+                    {
+                        await _emailService.SendOtpEmailAsync(model.Email, otp);
+                    }
+                    catch (Exception)
+                    {
+                        TempData["OtpEmailFailed"] = true;
+                    }
 
                     TempData["VerificationEmail"] = model.Email;
 

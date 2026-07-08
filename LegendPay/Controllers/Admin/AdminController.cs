@@ -1,16 +1,34 @@
 ﻿using LegendPay.Interfaces.Admin;
 using LegendPay.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace LegendPay.Controllers.Admin
 {
     public class AdminController : Controller
     {
         private readonly IAdminAuthService _adminAuthService;
+        private readonly IAdminDashboardService _adminDashboardService;
+        private readonly IAdminUserService _adminUserService;
+        private readonly IAdminTransactionService _adminTransactionService;
+        private readonly IAdminReportService _adminReportService;
+        private readonly IAdminSettingsService _adminSettingsService;
 
-        public AdminController(IAdminAuthService adminAuthService)
+        public AdminController(
+            IAdminAuthService adminAuthService,
+            IAdminDashboardService adminDashboardService,
+            IAdminUserService adminUserService,
+            IAdminTransactionService adminTransactionService,
+            IAdminReportService adminReportService,
+            IAdminSettingsService adminSettingsService)
         {
             _adminAuthService = adminAuthService;
+            _adminDashboardService = adminDashboardService;
+            _adminUserService = adminUserService;
+            _adminTransactionService = adminTransactionService;
+            _adminReportService = adminReportService;
+            _adminSettingsService = adminSettingsService;
         }
 
         [HttpGet]
@@ -70,9 +88,64 @@ namespace LegendPay.Controllers.Admin
         }
 
         [HttpGet]
-        public IActionResult Dashboard()
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> Dashboard()
         {
-            return View("~/Views/Admin/Dashboard.cshtml");
+            var model = await _adminDashboardService.GetDashboardAsync();
+            return View("~/Views/Admin/Dashboard.cshtml", model);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> UserRegistry(string? search, string? status, decimal? minBalance, int page = 1)
+        {
+            var model = await _adminUserService.GetUserRegistryAsync(search, status, minBalance, page, 15);
+            return View("~/Views/Admin/UserRegistry.cshtml", model);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> Transactions(string? status, string? biller, string? method, int page = 1)
+        {
+            var model = await _adminTransactionService.GetTransactionsAsync(status, biller, method, page, 15);
+            return View("~/Views/Admin/Transactions.cshtml", model);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> Reports()
+        {
+            var model = await _adminReportService.GetReportsAsync();
+            return View("~/Views/Admin/Reports.cshtml", model);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> LegendPoints()
+        {
+            var model = await _adminSettingsService.GetLegendPointsAsync();
+            return View("~/Views/Admin/LegendPoints.cshtml", model);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> LegendPoints(AdminLegendPointsViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var reloaded = await _adminSettingsService.GetLegendPointsAsync();
+                model.TotalPointsIssued = reloaded.TotalPointsIssued;
+                model.TotalRedeemedPoints = reloaded.TotalRedeemedPoints;
+                model.ActiveUsers = reloaded.ActiveUsers;
+                model.UpdatedAt = reloaded.UpdatedAt;
+                return View("~/Views/Admin/LegendPoints.cshtml", model);
+            }
+
+            Guid? adminId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+            await _adminSettingsService.UpdateLegendPointsAsync(model, adminId);
+
+            TempData["Saved"] = true;
+            return RedirectToAction("LegendPoints");
         }
 
         [HttpPost]
