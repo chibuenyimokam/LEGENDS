@@ -235,11 +235,13 @@ namespace LegendPay.Services.Account
 
             var totalSpending = spending.Sum(s => s.TotalSpent);
 
+            var ledgerBalance = await GetLedgerBalanceAsync(user);
+
             return new UserDashboardViewModel
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                WalletBalance = wallet?.Balance ?? 0m,
+                WalletBalance = ledgerBalance,
                 LegendPoints = legendPoint == null ? 0 : legendPoint.TotalPoints - legendPoint.RedeemedPoints,
                 PendingBillsCount = pendingBills.Count,
                 PendingBillsTotal = pendingBills.Sum(b => b.Amount),
@@ -420,6 +422,33 @@ namespace LegendPay.Services.Account
                 return null;
 
             return await _walletService.GetBalanceAsync(user.CustomerId);
+        }
+
+        public async Task<decimal> GetLedgerBalanceAsync(UserAccount user)
+        {
+            if (!string.IsNullOrEmpty(user.CustomerId))
+            {
+                try
+                {
+                    var live = await _walletService.GetBalanceAsync(user.CustomerId);
+                    if (live.HasValue)
+                    {
+                        if (user.Balance != live.Value)
+                        {
+                            user.Balance = live.Value;
+                            _context.Entry(user).State = EntityState.Modified;
+                            await _context.SaveChangesAsync();
+                        }
+                        return live.Value;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Live balance lookup failed for {Email}; using stored balance.", user.Email);
+                }
+            }
+
+            return user.Balance;
         }
 
         public async Task SignOutUserAsync(HttpContext httpContext) =>
