@@ -96,6 +96,26 @@ namespace LegendPay.Controllers.Admin
             return RedirectToAction("AdminSupport", new { chatId });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> OpenCount()
+        {
+            var count = await _adminSupportChatService.GetAwaitingReplyCountAsync();
+            return Json(new { count });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Awaiting()
+        {
+            var chats = await _adminSupportChatService.GetAwaitingReplyChatsAsync();
+            var items = chats.Select(c => new
+            {
+                chatId = c.Id,
+                subject = c.Subject,
+                user = c.UserAccount != null ? $"{c.UserAccount.FirstName} {c.UserAccount.LastName}" : "Unknown"
+            });
+            return Json(new { items });
+        }
+
         [HttpPost]
         public async Task<IActionResult> UpdateStatus(Guid chatId, string newStatus)
         {

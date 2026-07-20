@@ -88,6 +88,52 @@ namespace LegendPay.Services.Admin
             }
         }
 
+        public async Task<ServiceResponse<string>> ForgotPasswordAsync(string email)
+        {
+            try
+            {
+                var admin = await _context.AdminAccounts.FirstOrDefaultAsync(a => a.Email == email);
+
+                if (admin != null && admin.IsActive)
+                {
+                    var code = new Random().Next(100000, 999999).ToString();
+                    admin.TwoFactorCode = code;
+                    admin.TwoFactorExpiration = DateTime.UtcNow.AddMinutes(10);
+                    await _context.SaveChangesAsync();
+
+                    await _emailService.SendTwoFactorCodeAsync(admin.Email, code);
+                }
+
+                return ServiceResponse<string>.SuccessResponse(email, "If an account exists for that email, a reset code has been sent.");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResponse<string>.FailureResponse($"An error occurred: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceResponse<string>> ResetPasswordAsync(string email, string code, string newPassword)
+        {
+            try
+            {
+                var admin = await _context.AdminAccounts.FirstOrDefaultAsync(a => a.Email == email);
+
+                if (admin == null || admin.TwoFactorCode != code || admin.TwoFactorExpiration == null || admin.TwoFactorExpiration < DateTime.UtcNow)
+                    return ServiceResponse<string>.FailureResponse("Invalid or expired code. Please request a new one.");
+
+                admin.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+                admin.TwoFactorCode = null;
+                admin.TwoFactorExpiration = null;
+                await _context.SaveChangesAsync();
+
+                return ServiceResponse<string>.SuccessResponse("", "Your password has been reset. Please log in.");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResponse<string>.FailureResponse($"An error occurred: {ex.Message}");
+            }
+        }
+
         public async Task<ServiceResponse<string>> LogoutAsync(HttpContext httpContext)
         {
             try

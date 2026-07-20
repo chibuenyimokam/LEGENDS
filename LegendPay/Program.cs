@@ -53,6 +53,11 @@ namespace LegendPay
             builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
             builder.Services.AddScoped<IUserSupportChatService, UserSupportChatService>();
             builder.Services.AddScoped<IAdminSupportChatService, AdminSupportChatService>();
+            builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+            builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+            builder.Services.AddScoped<IAdminTransactionService, AdminTransactionService>();
+            builder.Services.AddScoped<IAdminReportService, AdminReportService>();
+            builder.Services.AddScoped<IAdminSettingsService, AdminSettingsService>();
             builder.Services.AddSignalR();
 
 
@@ -90,6 +95,11 @@ namespace LegendPay
                 name: "default",
                 pattern: "{controller=Home}/{action=Onboarding}/{id?}")
                 .WithStaticAssets();
+
+            if (app.Environment.IsDevelopment())
+            {
+                LegendPay.Data.AdminSeeder.SeedAsync(app.Services, app.Configuration).GetAwaiter().GetResult();
+            }
 
             app.Run();
         }
