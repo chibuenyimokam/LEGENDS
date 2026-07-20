@@ -24,6 +24,8 @@ namespace LegendPay.Models.Data.Tables
 
         public bool IsRead { get; set; } = false;
 
+        public Guid? ReferenceId { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

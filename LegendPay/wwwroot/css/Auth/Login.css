@@ -282,6 +282,16 @@ body {
     display: block;
 }
 
+.reset-success {
+    color: #0a7d43;
+    background: #e7f6ec;
+    border: 1px solid #b7e4c7;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     body {

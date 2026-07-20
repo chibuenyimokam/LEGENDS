@@ -46,6 +46,8 @@ namespace LegendPay.Controllers
 
             var userId = Guid.Parse(userIdClaim);
 
+            await PruneAsync(userId);
+
             var notifications = await _context.Notifications
                 .Where(n => n.UserAccountId == userId)
                 .OrderByDescending(n => n.CreatedAt)
@@ -56,6 +58,7 @@ namespace LegendPay.Controllers
                     n.Type,
                     n.Message,
                     n.IsRead,
+                    n.ReferenceId,
                     Time = n.CreatedAt.ToString("hh:mm tt"),
                     Date = n.CreatedAt.ToString("MMM dd")
                 })
@@ -102,6 +105,23 @@ namespace LegendPay.Controllers
             await _context.SaveChangesAsync();
 
             return Json(new { success = true });
+        }
+
+        private async Task PruneAsync(Guid userId)
+        {
+            var readCutoff = DateTime.UtcNow.AddHours(-48);
+            var hardCutoff = DateTime.UtcNow.AddDays(-30);
+
+            var stale = await _context.Notifications
+                .Where(n => n.UserAccountId == userId
+                    && ((n.IsRead && n.CreatedAt < readCutoff) || n.CreatedAt < hardCutoff))
+                .ToListAsync();
+
+            if (stale.Count > 0)
+            {
+                _context.Notifications.RemoveRange(stale);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

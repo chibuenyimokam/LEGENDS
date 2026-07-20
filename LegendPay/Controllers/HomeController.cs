@@ -69,7 +69,13 @@ namespace LegendPay.Controllers
             var user = await _authService.GetUserByIdAsync(userId.Value);
             if (user == null) return RedirectToAction("Login", "Auth");
 
+            if (string.IsNullOrEmpty(user.AccountNumber))
+            {
+                await _authService.TryProvisionWalletAsync(user);
+            }
+
             var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 10);
+            var ledgerBalance = await _authService.GetLedgerBalanceAsync(user);
 
             var model = new WalletDashboardViewModel
             {
