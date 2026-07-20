@@ -14,18 +14,20 @@ namespace LegendPay.Controllers
         private readonly IAuthService _authService;
         private readonly IWalletService _walletService;
         private readonly ILogger<HomeController> _logger;
+        private readonly IBillerOneService _billerOneService;
+
 
 
         public HomeController(
-                IEmailService emailService,
-                IOtpService otpService,
                 IAuthService authService,
                 IWalletService walletService,
+                IBillerOneService billerOneService,
                 ILogger<HomeController> logger)
         {
             _authService = authService;
             _walletService = walletService;
             _logger = logger;
+            _billerOneService = billerOneService;
         }
         public IActionResult Index()
         {
@@ -36,13 +38,35 @@ namespace LegendPay.Controllers
         {
             return View();
         }
+        public IActionResult Onboarding()
+        {
+            return View();
+        }
+        [Authorize]
+        public async Task<IActionResult> HomePage()
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            if (string.IsNullOrEmpty(user.AccountNumber))
+            {
+                await _authService.TryProvisionWalletAsync(user);
+            }
+
+            var model = await _authService.GetUserDashboardAsync(user);
+
+            return View(model);
+        }
         [Authorize]
         public async Task<IActionResult> FundWallet()
         {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
 
-            var user = await _authService.GetUserByEmailAsync(userEmail);
+            var user = await _authService.GetUserByIdAsync(userId.Value);
             if (user == null) return RedirectToAction("Login", "Auth");
 
             if (string.IsNullOrEmpty(user.AccountNumber))
@@ -58,9 +82,9 @@ namespace LegendPay.Controllers
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 CustomerId = user.CustomerId ?? string.Empty,
-                AccountNumber = user.AccountNumber ?? wallet?.AccountNumber ?? string.Empty,
-                BankName = user.BankName ?? wallet?.BankName ?? string.Empty,
-                Balance = ledgerBalance,
+                AccountNumber = wallet?.AccountNumber ?? user.AccountNumber ?? string.Empty,
+                BankName = wallet?.BankName ?? user.BankName ?? string.Empty,
+                WalletBalance = user.Balance,
                 RecentTransactions = wallet?.WalletTransactions?
                     .Select(t => new RecentTransactionViewModel
                     {
@@ -82,28 +106,69 @@ namespace LegendPay.Controllers
         [Authorize]
         public async Task<IActionResult> PayBills()
         {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
 
-            var user = await _authService.GetUserByEmailAsync(userEmail);
+            var user = await _authService.GetUserByIdAsync(userId.Value);
             if (user == null) return RedirectToAction("Login", "Auth");
+
+            var categoriesResponse = await _billerOneService.GetCategoriesAsync();
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+            var billersResponse = await _billerOneService.GetBillersAsync();
 
             var model = new PayBillsViewModel
             {
-                AvailableBalance = await _authService.GetLedgerBalanceAsync(user),
-                RecentFavorites = new List<RecentBillerViewModel>()
+                AvailableBalance = wallet?.Balance ?? 0m,
+                RecentFavorites = new List<RecentBillerViewModel>(),
+                Categories = categoriesResponse?.CategoryList?
+                .Select(c => new BillerCategoryViewModel
+                {
+                    Category = c.Category,
+                    LogoUrl = c.LogoUrl,
+                    IconName = MapCategoryToIcon(c.Category)
+                })
+                .ToList() ?? new List<BillerCategoryViewModel>(),
+
+                Billers = billersResponse?.Billers?
+                .Select(b => new BillerViewModel
+                {
+                    Category = b.Category,
+                    BillerName = b.BillerName,
+                    BillerId = b.BillerId,
+                    LogoPath = b.LogoPath,
+                    Description = b.Description,
+                    AmountInVerification = b.AmountInVerification,
+                    ReferenceIdVerifiable = b.ReferenceIdVerifiable
+                })
+                .ToList() ?? new List<BillerViewModel>()
             };
 
             return View(model);
+        }
+        private string MapCategoryToIcon(string category)
+        {
+            return category?.ToUpper() switch
+            {
+                "ELECTRICITY" => "bolt",
+                "AIRTIME" => "smartphone",
+                "DIGITALTV" => "tv",
+                "GAMES" => "sports_esports",
+                "EDUCATION" => "school",
+                "TRANSPORT" => "commute",
+                "INTERNATIONAL AIRTIME" => "public",
+                "EVENTS AND LIFESTYLE" => "event",
+                "INSURANCE" => "shield",
+                _ => "receipt_long"
+            };
         }
 
         [Authorize]
         public async Task<IActionResult> History(string? range, string? biller, string? amount, int page = 1)
         {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
 
-            var user = await _authService.GetUserByEmailAsync(userEmail);
+            var user = await _authService.GetUserByIdAsync(userId.Value);
             if (user == null) return RedirectToAction("Login", "Auth");
 
             var model = await _authService.GetBillHistoryAsync(user.Id, range, biller, amount, page, 10);
@@ -114,10 +179,10 @@ namespace LegendPay.Controllers
         [Authorize]
         public async Task<IActionResult> Receipt(Guid id)
         {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
 
-            var user = await _authService.GetUserByEmailAsync(userEmail);
+            var user = await _authService.GetUserByIdAsync(userId.Value);
             if (user == null) return RedirectToAction("Login", "Auth");
 
             var model = await _authService.GetBillReceiptAsync(id, user.Id);
@@ -126,37 +191,14 @@ namespace LegendPay.Controllers
             return View(model);
         }
 
-        public IActionResult Onboarding()
-        {
-            return View();
-        }
-        // this means only authenticated users can access this page
-        [Authorize]
-        public async Task<IActionResult> HomePage()
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            if (string.IsNullOrEmpty(user.AccountNumber))
-            {
-                await _authService.TryProvisionWalletAsync(user);
-            }
-
-            var model = await _authService.GetUserDashboardAsync(user);
-
-            return View(model);
-        }
 
         [Authorize]
         public async Task<IActionResult> Subscriptions()
         {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
 
-            var user = await _authService.GetUserByEmailAsync(userEmail);
+            var user = await _authService.GetUserByIdAsync(userId.Value);
             if (user == null) return RedirectToAction("Login", "Auth");
 
             var model = await _authService.GetSubscriptionsAsync(user.Id);

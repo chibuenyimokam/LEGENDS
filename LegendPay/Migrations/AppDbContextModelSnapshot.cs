@@ -720,6 +720,10 @@ namespace LegendPay.Migrations
                     b.Property<string>("AccountNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("Balance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("BankName")
                         .HasColumnType("nvarchar(max)");
 
@@ -783,21 +787,23 @@ namespace LegendPay.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccountNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Balance")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("BankName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("StaticAccountNumber")
+                    b.Property<string>("CustomerId")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("UserAccountId")
                         .HasColumnType("uniqueidentifier");
@@ -844,10 +850,15 @@ namespace LegendPay.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
+                    b.Property<Guid?>("UserAccountId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("WalletId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserAccountId");
 
                     b.HasIndex("WalletId");
 
@@ -1058,6 +1069,10 @@ namespace LegendPay.Migrations
 
             modelBuilder.Entity("LegendPay.Models.Data.Tables.WalletTransaction", b =>
                 {
+                    b.HasOne("LegendPay.Models.Data.Tables.UserAccount", null)
+                        .WithMany("WalletTransactions")
+                        .HasForeignKey("UserAccountId");
+
                     b.HasOne("LegendPay.Models.Data.Tables.Wallet", "Wallet")
                         .WithMany("WalletTransactions")
                         .HasForeignKey("WalletId")
@@ -1115,6 +1130,8 @@ namespace LegendPay.Migrations
 
                     b.Navigation("Wallet")
                         .IsRequired();
+
+                    b.Navigation("WalletTransactions");
                 });
 
             modelBuilder.Entity("LegendPay.Models.Data.Tables.Wallet", b =>
