@@ -6,6 +6,7 @@ using LegendPay.Models.Data.Tables;
 using LegendPay.Models.ViewModels;
 using LegendPay.Models.ViewModels.UserDashboard;
 using LegendPay.Models.WalletStation.Request;
+using LegendPay.Models.WalletStation.Response;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,31 @@ namespace LegendPay.Services.Account
             await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
         public async Task<UserAccount?> GetUserByIdAsync(Guid userId) =>
             await _context.UserAccounts.FirstOrDefaultAsync(u => u.Id == userId);
+
+        public async Task<bool> GeneratePasswordResetAsync(string email, string otp)
+        {
+            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+                return false;
+
+            user.OtpCode = otp;
+            user.OtpExpiration = DateTime.Now.AddMinutes(10);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ResetPasswordAsync(string email, string otp, string newPassword)
+        {
+            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null || user.OtpCode != otp || user.OtpExpiration == null || user.OtpExpiration < DateTime.Now)
+                return false;
+
+            user.Password = HashPassword(newPassword);
+            user.OtpCode = null;
+            user.OtpExpiration = null;
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
         public async Task<UserAccount?> CreateAndSaveUserAsync(SignUpViewModel model, string initialOtp)
         {
@@ -118,6 +144,30 @@ namespace LegendPay.Services.Account
             }
         }
 
+        private async Task<CreateWalletResponse?> CreateWalletWithRetryAsync(CreateWalletRequest walletRequest, string email)
+        {
+            const int maxAttempts = 3;
+
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    return await _walletService.CreateWalletAsync(walletRequest);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Wallet provisioning attempt {Attempt} of {MaxAttempts} failed for {Email}.", attempt, maxAttempts, email);
+
+                    if (attempt == maxAttempts)
+                        return null;
+
+                    await Task.Delay(TimeSpan.FromSeconds(attempt));
+                }
+            }
+
+            return null;
+        }
+
         public async Task<bool> TryProvisionWalletAsync(UserAccount user)
         {
             if (!string.IsNullOrEmpty(user.CustomerId))
@@ -134,7 +184,7 @@ namespace LegendPay.Services.Account
                     CustomerAlias = user.Email
                 };
 
-                var wallet = await _walletService.CreateWalletAsync(walletRequest);
+                var wallet = await CreateWalletWithRetryAsync(walletRequest, user.Email);
 
                 if (wallet?.AccountDetails != null)
                 {
@@ -221,6 +271,8 @@ namespace LegendPay.Services.Account
                 .ToListAsync();
 
             var totalSpending = spending.Sum(s => s.TotalSpent);
+
+            var ledgerBalance = await GetLedgerBalanceAsync(user);
 
             return new UserDashboardViewModel
             {
@@ -414,6 +466,33 @@ namespace LegendPay.Services.Account
         {
             _context.UserAccounts.Update(user);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<decimal> GetLedgerBalanceAsync(UserAccount user)
+        {
+            if (!string.IsNullOrEmpty(user.CustomerId))
+            {
+                try
+                {
+                    var live = await _walletService.GetBalanceAsync(user.CustomerId);
+                    if (live.HasValue)
+                    {
+                        if (user.Balance != live.Value)
+                        {
+                            user.Balance = live.Value;
+                            _context.Entry(user).State = EntityState.Modified;
+                            await _context.SaveChangesAsync();
+                        }
+                        return live.Value;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Live balance lookup failed for {Email}; using stored balance.", user.Email);
+                }
+            }
+
+            return user.Balance;
         }
 
         public async Task SignOutUserAsync(HttpContext httpContext) =>

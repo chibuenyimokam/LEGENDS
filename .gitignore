@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 appsettings.Development.json
 Migrations/
+
+# Runtime user uploads
+LegendPay/wwwroot/uploads/
