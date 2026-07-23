@@ -3,16 +3,46 @@
     ViewData["Title"] = "Pay a Bill";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 
-    var categories = new[]
+    // Map API category names to routes
+    string GetCategoryRoute(string category) => category?.ToUpper() switch
     {
-        new { Name = "Airtime", Icon = "smartphone" },
-        new { Name = "Internet / Data", Icon = "wifi" },
-        new { Name = "Electricity", Icon = "bolt" },
-        new { Name = "Digital TV", Icon = "tv" },
-        new { Name = "Games", Icon = "sports_esports" },
-        new { Name = "Education", Icon = "school" },
-        new { Name = "Transport", Icon = "commute" },
-        new { Name = "Other Utilities", Icon = "receipt_long" }
+        "ELECTRICITY" => Url.Action("SelectBiller", "Home", new { category = "ELECTRICITY" }) ?? "#",
+        "AIRTIME" => Url.Action("PurchaseDetails", "Home", new { category = "AIRTIME" }) ?? "#",
+        "DATA" => Url.Action("PurchaseDetails", "Home", new { category = "DATA" }) ?? "#",
+        "DIGITALTV" => Url.Action("SelectBiller", "Home", new { category = "DIGITALTV" }) ?? "#",
+        "EDUCATION" => Url.Action("SelectBiller", "Home", new { category = "EDUCATION" }) ?? "#",
+        "GAMES" => Url.Action("PurchaseDetails", "Home", new { category = "GAMES" }) ?? "#",
+        "TRANSPORT" => Url.Action("PurchaseDetails", "Home", new { category = "TRANSPORT" }) ?? "#",
+        "OTHER UTILITIES" => Url.Action("OtherUtilities", "Home") ?? "#",
+        _ => "#"
+    };
+
+    // Map API category names to Material Symbol icons
+    string GetCategoryIcon(string category) => category?.ToUpper() switch
+    {
+        "ELECTRICITY" => "bolt",
+        "AIRTIME" => "smartphone",
+        "DATA" => "wifi",
+        "DIGITALTV" => "tv",
+        "EDUCATION" => "school",
+        "GAMES" => "sports_esports",
+        "TRANSPORT" => "commute",
+        "OTHER UTILITIES" => "receipt_long",
+        _ => "receipt_long"
+    };
+
+    // Friendly display names
+    string GetDisplayName(string category) => category?.ToUpper() switch
+    {
+        "ELECTRICITY" => "Electricity",
+        "AIRTIME" => "Airtime",
+        "DATA" => "Internet / Data",
+        "DIGITALTV" => "Digital TV",
+        "EDUCATION" => "Education",
+        "GAMES" => "Games",
+        "TRANSPORT" => "Transport",
+        "OTHER UTILITIES" => "Other Utilities",
+        _ => category
     };
 }
 
@@ -33,12 +63,13 @@
         <input type="text" class="w-full pl-11 pr-4 py-3 bg-surface border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none" placeholder="Search for a biller (e.g. DSTV, MTN, IKEDC)" />
     </div>
 
+    <!-- Recently Used & Favorites -->
     <div class="space-y-4">
         <div class="flex items-center justify-between">
             <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Recently Used &amp; Favorites</h3>
             <a href="#" class="text-xs text-primary font-bold hover:underline">Manage Favorites</a>
         </div>
-        @if (Model.RecentFavorites.Any())
+        @if (Model.RecentFavorites != null && Model.RecentFavorites.Any())
         {
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach (var biller in Model.RecentFavorites)
@@ -64,21 +95,59 @@
         }
     </div>
 
+    <!-- Browse by Category — from API -->
     <div class="space-y-4">
         <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Browse by Category</h3>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            @foreach (var cat in categories)
-            {
-                <a href="@(cat.Name == "Electricity" ? Url.Action("ElectricityBillers", "Home") :
-                            cat.Name == "Airtime" ? Url.Action("AirtimeDetails", "Home") :
-                            cat.Name == "Internet / Data" ? Url.Action("InternetDetails", "Home") :
-                            cat.Name == "Digital TV" ? Url.Action("DigitalTVBillers", "Home") : "#")"  class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
-                    <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                        <span class="material-symbols-outlined">@cat.Icon</span>
-                    </div>
-                    <span class="text-sm font-semibold text-on-surface">@cat.Name</span>
-                </a>
-            }
-        </div>
+
+        @if (Model.Categories != null && Model.Categories.Any())
+        {
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                @foreach (var cat in Model.Categories)
+                {
+                    <a href="@GetCategoryRoute(cat.Category)"
+                       class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
+                        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                            @if (!string.IsNullOrEmpty(cat.LogoUrl))
+                            {
+                                <img src="@cat.LogoUrl" alt="@cat.Category"
+                                     class="w-7 h-7 object-contain"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" />
+                                <span class="material-symbols-outlined hidden">@GetCategoryIcon(cat.Category)</span>
+                            }
+                            else
+                            {
+                                <span class="material-symbols-outlined">@GetCategoryIcon(cat.Category)</span>
+                            }
+                        </div>
+                        <span class="text-sm font-semibold text-on-surface">@GetDisplayName(cat.Category)</span>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <!-- Fallback if API returns nothing -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                @foreach (var cat in new[] {
+                    new { Name = "Electricity",     Category = "ELECTRICITY",     Icon = "bolt"           },
+                    new { Name = "Airtime",         Category = "AIRTIME",         Icon = "smartphone"     },
+                    new { Name = "Internet / Data", Category = "DATA",            Icon = "wifi"           },
+                    new { Name = "Digital TV",      Category = "DIGITALTV",       Icon = "tv"             },
+                    new { Name = "Education",       Category = "EDUCATION",       Icon = "school"         },
+                    new { Name = "Games",           Category = "GAMES",           Icon = "sports_esports" },
+                    new { Name = "Transport",       Category = "TRANSPORT",       Icon = "commute"        },
+                    new { Name = "Other Utilities", Category = "OTHER UTILITIES", Icon = "receipt_long"   },
+                })
+                {
+                    <a href="@GetCategoryRoute(cat.Category)"
+                       class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
+                        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                            <span class="material-symbols-outlined">@cat.Icon</span>
+                        </div>
+                        <span class="text-sm font-semibold text-on-surface">@cat.Name</span>
+                    </a>
+                }
+            </div>
+        }
     </div>
 </div>

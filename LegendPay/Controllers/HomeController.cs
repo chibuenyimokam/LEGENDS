@@ -1,11 +1,14 @@
 using LegendPay.Interfaces.Auth;
 using LegendPay.Interfaces.Transaction;
 using LegendPay.Models;
+using LegendPay.Models.Data.Response_Table;
 using LegendPay.Models.ViewModels.UserDashboard;
+using LegendPay.Models.WalletStation.Request;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Security.Claims;
+using LegendPay.Models.Data;
 
 namespace LegendPay.Controllers
 {
@@ -14,18 +17,21 @@ namespace LegendPay.Controllers
         private readonly IAuthService _authService;
         private readonly IWalletService _walletService;
         private readonly ILogger<HomeController> _logger;
+        private readonly AppDbContext _context;
         private readonly IBillerOneService _billerOneService;
 
         public HomeController(
-                IAuthService authService,
-                IWalletService walletService,
-                IBillerOneService billerOneService,
-                ILogger<HomeController> logger)
+                 IAuthService authService,
+                 IWalletService walletService,
+                 IBillerOneService billerOneService,
+                 ILogger<HomeController> logger,
+                 AppDbContext context)
         {
             _authService = authService;
             _walletService = walletService;
             _logger = logger;
             _billerOneService = billerOneService;
+            _context = context;
         }
 
         public IActionResult Index()
@@ -212,30 +218,114 @@ namespace LegendPay.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        
 
+
+
+        // Helper: map category to display name
+        private string GetCategoryDisplayName(string category) => category?.ToUpper() switch
+        {
+            "ELECTRICITY" => "Electricity",
+            "AIRTIME" => "Airtime",
+            "DATA" => "Internet / Data",
+            "DIGITALTV" => "Digital TV",
+            "EDUCATION" => "Education",
+            "GAMES" => "Games & Betting",
+            "TRANSPORT" => "Transport",
+            _ => category ?? "Bills"
+        };
+
+        // Helper: map category to Material Symbol icon
+        private string GetCategoryIcon(string category) => category?.ToUpper() switch
+        {
+            "ELECTRICITY" => "bolt",
+            "AIRTIME" => "smartphone",
+            "DATA" => "wifi",
+            "DIGITALTV" => "tv",
+            "EDUCATION" => "school",
+            "GAMES" => "sports_esports",
+            "TRANSPORT" => "commute",
+            _ => "receipt_long"
+        };
+
+        // Helper: map category to reference label
+        private string GetReferenceLabel(string category, string billerName) => category?.ToUpper() switch
+        {
+            "ELECTRICITY" => "Meter / Account Number",
+            "DIGITALTV" => "Smartcard / IUC Number",
+            "EDUCATION" => billerName switch
+            {
+                "JAMB" => "Registration Number",
+                "WAEC" => "Exam Number",
+                "NECO" => "Exam Number",
+                "NABTEB" => "Exam Number",
+                _ => "Student ID / Application Number"
+            },
+            "AIRTIME" => "Phone Number",
+            "DATA" => "Phone Number",
+            "GAMES" => "User ID",
+            "TRANSPORT" => "Account / Reference Number",
+            _ => "Reference Number"
+        };
+
+        // Helper: 4-step categories
+        private bool IsFourStep(string category) =>
+            category?.ToUpper() is "ELECTRICITY" or "DIGITALTV" or "EDUCATION";
+
+        // Helper: map biller to electricity location
+        private string GetElectricityLocation(string billerName) => billerName?.ToUpper() switch
+        {
+            var b when b.Contains("IKEJA") || b.Contains("IKEDC") => "Lagos, Nigeria",
+            var b when b.Contains("EKO") || b.Contains("EKEDC") => "Lagos, Nigeria",
+            var b when b.Contains("ABUJA") || b.Contains("AEDC") => "Abuja, Nigeria",
+            var b when b.Contains("IBADAN") || b.Contains("IBEDC") => "Ibadan, Nigeria",
+            var b when b.Contains("ENUGU") || b.Contains("EEDC") => "Enugu, Nigeria",
+            var b when b.Contains("PORT") || b.Contains("PHEDC") => "Port Harcourt, Nigeria",
+            var b when b.Contains("KADUNA") || b.Contains("KAEDCO") => "Kaduna, Nigeria",
+            var b when b.Contains("JOS") || b.Contains("JEDC") => "Jos, Nigeria",
+            var b when b.Contains("BENIN") || b.Contains("BEDC") => "Benin City, Nigeria",
+            var b when b.Contains("YOLA") || b.Contains("YEDC") => "Yola, Nigeria",
+            var b when b.Contains("KANO") || b.Contains("KEDCO") => "Kano, Nigeria",
+            _ => "Nigeria"
+        };
+
+        // ── TEMPLATE A: Step 1 — Select Biller ──────────────────────────────────────
         [Authorize]
-        public async Task<IActionResult> ElectricityBillers()
+        public async Task<IActionResult> SelectBiller(string category)
         {
             var userEmail = User.Identity?.Name;
             if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
 
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
+            var billersResponse = await _billerOneService.GetBillersAsync();
 
-            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+            var billers = billersResponse?.Billers?
+                .Where(b => string.Equals(b.Category, category, StringComparison.OrdinalIgnoreCase))
+                .Select(b => new BillerItem
+                {
+                    BillerId = b.BillerId,
+                    BillerName = b.BillerName,
+                    Description = b.Description,
+                    LogoUrl = b.LogoPath,
+                    ReferenceIdVerifiable = b.ReferenceIdVerifiable,
+                    AmountInVerification = b.AmountInVerification
+                })
+                .ToList() ?? new List<BillerItem>();
 
-            var model = new PayBillsViewModel
+            var model = new SelectBillerViewModel
             {
-                AvailableBalance = wallet?.Balance ?? 0m,
-                RecentFavorites = new List<RecentBillerViewModel>()
+                Category = category,
+                CategoryDisplayName = GetCategoryDisplayName(category),
+                CategoryIcon = GetCategoryIcon(category),
+                Billers = billers
             };
 
-            return View("~/Views/Home/Electricity/ElectricityBillers.cshtml", model);
+            return View("~/Views/Home/Templates/SelectBiller.cshtml", model);
         }
 
+        // ── TEMPLATE A: Step 2 — Biller Details ─────────────────────────────────────
         [Authorize]
-        public async Task<IActionResult> ElectricityDetails(string billerName, string billerFullName)
+        public async Task<IActionResult> BillerDetails(
+        string category, string billerId, string billerName,
+        bool referenceIdVerifiable, bool amountInVerification)
         {
             var userEmail = User.Identity?.Name;
             if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
@@ -243,37 +333,87 @@ namespace LegendPay.Controllers
             var user = await _authService.GetUserByEmailAsync(userEmail);
             if (user == null) return RedirectToAction("Login", "Auth");
 
-            var locationMap = new Dictionary<string, string>
+            var packages = new List<BillerPackageItem>();
+
+            if (category?.ToUpper() == "DIGITALTV")
             {
-                { "IKEDC",  "Lagos, Nigeria"         },
-                { "EKEDC",  "Lagos, Nigeria"         },
-                { "AEDC",   "Abuja, Nigeria"         },
-                { "IBEDC",  "Ibadan, Nigeria"        },
-                { "EEDC",   "Enugu, Nigeria"         },
-                { "PHEDC",  "Port Harcourt, Nigeria" },
-                { "KAEDCO", "Kaduna, Nigeria"        },
-                { "JEDC",   "Jos, Nigeria"           },
-                { "BEDC",   "Benin City, Nigeria"    },
-                { "YEDC",   "Yola, Nigeria"          },
-                { "KEDCO",  "Kano, Nigeria"          },
+                var packagesResponse = await _billerOneService.GetBillerPackagesAsync(billerId);
+                packages = packagesResponse?.Packages?
+                    .Select(p => new BillerPackageItem
+                    {
+                        Label = p.BillerItemName,
+                        BillerItemId = p.BillerItemId,
+                        Amount = p.Amount
+                    })
+                    .ToList() ?? new List<BillerPackageItem>();
+            }
+
+            var model = new BillerDetailsViewModel
+            {
+                Category = category,
+                CategoryDisplayName = GetCategoryDisplayName(category),
+                BillerId = billerId,
+                BillerName = billerName,
+                CustomerName = $"{user.FirstName} {user.LastName}",
+                BillerLocation = category?.ToUpper() == "ELECTRICITY" ? GetElectricityLocation(billerName) : string.Empty,
+                ReferenceIdVerifiable = referenceIdVerifiable,
+                AmountInVerification = amountInVerification,
+                Packages = packages
             };
 
-            var model = new ElectricityDetailsViewModel
+            return View("~/Views/Home/Templates/BillerDetails.cshtml", model);
+        }
+
+        // ── TEMPLATE B: Step 1 — Purchase Details ────────────────────────────────────
+        [Authorize]
+        public async Task<IActionResult> PurchaseDetails(string category)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            List<BillerItem> billers = new();
+
+            // For Airtime & Data, networks are hardcoded (not from BillerOne)
+            if (category?.ToUpper() != "AIRTIME" && category?.ToUpper() != "DATA")
             {
-                BillerName = billerName,
-                BillerFullName = billerFullName,
-                BillerLocation = locationMap.TryGetValue(billerName, out var loc) ? loc : "Nigeria",
+                var billersResponse = await _billerOneService.GetBillersAsync();
+                billers = billersResponse?.Billers?
+                    .Where(b => string.Equals(b.Category, category, StringComparison.OrdinalIgnoreCase))
+                    .Select(b => new BillerItem
+                    {
+                        BillerId = b.BillerId,
+                        BillerName = b.BillerName,
+                        Description = b.Description,
+                        LogoUrl = b.LogoPath,
+                        ReferenceIdVerifiable = b.ReferenceIdVerifiable,
+                        AmountInVerification = b.AmountInVerification
+                    })
+                    .ToList() ?? new List<BillerItem>();
+            }
+
+            var model = new PurchaseDetailsViewModel
+            {
+                Category = category ?? string.Empty,
+                CategoryDisplayName = GetCategoryDisplayName(category ?? string.Empty),
+                CategoryIcon = GetCategoryIcon(category ?? string.Empty),
+                Billers = billers,
                 CustomerName = $"{user.FirstName} {user.LastName}"
             };
 
-            return View("~/Views/Home/Electricity/ElectricityDetails.cshtml", model);
+            return View("~/Views/Home/Templates/PurchaseDetails.cshtml", model);
         }
 
+        // ── SHARED: Review & Pay ─────────────────────────────────────────────────────
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> ElectricityReview(
-            string billerName, string billerFullName, string billerLocation,
-            string meterNumber, string customerName, decimal amount, bool saveBeneficiary)
+        public async Task<IActionResult> ReviewAndPay(
+            string category, string billerId, string billerName,
+            string referenceNumber, string customerName,
+            string planLabel, string planDuration,
+            decimal amount, bool saveBeneficiary)
         {
             var userEmail = User.Identity?.Name;
             if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
@@ -283,204 +423,31 @@ namespace LegendPay.Controllers
 
             var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
 
-            var model = new ElectricityReviewViewModel
+            var model = new ReviewAndPayViewModel
             {
+                Category = category,
+                CategoryDisplayName = GetCategoryDisplayName(category),
+                CategoryIcon = GetCategoryIcon(category),
+                BillerId = billerId,
                 BillerName = billerName,
-                BillerFullName = billerFullName,
-                BillerLocation = billerLocation,
-                MeterNumber = meterNumber,
+                ReferenceNumber = referenceNumber,
+                ReferenceLabel = GetReferenceLabel(category, billerName),
                 CustomerName = customerName,
-                Amount = amount,
-                WalletBalance = wallet?.Balance ?? 0m,
-                SaveBeneficiary = saveBeneficiary
-            };
-
-            return View("~/Views/Home/Electricity/ElectricityReview.cshtml", model);
-        }
-
-        [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> ElectricityPayment(ElectricityReviewViewModel model)
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
-            var balance = wallet?.Balance ?? 0m;
-
-            if (balance < model.Amount)
-            {
-                TempData["PaymentError"] = "Your wallet balance is not sufficient for this transaction. Please fund your wallet and try again.";
-                return RedirectToAction("ElectricityReview", new
-                {
-                    billerName = model.BillerName,
-                    billerFullName = model.BillerFullName,
-                    billerLocation = model.BillerLocation,
-                    meterNumber = model.MeterNumber,
-                    customerName = model.CustomerName,
-                    amount = model.Amount,
-                    saveBeneficiary = model.SaveBeneficiary
-                });
-            }
-
-            // TODO: Replace mock below with real payment API call when integrated
-            var rng = new Random();
-            string GenerateToken() =>
-                string.Join(" ", Enumerable.Range(0, 5).Select(_ => rng.Next(1000, 9999).ToString()));
-
-            var successModel = new ElectricitySuccessViewModel
-            {
-                BillerName = model.BillerName,
-                BillerFullName = model.BillerFullName,
-                MeterNumber = model.MeterNumber,
-                Amount = model.Amount,
-                PaidAt = DateTime.Now,
-                TransactionRef = $"LP-{rng.Next(1000000, 9999999)}-X",
-                ElectricityToken = GenerateToken(),
-                UnitValue = Math.Round(model.Amount / 86, 1),
-                PointsEarned = (int)(model.Amount * 0.02m)
-            };
-
-            return View("~/Views/Home/Electricity/ElectricitySuccess.cshtml", successModel);
-        }
-
-       
-
-        [Authorize]
-        public async Task<IActionResult> AirtimeDetails()
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            var model = new AirtimeDetailsViewModel
-            {
-                CustomerName = $"{user.FirstName} {user.LastName}"
-            };
-
-            return View("~/Views/Home/AirTime/AirtimeDetails.cshtml", model);
-        }
-
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> AirtimeReview(
-            string network, string phoneNumber, decimal amount, bool saveBeneficiary)
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
-
-            var model = new AirtimeReviewViewModel
-            {
-                Network = network,
-                PhoneNumber = phoneNumber,
-                Amount = amount,
-                WalletBalance = wallet?.Balance ?? 0m,
-                SaveBeneficiary = saveBeneficiary
-            };
-
-            return View("~/Views/Home/AirTime/AirtimeReview.cshtml", model);
-        }
-
-        [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> AirtimePayment(AirtimeReviewViewModel model)
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
-            var balance = wallet?.Balance ?? 0m;
-
-            if (balance < model.Amount)
-            {
-                TempData["PaymentError"] = "Your wallet balance is not sufficient for this transaction. Please fund your wallet and try again.";
-                return RedirectToAction("AirtimeReview", new
-                {
-                    network = model.Network,
-                    phoneNumber = model.PhoneNumber,
-                    amount = model.Amount,
-                    saveBeneficiary = model.SaveBeneficiary
-                });
-            }
-
-            // TODO: Replace mock below with real airtime API call when integrated
-            var rng = new Random();
-            var successModel = new AirtimeSuccessViewModel
-            {
-                Network = model.Network,
-                PhoneNumber = model.PhoneNumber,
-                Amount = model.Amount,
-                PaidAt = DateTime.Now,
-                TransactionRef = $"LP-{rng.Next(1000000, 9999999)}-X",
-                PointsEarned = (int)(model.Amount * 0.02m)
-            };
-
-            return View("~/Views/Home/AirTime/AirtimeSuccess.cshtml", successModel);
-        }
-
-        
-
-        [Authorize]
-        public async Task<IActionResult> InternetDetails()
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            var model = new InternetDetailsViewModel
-            {
-                CustomerName = $"{user.FirstName} {user.LastName}"
-            };
-
-            return View("~/Views/Home/Internet/InternetDetails.cshtml", model);
-        }
-
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> InternetReview(
-            string network, string planLabel, string planDuration,
-            string phoneNumber, decimal amount, bool saveBeneficiary)
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
-
-            var model = new InternetReviewViewModel
-            {
-                Network = network,
                 PlanLabel = planLabel,
                 PlanDuration = planDuration,
-                PhoneNumber = phoneNumber,
                 Amount = amount,
                 WalletBalance = wallet?.Balance ?? 0m,
-                SaveBeneficiary = saveBeneficiary
+                SaveBeneficiary = saveBeneficiary,
+                IsFourStep = IsFourStep(category)
             };
 
-            return View("~/Views/Home/Internet/InternetReview.cshtml", model);
+            return View("~/Views/Home/Templates/ReviewAndPay.cshtml", model);
         }
 
+        // ── SHARED: Process Payment ──────────────────────────────────────────────────
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> InternetPayment(InternetReviewViewModel model)
+        public async Task<IActionResult> ProcessPayment(ReviewAndPayViewModel model)
         {
             var userEmail = User.Identity?.Name;
             if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
@@ -494,139 +461,106 @@ namespace LegendPay.Controllers
             if (balance < model.Amount)
             {
                 TempData["PaymentError"] = "Your wallet balance is not sufficient for this transaction. Please fund your wallet and try again.";
-                return RedirectToAction("InternetReview", new
+                return RedirectToAction("ReviewAndPay", new
                 {
-                    network = model.Network,
+                    category = model.Category,
+                    billerId = model.BillerId,
+                    billerName = model.BillerName,
+                    referenceNumber = model.ReferenceNumber,
+                    customerName = model.CustomerName,
                     planLabel = model.PlanLabel,
                     planDuration = model.PlanDuration,
-                    phoneNumber = model.PhoneNumber,
                     amount = model.Amount,
                     saveBeneficiary = model.SaveBeneficiary
                 });
             }
 
-            // TODO: Replace mock below with real data API call when integrated
-            var rng = new Random();
-            var successModel = new InternetSuccessViewModel
+            // Debit the wallet
+            var debitRequest = new DebitRequest
             {
-                Network = model.Network,
+                Amount = model.Amount,
+                CustomerId = user.CustomerId ?? string.Empty,
+                Description = $"Bill payment - {model.BillerName} - {model.Category}",
+                TraceId = $"TIDL{Guid.NewGuid().ToString("N")[..8]}"
+            };
+
+            var debitResponse = await _walletService.DebitWalletAsync(debitRequest);
+
+            if (debitResponse?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
+            {
+                TempData["PaymentError"] = "Payment could not be processed at this time. Please try again.";
+                return RedirectToAction("ReviewAndPay", new
+                {
+                    category = model.Category,
+                    billerId = model.BillerId,
+                    billerName = model.BillerName,
+                    referenceNumber = model.ReferenceNumber,
+                    customerName = model.CustomerName,
+                    planLabel = model.PlanLabel,
+                    planDuration = model.PlanDuration,
+                    amount = model.Amount,
+                    saveBeneficiary = model.SaveBeneficiary
+                });
+            }
+
+            // Update local balance
+            var localUser = _context.UserAccounts.FirstOrDefault(u => u.CustomerId == user.CustomerId);
+            if (localUser != null)
+            {
+                localUser.Balance = debitResponse.Balance;
+                await _context.SaveChangesAsync();
+            }
+
+            // TODO: Add BillerOne payment call here when Mitchel integrates the payment endpoint
+
+            var rng = new Random();
+            string? token = null;
+            decimal unitValue = 0;
+
+            if (model.Category?.ToUpper() == "ELECTRICITY")
+            {
+                token = string.Join(" ", Enumerable.Range(0, 5).Select(_ => rng.Next(1000, 9999).ToString()));
+                unitValue = Math.Round(model.Amount / 86, 1);
+            }
+
+            var successDesc = model.Category?.ToUpper() switch
+            {
+                "ELECTRICITY" => $"Paid to {model.BillerName} Prepaid",
+                "AIRTIME" => $"{model.BillerName} Airtime sent to {model.ReferenceNumber}",
+                "DATA" => $"{model.PlanLabel} data sent to {model.ReferenceNumber}",
+                "DIGITALTV" => $"{model.BillerName} — {model.PlanLabel}",
+                "EDUCATION" => $"Paid to {model.BillerName}",
+                "GAMES" => $"Deposited to {model.BillerName} — User ID: {model.ReferenceNumber}",
+                "TRANSPORT" => $"Paid to {model.BillerName}",
+                _ => $"Paid to {model.BillerName}"
+            };
+
+            var successModel = new PaymentSuccessViewModel
+            {
+                Category = model.Category ?? string.Empty,
+                BillerName = model.BillerName,
+                ReferenceNumber = model.ReferenceNumber,
+                ReferenceLabel = GetReferenceLabel(model.Category ?? string.Empty, model.BillerName),
                 PlanLabel = model.PlanLabel,
                 PlanDuration = model.PlanDuration,
-                PhoneNumber = model.PhoneNumber,
+                SuccessDescription = successDesc,
                 Amount = model.Amount,
                 PaidAt = DateTime.Now,
                 TransactionRef = $"LP-{rng.Next(1000000, 9999999)}-X",
-                PointsEarned = (int)(model.Amount * 0.02m)
+                PointsEarned = (int)(model.Amount * 0.02m),
+                IsFourStep = model.IsFourStep,
+                ElectricityToken = token,
+                UnitValue = unitValue
             };
 
-            return View("~/Views/Home/Internet/InternetSuccess.cshtml", successModel);
+            return View("~/Views/Home/Templates/PaymentSuccess.cshtml", successModel);
         }
 
-        // ── DIGITAL TV ───────────────────────────────────────────────────────────────
-
+        // ── OTHER UTILITIES ──────────────────────────────────────────────────────────
         [Authorize]
-        public async Task<IActionResult> DigitalTVBillers()
+        public IActionResult OtherUtilities()
         {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            return View("~/Views/Home/DigitalTV/DigitalTVBillers.cshtml");
-        }
-
-        [Authorize]
-        public async Task<IActionResult> DigitalTVDetails(string providerName, string providerFullName)
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            var model = new DigitalTVDetailsViewModel
-            {
-                ProviderName = providerName,
-                ProviderFullName = providerFullName,
-                CustomerName = $"{user.FirstName} {user.LastName}"
-            };
-
-            return View("~/Views/Home/DigitalTV/DigitalTVDetails.cshtml", model);
-        }
-
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> DigitalTVReview(
-            string providerName, string providerFullName, string smartcardNumber,
-            string customerName, string packageLabel, decimal amount, bool saveBeneficiary)
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
-
-            var model = new DigitalTVReviewViewModel
-            {
-                ProviderName = providerName,
-                ProviderFullName = providerFullName,
-                SmartcardNumber = smartcardNumber,
-                CustomerName = customerName,
-                PackageLabel = packageLabel,
-                Amount = amount,
-                WalletBalance = wallet?.Balance ?? 0m,
-                SaveBeneficiary = saveBeneficiary
-            };
-
-            return View("~/Views/Home/DigitalTV/DigitalTVReview.cshtml", model);
-        }
-
-        [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> DigitalTVPayment(DigitalTVReviewViewModel model)
-        {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
-
-            var user = await _authService.GetUserByEmailAsync(userEmail);
-            if (user == null) return RedirectToAction("Login", "Auth");
-
-            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
-            var balance = wallet?.Balance ?? 0m;
-
-            if (balance < model.Amount)
-            {
-                TempData["PaymentError"] = "Your wallet balance is not sufficient for this transaction. Please fund your wallet and try again.";
-                return RedirectToAction("DigitalTVReview", new
-                {
-                    providerName = model.ProviderName,
-                    providerFullName = model.ProviderFullName,
-                    smartcardNumber = model.SmartcardNumber,
-                    customerName = model.CustomerName,
-                    packageLabel = model.PackageLabel,
-                    amount = model.Amount,
-                    saveBeneficiary = model.SaveBeneficiary
-                });
-            }
-
-            // TODO: Replace mock below with real TV subscription API call when integrated
-            var rng = new Random();
-            var successModel = new DigitalTVSuccessViewModel
-            {
-                ProviderName = model.ProviderName,
-                ProviderFullName = model.ProviderFullName,
-                SmartcardNumber = model.SmartcardNumber,
-                PackageLabel = model.PackageLabel,
-                Amount = model.Amount,
-                PaidAt = DateTime.Now,
-                TransactionRef = $"LP-{rng.Next(1000000, 9999999)}-X",
-                PointsEarned = (int)(model.Amount * 0.02m)
-            };
-
-            return View("~/Views/Home/DigitalTV/DigitalTVSuccess.cshtml", successModel);
+            return View("~/Views/Home/Templates/OtherUtilities.cshtml");
         }
     }
 }
