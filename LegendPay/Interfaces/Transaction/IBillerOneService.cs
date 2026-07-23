@@ -6,6 +6,7 @@ namespace LegendPay.Interfaces.Transaction
     {
         Task<GetCategoriesResponse?> GetCategoriesAsync(CancellationToken cancellationToken = default);
         Task<GetBillersResponse?> GetBillersAsync(CancellationToken cancellationToken = default);
+        Task<GetBillerPackagesResponse?> GetBillerPackagesAsync(string billerId, CancellationToken cancellationToken = default);
 
     }
 }

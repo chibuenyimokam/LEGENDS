@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "Other Utilities";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    var categories = new[]
+    {
+        new { Name = "Electricity",    Desc = "IKEDC, EKEDC, AEDC and more",      Icon = "bolt",            BgColor = "bg-yellow-50",  IconColor = "text-yellow-600",  Action = "SelectBiller",    RouteValues = new { category = "ELECTRICITY" } },
+        new { Name = "Airtime",        Desc = "MTN, Airtel, Glo, 9mobile",         Icon = "smartphone",      BgColor = "bg-red-50",     IconColor = "text-red-600",     Action = "PurchaseDetails", RouteValues = new { category = "AIRTIME" }     },
+        new { Name = "Internet / Data",Desc = "MTN, Airtel, Glo, 9mobile",         Icon = "wifi",            BgColor = "bg-blue-50",    IconColor = "text-blue-600",    Action = "PurchaseDetails", RouteValues = new { category = "DATA" }        },
+        new { Name = "Digital TV",     Desc = "DSTV, GOtv, Startimes",             Icon = "tv",              BgColor = "bg-purple-50",  IconColor = "text-purple-600",  Action = "SelectBiller",    RouteValues = new { category = "DIGITALTV" }   },
+        new { Name = "Education",      Desc = "JAMB, WAEC, NECO, Universities",    Icon = "school",          BgColor = "bg-green-50",   IconColor = "text-green-600",   Action = "SelectBiller",    RouteValues = new { category = "EDUCATION" }   },
+        new { Name = "Games & Betting",Desc = "SportyBet, Bet9ja, 1xBet and more", Icon = "sports_esports",  BgColor = "bg-violet-50",  IconColor = "text-violet-600",  Action = "PurchaseDetails", RouteValues = new { category = "GAMES" }       },
+        new { Name = "Transport",      Desc = "GIG Mobility, Chisco, Toll and more",Icon = "commute",         BgColor = "bg-orange-50",  IconColor = "text-orange-600",  Action = "PurchaseDetails", RouteValues = new { category = "TRANSPORT" }   },
+    };
+}
+
+<div class="p-10 space-y-6 max-w-4xl">
+
+    <div>
+        <h2 class="text-2xl font-bold text-on-surface tracking-tight">Other Utilities</h2>
+        <p class="text-sm text-on-surface-variant mt-1">All available bill payment categories.</p>
+    </div>
+
+    <div class="space-y-3">
+        @foreach (var cat in categories)
+        {
+            <a href="@Url.Action(cat.Action, "Home", cat.RouteValues)"
+               class="flex items-center justify-between bg-surface border border-slate-200 rounded-2xl px-6 py-5 hover:border-primary hover:shadow-md hover:-translate-y-0.5 transition-all group">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl @cat.BgColor flex items-center justify-center @cat.IconColor group-hover:bg-primary group-hover:text-white transition-colors flex-shrink-0">
+                        <span class="material-symbols-outlined">@cat.Icon</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-on-surface">@cat.Name</p>
+                        <p class="text-xs text-on-surface-variant mt-0.5">@cat.Desc</p>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">chevron_right</span>
+            </a>
+        }
+    </div>
+
+</div>

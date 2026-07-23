@@ -104,6 +104,22 @@ namespace LegendPay.Services.Transaction
             return result;
         }
 
+        public async Task<DebitResponse?> DebitWalletAsync(DebitRequest debitRequest, CancellationToken cancellationToken = default)
+        {
+            var payload = new
+            {
+                Amount = debitRequest.Amount,
+                CustomerId = debitRequest.CustomerId,
+                Description = debitRequest.Description,
+                TraceId = $"TIDL{Guid.NewGuid().ToString("N")[..8]}"
+            };
+            var result = await PostAsync<DebitResponse>("api/Debit", payload, cancellationToken);
+            if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
+                return null;
+
+            return result;
+        }
+
 
         public async Task<decimal?> GetBalanceAsync(string customerId, CancellationToken cancellationToken = default)
         {

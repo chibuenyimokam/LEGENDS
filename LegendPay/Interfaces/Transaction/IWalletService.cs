@@ -7,6 +7,7 @@ namespace LegendPay.Interfaces.Transaction
     {
         Task<CreateWalletResponse?> CreateWalletAsync(CreateWalletRequest walletRequest, CancellationToken cancellationToken = default);
         Task<CreditResponse?> CreditWalletAsync(CreditRequest creditRequest, CancellationToken cancellationToken = default);
+        Task<DebitResponse?> DebitWalletAsync(DebitRequest debitRequest, CancellationToken cancellationToken = default);
         Task<decimal?> GetBalanceAsync(string customerId, CancellationToken cancellationToken = default);
     }
 }
