@@ -1,0 +1,134 @@
+@using LegendPay.Helpers
+@model LegendPay.Models.ViewModels.AdminTransactionsViewModel
+@{
+    ViewData["Title"] = "Transactions";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="p-10 space-y-8 max-w-7xl">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Transaction Registry</h2>
+            <div class="flex items-center gap-4 mt-1">
+                <span class="text-sm text-on-surface-variant">Today's Volume: <span class="font-bold text-primary">₦@Model.TodayVolume.ToString("N2")</span></span>
+                <span class="text-slate-300">•</span>
+                <span class="text-sm text-on-surface-variant">Success Rate: <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded">@Model.SuccessRate.ToString("0.#")%</span></span>
+            </div>
+        </div>
+    </div>
+
+    <form asp-controller="Admin" asp-action="Transactions" method="get" class="bg-surface border border-slate-200 rounded-xl p-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div>
+                <label class="text-xs font-semibold text-on-surface-variant mb-1.5 block">Status</label>
+                <select name="status" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none">
+                    <option value="all" selected="@(string.IsNullOrEmpty(Model.Status) || Model.Status == "all" ? "selected" : null)">All Statuses</option>
+                    <option value="Success" selected="@(Model.Status == "Success" ? "selected" : null)">Success</option>
+                    <option value="Pending" selected="@(Model.Status == "Pending" ? "selected" : null)">Pending</option>
+                    <option value="Failed" selected="@(Model.Status == "Failed" ? "selected" : null)">Failed</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-on-surface-variant mb-1.5 block">Biller</label>
+                <select name="biller" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none">
+                    <option value="all" selected="@(string.IsNullOrEmpty(Model.Biller) || Model.Biller == "all" ? "selected" : null)">All Billers</option>
+                    @foreach (var b in Model.Billers)
+                    {
+                        <option value="@b" selected="@(Model.Biller == b ? "selected" : null)">@b</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-on-surface-variant mb-1.5 block">Method</label>
+                <select name="method" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none">
+                    <option value="all" selected="@(string.IsNullOrEmpty(Model.Method) || Model.Method == "all" ? "selected" : null)">All Methods</option>
+                    <option value="Wallet" selected="@(Model.Method == "Wallet" ? "selected" : null)">Wallet</option>
+                    <option value="Verge" selected="@(Model.Method == "Verge" ? "selected" : null)">Verge</option>
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#083b72] transition-colors">
+                <span class="material-symbols-outlined text-[18px]">filter_alt</span>
+                Apply Filters
+            </button>
+        </div>
+    </form>
+
+    <div class="bg-surface border border-slate-200 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Reference</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">User</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Biller</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Amount</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Method</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
+                        <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @if (Model.Transactions.Any())
+                    {
+                        @foreach (var txn in Model.Transactions)
+                        {
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-mono text-sm text-primary font-semibold">@txn.Reference</td>
+                                <td class="px-6 py-4 text-sm font-semibold text-slate-900">@txn.UserName</td>
+                                <td class="px-6 py-4 text-sm text-on-surface-variant">@txn.BillerName</td>
+                                <td class="px-6 py-4 text-right font-bold text-sm text-slate-900">₦@txn.Amount.ToString("N2")</td>
+                                <td class="px-6 py-4 text-sm text-on-surface-variant">@txn.PaymentMethod</td>
+                                <td class="px-6 py-4">
+                                    @if (txn.IsSuccess)
+                                    {
+                                        <span class="px-2.5 py-1 bg-green-100 text-green-700 text-[11px] font-bold rounded-full uppercase tracking-wider">Success</span>
+                                    }
+                                    else if (txn.IsPending)
+                                    {
+                                        <span class="px-2.5 py-1 bg-amber-100 text-amber-700 text-[11px] font-bold rounded-full uppercase tracking-wider">Pending</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2.5 py-1 bg-red-100 text-red-700 text-[11px] font-bold rounded-full uppercase tracking-wider">@txn.Status</span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-xs text-on-surface-variant">@WatTime.FromUtc(txn.CreatedAt).ToString("MMM d, yyyy • h:mm tt")</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td class="px-6 py-12 text-center text-sm text-on-surface-variant" colspan="7">No transactions found for the selected filters.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+            <p class="text-xs text-on-surface-variant font-medium">Showing @Model.ShownCount of @Model.TotalCount transactions</p>
+            <div class="flex gap-2">
+                @if (Model.HasPrevious)
+                {
+                    <a asp-controller="Admin" asp-action="Transactions" asp-route-status="@Model.Status" asp-route-biller="@Model.Biller" asp-route-method="@Model.Method" asp-route-page="@(Model.Page - 1)" class="p-2 border border-slate-200 rounded hover:bg-slate-100 flex items-center">
+                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </a>
+                }
+                else
+                {
+                    <span class="p-2 border border-slate-200 rounded opacity-30 flex items-center"><span class="material-symbols-outlined text-[18px]">chevron_left</span></span>
+                }
+                @if (Model.HasNext)
+                {
+                    <a asp-controller="Admin" asp-action="Transactions" asp-route-status="@Model.Status" asp-route-biller="@Model.Biller" asp-route-method="@Model.Method" asp-route-page="@(Model.Page + 1)" class="p-2 border border-slate-200 rounded hover:bg-slate-100 flex items-center">
+                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </a>
+                }
+                else
+                {
+                    <span class="p-2 border border-slate-200 rounded opacity-30 flex items-center"><span class="material-symbols-outlined text-[18px]">chevron_right</span></span>
+                }
+            </div>
+        </div>
+    </div>
+</div>

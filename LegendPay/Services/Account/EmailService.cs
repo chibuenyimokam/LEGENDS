@@ -43,19 +43,12 @@ namespace LegendPay.Services.Account
                     If you did not request this, please ignore this email.</p>"
             };
             msg.AddTo(new EmailAddress(toEmail));
-            //await client.SendEmailAsync(msg);
             var response = await client.SendEmailAsync(msg);
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Body.ReadAsStringAsync();
                 _logger.LogError("Failed to send OTP email to {Email}. Status: {StatusCode}. Response: {ResponseBody}", toEmail, response.StatusCode, body);
                 throw new InvalidOperationException($"Failed to send OTP email. Status: {response.StatusCode}. Response: {body}");
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Body.ReadAsStringAsync();
-                throw new Exception($"SendGrid failed with status {response.StatusCode}. Details: {body}");
             }
         }
     }

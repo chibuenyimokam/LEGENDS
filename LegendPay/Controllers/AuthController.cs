@@ -16,7 +16,6 @@ namespace LegendPay.Controllers
 {
     public class AuthController : Controller
     {
-        // References to the database context and injected services
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
         private readonly IAuthService _authService;
@@ -77,7 +76,14 @@ namespace LegendPay.Controllers
                 {
                     var user = await _authService.CreateAndSaveUserAsync(model, otp); 
 
-                    await _emailService.SendOtpEmailAsync(model.Email, otp);
+                    try
+                    {
+                        await _emailService.SendOtpEmailAsync(model.Email, otp);
+                    }
+                    catch (Exception)
+                    {
+                        TempData["OtpEmailFailed"] = true;
+                    }
 
                     TempData["VerificationEmail"] = model.Email;
 
@@ -142,7 +148,7 @@ namespace LegendPay.Controllers
             }
             var newOtp = _otpService.GenerateOtp();
 
-            _otpService.ConfigureUserOtp(account, newOtp);
+            await _otpService.ConfigureUserOtpAsync(account, newOtp);
 
             await _emailService.SendOtpEmailAsync(account.Email, newOtp);
 
@@ -151,6 +157,64 @@ namespace LegendPay.Controllers
             return RedirectToAction("VerifyEmail", new { resent = true });
         }
 
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var otp = _otpService.GenerateOtp();
+            var exists = await _authService.GeneratePasswordResetAsync(model.Email, otp);
+
+            if (exists)
+            {
+                try
+                {
+                    await _emailService.SendOtpEmailAsync(model.Email, otp);
+                }
+                catch (Exception)
+                {
+                    TempData["OtpEmailFailed"] = true;
+                }
+            }
+
+            TempData["ResetEmail"] = model.Email;
+            return RedirectToAction("ResetPassword");
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword()
+        {
+            var email = TempData["ResetEmail"] as string;
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("ForgotPassword");
+
+            return View(new ResetPasswordViewModel { Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var success = await _authService.ResetPasswordAsync(model.Email, model.OtpCode, model.NewPassword);
+            if (!success)
+            {
+                ModelState.AddModelError("", "Invalid or expired code. Please request a new one.");
+                return View(model);
+            }
+
+            TempData["PasswordReset"] = true;
+            return RedirectToAction("Login");
+        }
 
         public IActionResult Login()
         {

@@ -42,6 +42,11 @@
                 <div class="alert-success">@ViewBag.SuccessMessage</div>
             }
 
+            @if (TempData["AdminPasswordReset"] as bool? ?? false)
+            {
+                <div class="alert-success">Your password has been reset. Please sign in with your new password.</div>
+            }
+
             <form asp-action="Login" asp-controller="Admin" method="post">
                 @Html.AntiForgeryToken()
 
@@ -69,7 +74,7 @@
                 <div class="form-group">
                     <div class="label-row">
                         <label class="form-label">Password</label>
-                        <a href="#" class="forgot-link">Forgot Password?</a>
+                        <a asp-controller="Admin" asp-action="ForgotPassword" class="forgot-link">Forgot Password?</a>
                     </div>
                     <div class="input-wrapper">
                         <span class="input-icon">
