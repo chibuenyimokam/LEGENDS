@@ -1,0 +1,82 @@
+@model LegendPay.Models.ViewModels.AdminReportsViewModel
+@{
+    ViewData["Title"] = "Reports";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="p-10 space-y-8 max-w-7xl">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Reports &amp; Analytics</h2>
+        <p class="text-sm text-on-surface-variant mt-0.5">Platform performance across all transactions to date.</p>
+    </div>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-surface border border-slate-200 p-6 rounded-xl">
+            <div class="p-2 bg-primary/10 rounded-lg w-fit mb-3"><span class="material-symbols-outlined text-primary">account_balance_wallet</span></div>
+            <p class="text-xs font-medium text-on-surface-variant mb-1">Total Revenue</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">₦@Model.TotalRevenue.ToString("N2")</h3>
+        </div>
+        <div class="bg-surface border border-slate-200 p-6 rounded-xl">
+            <div class="p-2 bg-primary/10 rounded-lg w-fit mb-3"><span class="material-symbols-outlined text-primary">receipt_long</span></div>
+            <p class="text-xs font-medium text-on-surface-variant mb-1">Total Transactions</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">@Model.TotalTransactions.ToString("N0")</h3>
+        </div>
+        <div class="bg-surface border border-slate-200 p-6 rounded-xl">
+            <div class="p-2 bg-primary/10 rounded-lg w-fit mb-3"><span class="material-symbols-outlined text-primary">payments</span></div>
+            <p class="text-xs font-medium text-on-surface-variant mb-1">Avg. Transaction Value</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">₦@Model.AvgTransactionValue.ToString("N2")</h3>
+        </div>
+        <div class="bg-surface border border-slate-200 p-6 rounded-xl">
+            <div class="p-2 bg-primary/10 rounded-lg w-fit mb-3"><span class="material-symbols-outlined text-primary">trending_up</span></div>
+            <p class="text-xs font-medium text-on-surface-variant mb-1">Success Rate</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">@Model.SuccessRate.ToString("0.#")%</h3>
+        </div>
+    </section>
+
+    <section class="space-y-4">
+        <h3 class="text-lg font-bold text-slate-900">Top Performing Billers</h3>
+        <div class="bg-surface border border-slate-200 rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Biller</th>
+                            <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Volume</th>
+                            <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Revenue</th>
+                            <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Revenue Share</th>
+                            <th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Success</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @if (Model.TopBillers.Any())
+                        {
+                            @foreach (var biller in Model.TopBillers)
+                            {
+                                var share = Model.TopRevenue > 0 ? (double)(biller.Revenue / Model.TopRevenue) * 100 : 0;
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-6 py-4 text-sm font-semibold text-slate-900">@biller.Name</td>
+                                    <td class="px-6 py-4 text-right text-sm text-on-surface-variant">@biller.Volume.ToString("N0")</td>
+                                    <td class="px-6 py-4 text-right font-bold text-sm text-slate-900">₦@biller.Revenue.ToString("N2")</td>
+                                    <td class="px-6 py-4">
+                                        <div class="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                            <div class="h-full bg-primary rounded-full" style="width: @share.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 @(biller.SuccessRate >= 95 ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700") text-[11px] font-bold rounded">@biller.SuccessRate.ToString("0.#")%</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td class="px-6 py-12 text-center text-sm text-on-surface-variant" colspan="5">No transaction data to report yet.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>

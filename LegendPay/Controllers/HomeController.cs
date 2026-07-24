@@ -20,6 +20,7 @@ namespace LegendPay.Controllers
         private readonly AppDbContext _context;
         private readonly IBillerOneService _billerOneService;
 
+
         public HomeController(
                  IAuthService authService,
                  IWalletService walletService,
@@ -77,7 +78,13 @@ namespace LegendPay.Controllers
             var user = await _authService.GetUserByIdAsync(userId.Value);
             if (user == null) return RedirectToAction("Login", "Auth");
 
+            if (string.IsNullOrEmpty(user.AccountNumber))
+            {
+                await _authService.TryProvisionWalletAsync(user);
+            }
+
             var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 10);
+            var ledgerBalance = await _authService.GetLedgerBalanceAsync(user);
 
             var model = new WalletDashboardViewModel
             {
@@ -197,6 +204,7 @@ namespace LegendPay.Controllers
 
             return View(model);
         }
+
 
         [Authorize]
         public async Task<IActionResult> Subscriptions()

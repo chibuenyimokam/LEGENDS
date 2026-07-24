@@ -15,9 +15,12 @@ namespace LegendPay.Interfaces.Auth
         Task<UserAccount?> GetUserByEmailAsync(string email);
         Task<UserAccount?> GetUserByIdAsync(Guid userId);
         Task<UserAccount?>CreateAndSaveUserAsync(SignUpViewModel model, string initialotp);
+        Task<bool> GeneratePasswordResetAsync(string email, string otp);
+        Task<bool> ResetPasswordAsync(string email, string otp, string newPassword);
         Task<UserAccount?> ValidateLoginCredentialsAsync(string identifier, string plainPassword);
         Task UpdateUserAsync(UserAccount user);
         Task<decimal?> GetUserBalanceAsync(string email);
+        Task<decimal> GetLedgerBalanceAsync(UserAccount user);
         Task<bool> TryProvisionWalletAsync(UserAccount user);
         Task<UserAccount?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10);
         Task<UserDashboardViewModel> GetUserDashboardAsync(UserAccount user);
