@@ -496,6 +496,6 @@ namespace LegendPay.Services.Account
         }
 
         public async Task SignOutUserAsync(HttpContext httpContext) =>
-            await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await httpContext.SignOutAsync("UserScheme", new AuthenticationProperties());
     }
 }

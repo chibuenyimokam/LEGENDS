@@ -239,12 +239,13 @@
                 toggle.textContent = hidden ? 'visibility_off' : 'visibility';
             }
 
-            let hidden = sessionStorage.getItem(KEY) === '1';
+            const stored = localStorage.getItem(KEY);
+            let hidden = stored === null ? true : stored === '1';
             apply(hidden);
 
             toggle.addEventListener('click', () => {
                 hidden = !hidden;
-                sessionStorage.setItem(KEY, hidden ? '1' : '0');
+                localStorage.setItem(KEY, hidden ? '1' : '0');
                 apply(hidden);
             });
         })();

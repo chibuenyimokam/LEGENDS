@@ -1,0 +1,56 @@
+﻿@model LegendPay.Models.ViewModels.BeneficiariesViewModel
+@{
+    ViewData["Title"] = "Beneficiaries";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="p-10 space-y-8 max-w-4xl">
+
+    <div>
+        <h2 class="text-2xl font-bold text-on-surface tracking-tight">Beneficiaries</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Manage the billers you've saved for quick, repeat payments.</p>
+    </div>
+
+    @if (TempData["DeleteError"] != null)
+    {
+        <div class="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">@TempData["DeleteError"]</div>
+    }
+
+    @if (!Model.Beneficiaries.Any())
+    {
+        <div class="bg-surface border border-slate-200 rounded-2xl p-10 text-center space-y-3">
+            <span class="material-symbols-outlined text-4xl text-on-surface-variant">bookmark_border</span>
+            <p class="text-sm font-semibold text-on-surface">No saved beneficiaries yet</p>
+            <p class="text-xs text-on-surface-variant">Toggle "Save as beneficiary" during a bill payment to see it here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="bg-surface border border-slate-200 rounded-2xl divide-y divide-slate-100">
+            @foreach (var b in Model.Beneficiaries)
+            {
+                <div class="flex items-center justify-between gap-4 p-5">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                            <span class="material-symbols-outlined">@b.CategoryIcon</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-on-surface truncate">@b.BenefName</p>
+                            <p class="text-xs text-on-surface-variant truncate">@b.Biller &middot; @b.BenefRefId</p>
+                        </div>
+                    </div>
+                    <form method="post" action="@Url.Action("DeleteBeneficiary", "Home")"
+                          onsubmit="return confirm('Remove @b.BenefName as a beneficiary?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="benefId" value="@b.BenefId" />
+                        <button type="submit"
+                                class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+
+</div>

@@ -4,11 +4,13 @@ using LegendPay.Models;
 using LegendPay.Models.Data.Response_Table;
 using LegendPay.Models.ViewModels.UserDashboard;
 using LegendPay.Models.WalletStation.Request;
+using LegendPay.Models.BillerOne.Request;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Security.Claims;
 using LegendPay.Models.Data;
+using LegendPay.Models.ViewModels;
 
 namespace LegendPay.Controllers
 {
@@ -219,6 +221,46 @@ namespace LegendPay.Controllers
             var model = await _authService.GetSubscriptionsAsync(user.Id);
 
             return View(model);
+        }
+        [Authorize]
+        public async Task<IActionResult> Beneficiaries()
+        {
+            var response = await _billerOneService.GetBeneficiariesAsync();
+
+            var model = new BeneficiariesViewModel
+            {
+                Beneficiaries = response?.BeneficiaryList?
+                    .Select(b => new BeneficiaryDisplayItem
+                    {
+                        BenefId = b.BenefId,
+                        BenefName = b.BenefName,
+                        BenefRefId = b.BenefRefId,
+                        Biller = b.Biller,
+                        Category = b.Category,
+                        CategoryDisplayName = GetCategoryDisplayName(b.Category),
+                        CategoryIcon = GetCategoryIcon(b.Category)
+                    })
+                    .ToList() ?? new List<BeneficiaryDisplayItem>()
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteBeneficiary(string benefId)
+        {
+            if (string.IsNullOrEmpty(benefId))
+                return RedirectToAction("Beneficiaries");
+
+            var response = await _billerOneService.DeleteBeneficiaryAsync(benefId);
+            if (response?.ResponseCode != "00")
+            {
+                TempData["DeleteError"] = "Could not remove beneficiary. Please try again.";
+            }
+
+            return RedirectToAction("Beneficiaries");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -518,6 +560,28 @@ namespace LegendPay.Controllers
             {
                 localUser.Balance = debitResponse.Balance;
                 await _context.SaveChangesAsync();
+            }
+            if (model.SaveBeneficiary)
+            {
+                try
+                {
+                    var benefName = !string.IsNullOrEmpty(model.CustomerName)
+                        ? model.CustomerName
+                        : $"{model.BillerName} - {model.ReferenceNumber}";
+
+                    await _billerOneService.CreateBeneficiaryAsync(new CreateBeneficiaryRequest
+                    {
+                        BenefName = benefName,
+                        BenefRefId = model.ReferenceNumber,
+                        Biller = model.BillerName,
+                        Category = model.Category ?? string.Empty
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to save beneficiary for {BillerName}", model.BillerName);
+                    // Don't fail the payment if saving the beneficiary fails
+                }
             }
 
             // TODO: Add BillerOne payment call here when Mitchel integrates the payment endpoint
