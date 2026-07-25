@@ -6,6 +6,8 @@ using System.Security.Claims;
 
 namespace LegendPay.Controllers.Admin
 {
+    [Authorize(AuthenticationSchemes = "AdminScheme")]
+    [Area("Admin")]
     public class AdminController : Controller
     {
         private readonly IAdminAuthService _adminAuthService;
@@ -30,14 +32,15 @@ namespace LegendPay.Controllers.Admin
             _adminReportService = adminReportService;
             _adminSettingsService = adminSettingsService;
         }
-
-        [HttpGet]
+        [AllowAnonymous]
+        [HttpGet("Admin/Login")]
         public IActionResult Login()
         {
             return View("~/Views/Admin/AdminLogin.cshtml", new AdminLoginViewModel());
         }
-
-        [HttpPost]
+        [AllowAnonymous]
+        [HttpPost("Admin/Login")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(AdminLoginViewModel model)
         {
             if (!ModelState.IsValid)
@@ -64,8 +67,8 @@ namespace LegendPay.Controllers.Admin
                 return View("~/Views/Admin/AdminLogin.cshtml", model);
             }
         }
-
-        [HttpPost]
+        [AllowAnonymous]
+        [HttpPost("Admin/VerifyOtp")]
         public async Task<IActionResult> VerifyOtp(string email, string twoFactorCode)
         {
             try
@@ -88,6 +91,7 @@ namespace LegendPay.Controllers.Admin
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult ForgotPassword()
         {
             return View("~/Views/Admin/AdminForgotPassword.cshtml", new ForgotPasswordViewModel());
@@ -114,7 +118,7 @@ namespace LegendPay.Controllers.Admin
 
             return View("~/Views/Admin/AdminResetPassword.cshtml", new ResetPasswordViewModel { Email = email });
         }
-
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {

@@ -47,7 +47,7 @@
                 <div class="alert-success">Your password has been reset. Please sign in with your new password.</div>
             }
 
-            <form asp-action="Login" asp-controller="Admin" method="post">
+            <form asp-area="Admin" asp-action="Login" asp-controller="Admin" method="post">
                 @Html.AntiForgeryToken()
 
                 <div class="form-group">
@@ -61,7 +61,7 @@
                         </span>
                         @if (showOtp)
                         {
-                            <input asp-for="Email" class="form-input" placeholder="admin@legendpay.com" disabled />
+                            <input asp-for="Email" class="form-input" placeholder="admin@legendpay.com" readonly /> //from diabled to readonly
                         }
                         else
                         {
@@ -74,7 +74,7 @@
                 <div class="form-group">
                     <div class="label-row">
                         <label class="form-label">Password</label>
-                        <a asp-controller="Admin" asp-action="ForgotPassword" class="forgot-link">Forgot Password?</a>
+                        <a asp-area="Admin" asp-controller="Admin" asp-action="ForgotPassword" class="forgot-link">Forgot Password?</a>
                     </div>
                     <div class="input-wrapper">
                         <span class="input-icon">
@@ -85,7 +85,7 @@
                         </span>
                         @if (showOtp)
                         {
-                            <input asp-for="Password" type="password" class="form-input" placeholder="••••••••••••" id="passwordInput" disabled />
+                            <input asp-for="Password" type="password" class="form-input" placeholder="••••••••••••" id="passwordInput" readonly /> //diabled to readonly
                         }
                         else
                         {
@@ -110,7 +110,7 @@
 
             @if (showOtp)
             {
-                <form asp-action="VerifyOtp" asp-controller="Admin" method="post">
+                <form asp-area="Admin" asp-action="VerifyOtp" asp-controller="Admin" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="email" value="@adminEmail" />
 

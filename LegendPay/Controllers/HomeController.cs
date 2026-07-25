@@ -12,6 +12,7 @@ using LegendPay.Models.Data;
 
 namespace LegendPay.Controllers
 {
+    [Authorize(AuthenticationSchemes = "UserScheme")]
     public class HomeController : Controller
     {
         private readonly IAuthService _authService;
@@ -44,7 +45,7 @@ namespace LegendPay.Controllers
         {
             return View();
         }
-
+        [AllowAnonymous]
         public IActionResult Onboarding()
         {
             return View();
