@@ -229,10 +229,10 @@ namespace LegendPay.Services.Account
             };
 
             var claimsIdentity = new ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                claims, "UserScheme");
 
             await httpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
+                "UserScheme",
                 new ClaimsPrincipal(claimsIdentity));
         }
 

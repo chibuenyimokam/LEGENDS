@@ -60,15 +60,31 @@ namespace LegendPay
             builder.Services.AddScoped<IAdminSettingsService, AdminSettingsService>();
             builder.Services.AddSignalR();
 
+            //using scheme now cause we have admin and users on the same server and we want to avoid cookie breaking due to too many redirects cause it identifies admin and user as the same cookie and it will break the login flow for both parties
 
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddCookie(options =>
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = "UserScheme";
+            })
+            .AddCookie("UserScheme", options =>
             {
                 options.LoginPath = "/Auth/Login";
                 options.LogoutPath = "/Auth/Logout";
                 options.AccessDeniedPath = "/Auth/Login";
-                options.Cookie.Name = ".LegendPayAuth";
+                options.Cookie.Name = ".LegendPay.UserAuth";
                 options.ExpireTimeSpan = TimeSpan.FromDays(1); //time user stays logged in
+                options.SlidingExpiration = true; //instructs the server to re-issue a
+                //new authentication cookie with a fresh expiration date whenever
+                //a user makes a request while past the halfway point of the set ExpireTimeSpan
+            })
+            .AddCookie("AdminScheme", options =>
+            {
+                options.LoginPath = "/Admin/Login";
+                options.LogoutPath = "/Admin/Logout";
+                options.AccessDeniedPath = "/Admin/Login";
+                options.Cookie.Name = ".LegendPay.AdminAuth";
+                options.ExpireTimeSpan = TimeSpan.FromHours(2); //time user stays logged in
                 options.SlidingExpiration = true; //instructs the server to re-issue a
                 //new authentication cookie with a fresh expiration date whenever
                 //a user makes a request while past the halfway point of the set ExpireTimeSpan
@@ -91,6 +107,10 @@ namespace LegendPay
 
             app.MapStaticAssets();
             app.MapHub<SupportChatHub>("/supportChatHub");
+            app.MapControllerRoute(
+                name: "areas",
+                pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Onboarding}/{id?}")

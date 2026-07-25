@@ -77,8 +77,8 @@ namespace LegendPay.Services.Admin
                     new Claim(ClaimTypes.Role, admin.Role)
                 };
 
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+                var claimsIdentity = new ClaimsIdentity(claims, "AdminScheme");
+                await httpContext.SignInAsync("AdminScheme", new ClaimsPrincipal(claimsIdentity));
 
                 return ServiceResponse<string>.SuccessResponse("", "Login successful.");
             }
@@ -138,7 +138,7 @@ namespace LegendPay.Services.Admin
         {
             try
             {
-                await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                await httpContext.SignOutAsync("AdminScheme");
                 return ServiceResponse<string>.SuccessResponse("", "Logged out successfully.");
             }
             catch (Exception ex)
