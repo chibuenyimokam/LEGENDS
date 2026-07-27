@@ -318,7 +318,6 @@ namespace LegendPay.Controllers
             _ => "Reference Number"
         };
 
-        // Helper: 4-step categories
         private bool IsFourStep(string category) =>
             category?.ToUpper() is "ELECTRICITY" or "DIGITALTV" or "EDUCATION";
 
@@ -339,7 +338,6 @@ namespace LegendPay.Controllers
             _ => "Nigeria"
         };
 
-        // ── TEMPLATE A: Step 1 — Select Biller ──────────────────────────────────────
         [Authorize]
         public async Task<IActionResult> SelectBiller(string category)
         {
@@ -372,7 +370,6 @@ namespace LegendPay.Controllers
             return View("~/Views/Home/Templates/SelectBiller.cshtml", model);
         }
 
-        // ── TEMPLATE A: Step 2 — Biller Details ─────────────────────────────────────
         [Authorize]
         public async Task<IActionResult> BillerDetails(
         string category, string billerId, string billerName,
@@ -415,7 +412,6 @@ namespace LegendPay.Controllers
             return View("~/Views/Home/Templates/BillerDetails.cshtml", model);
         }
 
-        // ── TEMPLATE B: Step 1 — Purchase Details ────────────────────────────────────
         [Authorize]
         public async Task<IActionResult> PurchaseDetails(string category)
         {
