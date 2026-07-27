@@ -42,7 +42,13 @@ namespace LegendPay.Services.Admin
                 admin.TwoFactorExpiration = DateTime.UtcNow.AddMinutes(10);
                 await _context.SaveChangesAsync();
 
-                await _emailService.SendTwoFactorCodeAsync(admin.Email, twoFactorCode);
+                var emailResult = await _emailService.SendTwoFactorCodeAsync(admin.Email, twoFactorCode);
+                if(!emailResult.Success)
+                {
+                    return ServiceResponse<string>.FailureResponse("Failed to send 2FA code. Please try again later.");
+                }
+
+                //await _emailService.SendTwoFactorCodeAsync(admin.Email, twoFactorCode);
 
                 return ServiceResponse<string>.SuccessResponse(admin.Email, "2FA code sent to your email.");
             }
@@ -101,7 +107,11 @@ namespace LegendPay.Services.Admin
                     admin.TwoFactorExpiration = DateTime.UtcNow.AddMinutes(10);
                     await _context.SaveChangesAsync();
 
-                    await _emailService.SendTwoFactorCodeAsync(admin.Email, code);
+                    var emailResult = await _emailService.SendTwoFactorCodeAsync(admin.Email, code);
+                    if (!emailResult.Success)
+                    {
+                        return ServiceResponse<string>.FailureResponse("Failed to send reset code. Please try again later.");
+                    }
                 }
 
                 return ServiceResponse<string>.SuccessResponse(email, "If an account exists for that email, a reset code has been sent.");

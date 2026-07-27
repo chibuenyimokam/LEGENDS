@@ -10,6 +10,7 @@ using System.Security.Claims;
 namespace LegendPay.Controllers.Admin
 {
     [Authorize]
+    [Area("Admin")]
     public class AdminSupportChatController : Controller
     {
         private readonly IAdminSupportChatService _adminSupportChatService;
@@ -24,6 +25,8 @@ namespace LegendPay.Controllers.Admin
         }
 
         [HttpGet]
+        [Area("Admin")]
+        [Authorize(AuthenticationSchemes ="AdminScheme")]
         public async Task<IActionResult> UserSupport(string? status = null)
         {
             var response = await _adminSupportChatService.GetAllChatsAsync(status);
@@ -39,6 +42,8 @@ namespace LegendPay.Controllers.Admin
         }
 
         [HttpGet]
+        [Area("Admin")]
+        [Authorize(AuthenticationSchemes = "AdminScheme")]
         public async Task<IActionResult> AdminSupport(Guid chatId)
         {
             var response = await _adminSupportChatService.GetChatAsync(chatId);
@@ -61,6 +66,7 @@ namespace LegendPay.Controllers.Admin
         }
 
         [HttpPost]
+        [Authorize(AuthenticationSchemes = "AdminScheme")]
         public async Task<IActionResult> SendReply(Guid chatId, string replyText)
         {
             if (string.IsNullOrWhiteSpace(replyText))
