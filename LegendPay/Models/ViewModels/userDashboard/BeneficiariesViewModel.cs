@@ -1,8 +1,13 @@
-﻿namespace LegendPay.Models.ViewModels
+﻿namespace LegendPay.Models.ViewModels.userDashboard
 {
     public class BeneficiariesViewModel
     {
         public List<BeneficiaryDisplayItem> Beneficiaries { get; set; } = new();
+        public string? Search { get; set; }
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+        public int TotalCount { get; set; }
 
     }
      public class BeneficiaryDisplayItem

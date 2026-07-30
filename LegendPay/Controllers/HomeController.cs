@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Security.Claims;
 using LegendPay.Models.Data;
-using LegendPay.Models.ViewModels;
+using LegendPay.Models.ViewModels.userDashboard;
 
 namespace LegendPay.Controllers
 {
@@ -223,13 +223,13 @@ namespace LegendPay.Controllers
             return View(model);
         }
         [Authorize]
-        public async Task<IActionResult> Beneficiaries()
+        public async Task<IActionResult> Beneficiaries(string? search, int page = 1)
         {
+            const int pageSize = 10;
+            if (page < 1) page = 1;
             var response = await _billerOneService.GetBeneficiariesAsync();
 
-            var model = new BeneficiariesViewModel
-            {
-                Beneficiaries = response?.BeneficiaryList?
+            var allBeneficiaries = response?.BeneficiaryList?
                     .Select(b => new BeneficiaryDisplayItem
                     {
                         BenefId = b.BenefId,
@@ -240,7 +240,31 @@ namespace LegendPay.Controllers
                         CategoryDisplayName = GetCategoryDisplayName(b.Category),
                         CategoryIcon = GetCategoryIcon(b.Category)
                     })
-                    .ToList() ?? new List<BeneficiaryDisplayItem>()
+                    .ToList() ?? new List<BeneficiaryDisplayItem>();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                allBeneficiaries = allBeneficiaries
+                    .Where(b => b.BenefName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                                b.BenefRefId.Contains(search, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            var totalCount = allBeneficiaries.Count;
+            var totalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 1;
+            if (page > totalPages) page = totalPages;
+            var pagedBeneficiaries = allBeneficiaries
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+            var model = new BeneficiariesViewModel
+            {
+                Beneficiaries = pagedBeneficiaries,
+                Search =search,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                PageSize = pageSize,
+                TotalCount = totalCount
             };
 
             return View(model);
@@ -565,13 +589,22 @@ namespace LegendPay.Controllers
                         ? model.CustomerName
                         : $"{model.BillerName} - {model.ReferenceNumber}";
 
-                    await _billerOneService.CreateBeneficiaryAsync(new CreateBeneficiaryRequest
+                    var beneficairyResponse = await _billerOneService.CreateBeneficiaryAsync(new CreateBeneficiaryRequest
                     {
                         BenefName = benefName,
                         BenefRefId = model.ReferenceNumber,
                         Biller = model.BillerName,
                         Category = model.Category ?? string.Empty
                     });
+                    if (beneficairyResponse?.ResponseCode == "00")
+                    {
+                        _logger.LogInformation("Beneficiary saved successfully for {BBillerName}, RefId {RefId}", model.BillerName, model.ReferenceNumber);
+                    }
+                    else
+                    {
+                        _logger.LogError("Beneficiary save rejected. BillerName: {BillerName}, RefId: {RefId}, ResponseCode: {Code}, ResponseMessage: {Message}",
+                            model.BillerName, model.ReferenceNumber, beneficairyResponse?.ResponseCode, beneficairyResponse?.ResponseMessage);
+                    }
                 }
                 catch (Exception ex)
                 {
