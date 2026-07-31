@@ -3,6 +3,9 @@
     public class GetTransactionListResponse
     {
         public ResponseHeader ResponseHeader { get; set; }
+        public Pagination Pagination { get; set; }
+        public List<TransactionDetailsList> TransactionDetailsList { get; set; }
+    }
         public class Pagination
         {
             public required int CurrentPage { get; set; }
@@ -20,6 +23,4 @@
             public required decimal Balance { get; set; }
             public required string Description { get; set; }
         }
-    
-    }
 }

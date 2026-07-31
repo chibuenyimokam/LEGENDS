@@ -45,10 +45,15 @@ namespace LegendPay
                     client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
                 }
             });
+            //builder.Services.AddHttpClient("WalletStationClient", client =>
+            //{
+            //    client.BaseAddress = new Uri("<WalletStation base URL>");
+            //});
 
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            //builder.Services.AddScoped<IWalletTransactionHistoryService, WalletTransactionHistoryService>();
             builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
             builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
             builder.Services.AddScoped<IUserSupportChatService, UserSupportChatService>();
