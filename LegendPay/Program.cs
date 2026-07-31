@@ -45,6 +45,19 @@ namespace LegendPay
                     client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
                 }
             });
+            builder.Services.Configure<VasSettings>(builder.Configuration.GetSection(VasSettings.SectionName));
+            builder.Services.AddSingleton<VasSignatureService>();
+
+            builder.Services.AddHttpClient("VasClient", (sp, client) =>
+            {
+                var settings = sp.GetRequiredService<IOptions<VasSettings>>().Value;
+                client.BaseAddress = new Uri(settings.VasBaseUrl);
+
+                var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{settings.Username}:{settings.Password}"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);
+            });
+
+            builder.Services.AddScoped<IVasService, VasService>();
 
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IOtpService, OtpService>();

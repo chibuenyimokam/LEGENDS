@@ -1,6 +1,7 @@
 ﻿using LegendPay.Models.VAS.Response;
+using LegendPay.Models.VAS.Request;
 
-namespace LegendPay.Services.Vas
+namespace LegendPay.Interfaces.Transaction
 {
     public interface IVasService
     {

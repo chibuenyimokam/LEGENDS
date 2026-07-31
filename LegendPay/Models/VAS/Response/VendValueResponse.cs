@@ -1,7 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
 namespace LegendPay.Models.VAS.Response
-{    public class VendValueResponse
+{  
+    public class VendValueResponse
     {
         public VasResponseHeader? VasResponseHeader { get; set; }
 
@@ -65,6 +66,12 @@ namespace LegendPay.Models.VAS.Response
 
         [JsonPropertyName("orderId")]
         public string? OrderId { get; set; }
+
+       public class VasTokenData
+        {
+          [JsonPropertyName("stdToken")]
+          public StdToken? StdToken { get; set; }
+        }
         public class StdToken
         {
             [JsonPropertyName("amount")]
@@ -92,10 +99,6 @@ namespace LegendPay.Models.VAS.Response
             public string? Tax { get; set; }
         }
 
-        public class VasTokenData
-        {
-            [JsonPropertyName("stdToken")]
-            public StdToken? StdToken { get; set; }
-        }
+        
     }
 }
