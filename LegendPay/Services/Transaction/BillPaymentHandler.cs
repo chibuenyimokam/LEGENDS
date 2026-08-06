@@ -166,7 +166,7 @@ namespace LegendPay.Services.Transaction
             {
                 _logger.LogError("VAS Vend Failed. Code: {Code}, Message: {Msg}", vasResponse?.ResponseCode, vasResponse?.Message);
 
-                // Vend failed after the wallet was already debited, reverse the debit so the
+                // if Vend failed after the wallet was already debited, reverse the debit so the
                 // customer isn't charged for a service that was never delivered.
                 var reversalRequest = new DebitReversalRequest
                 {
@@ -194,7 +194,7 @@ namespace LegendPay.Services.Transaction
                 else
                 {
                     // Debit succeeded, vend failed, AND the reversal failed - this needs
-                    // manual reconciliation. Log loudly so it isn't missed.
+                    // manual reconciliation.
                     _logger.LogCritical(
                         "REVERSAL FAILED for {PaymentRef}. User {CustomerId} was debited {Amount} but vend and reversal both failed.",
                         paymentRef, user.CustomerId, model.Amount);
@@ -238,14 +238,7 @@ namespace LegendPay.Services.Transaction
 
             List<BillerItem> billers = new();
 
-            // Determine target group slug for CoralPay VAS
-            // Airtime and Data share the AIRTIME_AND_DATA CoralPay group
-            //string targetGroupSlug = category;
-            //if (category.Equals("AIRTIME", StringComparison.OrdinalIgnoreCase) ||
-            //    category.Equals("DATA", StringComparison.OrdinalIgnoreCase))
-            //{
-            //    targetGroupSlug = "AIRTIME_AND_DATA";
-            //}
+            
             string targetGroupSlug = MapToVasGroupSlug(category);
 
             // Fetch billers from CoralPay VAS using the category/group slug

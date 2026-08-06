@@ -42,14 +42,41 @@
             {
                 <!-- Network provider cards for Airtime & Data  pulled from CoralPay's biller list -->
                 <div class="grid grid-cols-4 gap-3">
-                    @foreach (var biller in Model.Billers ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>())
+                    @{
+                        var mainBillers = Model.Billers?.Take(5).ToList() ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>();
+                        var moreBillers = Model.Billers?.Skip(5).ToList() ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>();
+                    }
+                    
+                    @foreach (var biller in mainBillers)
                     {
-                        <button type="button" onclick="selectProvider('@biller.BillerName', '@biller.BillerId')" id="provider-@biller.BillerId"
-                                class="provider-btn flex flex-col items-center gap-2 border-2 border-slate-200 rounded-xl p-4 hover:border-primary transition-all">
-                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary">
-                                @(biller.BillerName.Length >= 2 ? biller.BillerName.Substring(0, 2).ToUpper() : biller.BillerName.ToUpper())
+                     <button type="button" onclick="selectProvider('@biller.BillerName', '@biller.BillerId')"
+                                id="provider-@biller.BillerId"
+                                class="provider-btn flex flex-col items-center gap-2 border-2 border-slate-200 rounded-xl p-3 hover:border-primary transition-all">
+                            @if (!string.IsNullOrEmpty(biller.LogoUrl))
+                            {
+                                <img src="@biller.LogoUrl" alt="@biller.BillerName" class="w-10 h-10 rounded-full object-contain"
+                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+                                <div class="w-10 h-10 rounded-full bg-slate-200 items-center justify-center text-xs font-black text-slate-700 hidden">
+                                    @(biller.BillerName.Length >= 2 ? biller.BillerName.Substring(0, 2).ToUpper() : biller.BillerName.ToUpper())
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary">
+                                    @(biller.BillerName.Length >= 2 ? biller.BillerName.Substring(0, 2).ToUpper() : biller.BillerName.ToUpper())
+                                </div>
+                            }
+                            <span class="text-xs font-semibold text-on-surface text-center leading-tight">@biller.BillerName</span>
+                        </button>
+                    }
+                    @if (moreBillers.Any())
+                    {
+                        <button type="button" onclick="document.getElementById('moreModal').classList.remove('hidden')"
+                                class="flex flex-col items-center gap-2 border-2 border-slate-200 rounded-xl p-3 hover:border-primary transition-all">
+                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-on-surface-variant">more_horiz</span>
                             </div>
-                            <span class="text-xs font-semibold text-on-surface">@biller.BillerName</span>
+                            <span class="text-xs font-semibold text-on-surface">More</span>
                         </button>
                     }
                 </div>

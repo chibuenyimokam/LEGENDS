@@ -6,11 +6,19 @@
     var hasAccountNumber = !string.IsNullOrWhiteSpace(Model.AccountNumber);
 }
 @functions {
-    private static string RelativeTime(DateTime utc)
+    private static string RelativeTime(DateTime date)
     {
-        var span = DateTime.UtcNow - utc;
+        if (date == default || date == DateTime.MinValue)
+        {
+            return "Date unavailable";
+        }
+
+        var localDate = date.Kind == DateTimeKind.Utc ? date.ToLocalTime() : date;
+        var now = DateTime.Now;
+        var span = now - localDate;
 
         if (span.TotalSeconds < 60) return "Just now";
+
         if (span.TotalMinutes < 60)
         {
             var mins = (int)span.TotalMinutes;
@@ -27,7 +35,7 @@
             return $"{days} day{(days == 1 ? "" : "s")} ago";
         }
 
-        return utc.ToLocalTime().ToString("MMM d, yyyy");
+        return localDate.ToString("MMM d, yyyy");
     }
 }
 
@@ -100,7 +108,7 @@
             <section class="space-y-4">
                 <div class="flex items-center justify-between px-1">
                     <h3 class="font-label-md text-label-md text-on-surface-variant">Recent Activity</h3>
-                    <button class="text-primary font-label-sm text-label-sm hover:underline">View History</button>
+                    @* <button class="text-primary font-label-sm text-label-sm hover:underline" asp-controller="Home" asp-action="History" >View History</button> *@
                 </div>
                 <div class="bg-surface-container-lowest border border-surface-variant rounded-xl divide-y divide-surface-variant">
                     @if (Model.RecentTransactions.Any())
@@ -141,6 +149,7 @@
                                     }
                                     <p class="text-[10px] text-on-surface-variant/60">@RelativeTime(txn.Date)</p>
                                 </div>
+
                             </div>
                         }
                     }
@@ -153,6 +162,53 @@
                         </div>
                     }
                 </div>
+
+                @* Pagination Navigation Controls *@
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="flex items-center justify-between pt-2 px-1">
+                        <p class="text-xs text-on-surface-variant">
+                            Page <span class="font-semibold text-on-surface">@Model.CurrentPage</span> of <span class="font-semibold text-on-surface">@Model.TotalPages</span>
+                        </p>
+                        <div class="flex items-center gap-2">
+                            @if (Model.HasPreviousPage)
+                            {
+                                <a asp-controller="Home"
+                                   asp-action="FundWallet"
+                                   asp-route-page="@(Model.CurrentPage - 1)"
+                                   class="px-3 py-1.5 rounded-lg border border-surface-variant text-xs font-semibold text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                                    Previous
+                                </a>
+                            }
+                            else
+                            {
+                                <button disabled class="px-3 py-1.5 rounded-lg border border-surface-variant/40 text-xs font-semibold text-on-surface-variant/40 cursor-not-allowed flex items-center gap-1 opacity-50">
+                                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                                    Previous
+                                </button>
+                            }
+
+                            @if (Model.HasNextPage)
+                            {
+                                <a asp-controller="Home"
+                                   asp-action="FundWallet"
+                                   asp-route-page="@(Model.CurrentPage + 1)"
+                                   class="px-3 py-1.5 rounded-lg border border-surface-variant text-xs font-semibold text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-1">
+                                    Next
+                                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <button disabled class="px-3 py-1.5 rounded-lg border border-surface-variant/40 text-xs font-semibold text-on-surface-variant/40 cursor-not-allowed flex items-center gap-1 opacity-50">
+                                    Next
+                                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
             </section>
         </div>
 
@@ -215,7 +271,7 @@
 
 @section Scripts {
     <script>
-        (function () {
+        (function() {
             const balance = document.getElementById('walletBalance');
             const toggle = document.getElementById('balanceToggle');
 
