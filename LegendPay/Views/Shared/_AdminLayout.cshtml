@@ -119,7 +119,7 @@
                 <span class="material-symbols-outlined">gavel</span>
                 <span>Disputes</span>
             </a>
-            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+            <a asp-controller="Admin" asp-action="Settlement" class="@NavClass("Admin", "Settlement")">
                 <span class="material-symbols-outlined">account_balance</span>
                 <span>Settlements</span>
             </a>
@@ -134,11 +134,11 @@
             <div class="pt-4 pb-2">
                 <p class="px-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-50">System</p>
             </div>
-            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+            <a asp-controller="Admin" asp-action="AuditLogs" class="@NavClass("Admin", "AuditLogs")">
                 <span class="material-symbols-outlined">receipt_long</span>
                 <span>Audit Logs</span>
             </a>
-            <a href="#" class="text-on-surface-variant hover:text-slate-900 flex items-center px-3 py-2 gap-3 text-sm font-medium transition-colors">
+            <a asp-controller="Admin" asp-action="Settings" class="@NavClass("Admin", "Settings")">
                 <span class="material-symbols-outlined">settings</span>
                 <span>Settings</span>
             </a>

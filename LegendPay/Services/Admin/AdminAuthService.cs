@@ -1,5 +1,6 @@
 ﻿using LegendPay.Interfaces.Admin;
 using LegendPay.Models;
+using LegendPay.Models.Data.Tables;
 using LegendPay.Models.ViewModels;
 using LegendPay.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -132,6 +133,43 @@ namespace LegendPay.Services.Admin
             {
                 return ServiceResponse<string>.FailureResponse($"An error occurred: {ex.Message}");
             }
+        }
+
+        public async Task<AdminAccount?> GetAdminByIdAsync(Guid adminId) =>
+            await _context.AdminAccounts.FirstOrDefaultAsync(a => a.Id == adminId);
+
+        public async Task<ServiceResponse<string>> UpdateProfileAsync(Guid adminId, string firstName, string lastName)
+        {
+            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+                return ServiceResponse<string>.FailureResponse("First and last name are required.");
+
+            var admin = await _context.AdminAccounts.FirstOrDefaultAsync(a => a.Id == adminId);
+            if (admin == null)
+                return ServiceResponse<string>.FailureResponse("Admin not found.");
+
+            admin.FirstName = firstName.Trim();
+            admin.LastName = lastName.Trim();
+            await _context.SaveChangesAsync();
+
+            return ServiceResponse<string>.SuccessResponse("", "Your profile has been updated.");
+        }
+
+        public async Task<ServiceResponse<string>> ChangePasswordAsync(Guid adminId, string currentPassword, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+                return ServiceResponse<string>.FailureResponse("Your new password must be at least 8 characters.");
+
+            var admin = await _context.AdminAccounts.FirstOrDefaultAsync(a => a.Id == adminId);
+            if (admin == null)
+                return ServiceResponse<string>.FailureResponse("Admin not found.");
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, admin.Password))
+                return ServiceResponse<string>.FailureResponse("Your current password is incorrect.");
+
+            admin.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _context.SaveChangesAsync();
+
+            return ServiceResponse<string>.SuccessResponse("", "Your password has been changed.");
         }
 
         public async Task<ServiceResponse<string>> LogoutAsync(HttpContext httpContext)

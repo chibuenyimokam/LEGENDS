@@ -1,0 +1,71 @@
+@model LegendPay.Models.Data.Tables.AdminAccount
+@{
+    ViewData["Title"] = "Settings";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="flex-1 px-10 py-8 max-w-3xl w-full">
+
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-slate-900">Settings</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Manage your administrator profile and password.</p>
+    </div>
+
+    @foreach (var (key, cls) in new[] { ("AdminProfileSuccess", "green"), ("AdminProfileError", "red"), ("AdminPasswordSuccess", "green"), ("AdminPasswordError", "red") })
+    {
+        if (TempData[key] != null)
+        {
+            <div class="mb-4 rounded-lg px-4 py-3 text-sm border @(cls == "green" ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800")">@TempData[key]</div>
+        }
+    }
+
+    <div class="bg-surface border border-slate-200 rounded-xl p-6 mb-6">
+        <h3 class="text-sm font-bold text-slate-900 mb-4">Profile</h3>
+        <form asp-controller="Admin" asp-action="UpdateAdminProfile" method="post" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">First name</label>
+                    <input name="firstName" value="@Model.FirstName" required class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Last name</label>
+                    <input name="lastName" value="@Model.LastName" required class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Email (login &amp; 2FA)</label>
+                    <input value="@Model.Email" disabled class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm bg-slate-50 text-on-surface-variant" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Role</label>
+                    <input value="@Model.Role" disabled class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm bg-slate-50 text-on-surface-variant" />
+                </div>
+            </div>
+            <button type="submit" class="h-11 px-6 bg-primary text-white font-semibold rounded-lg hover:bg-primary-container transition-colors">Save profile</button>
+        </form>
+    </div>
+
+    <div class="bg-surface border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-bold text-slate-900 mb-4">Change password</h3>
+        <form asp-controller="Admin" asp-action="ChangeAdminPassword" method="post" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Current password</label>
+                <input name="currentPassword" type="password" required class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary" />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">New password</label>
+                    <input name="newPassword" type="password" required minlength="8" class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Confirm new password</label>
+                    <input name="confirmPassword" type="password" required minlength="8" class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+            </div>
+            <button type="submit" class="h-11 px-6 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors">Update password</button>
+        </form>
+    </div>
+</div>
