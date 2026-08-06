@@ -48,6 +48,8 @@ namespace LegendPay
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<ILegendPointService, LegendPointService>();
+            builder.Services.AddScoped<IScheduledPaymentService, ScheduledPaymentService>();
             builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
             builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
             builder.Services.AddScoped<IUserSupportChatService, UserSupportChatService>();
@@ -57,6 +59,8 @@ namespace LegendPay
             builder.Services.AddScoped<IAdminTransactionService, AdminTransactionService>();
             builder.Services.AddScoped<IAdminReportService, AdminReportService>();
             builder.Services.AddScoped<IAdminSettingsService, AdminSettingsService>();
+            builder.Services.AddScoped<IAdminSettlementService, AdminSettlementService>();
+            builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
             builder.Services.AddSignalR();
 
 

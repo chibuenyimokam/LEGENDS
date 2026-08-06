@@ -1,0 +1,157 @@
+@model LegendPay.Models.ViewModels.userDashboard.LegendPointViewModel
+@{
+    ViewData["Title"] = "Legend Points";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="flex-1 px-10 py-8 max-w-4xl w-full">
+
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-slate-900">Legend Points</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Earn points on every payment and redeem them for wallet cashback.</p>
+    </div>
+
+    @if (TempData["RedeemSuccess"] != null)
+    {
+        <div class="mb-4 rounded-lg bg-green-50 border border-green-200 text-green-800 px-4 py-3 text-sm">@TempData["RedeemSuccess"]</div>
+    }
+    @if (TempData["RedeemError"] != null)
+    {
+        <div class="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-800 px-4 py-3 text-sm">@TempData["RedeemError"]</div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-primary text-white rounded-xl p-6">
+            <p class="text-xs font-bold uppercase tracking-widest opacity-70 mb-2">Available Points</p>
+            <p class="text-4xl font-bold tracking-tight">@Model.AvailablePoints.ToString("N0")</p>
+            <p class="text-xs opacity-80 mt-2">Worth ₦@Model.MaxCashValue.ToString("N2") in cashback</p>
+        </div>
+        <div class="bg-surface border border-slate-200 rounded-xl p-6">
+            <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-2">Total Earned</p>
+            <p class="text-3xl font-bold text-slate-900">@Model.TotalEarned.ToString("N0")</p>
+        </div>
+        <div class="bg-surface border border-slate-200 rounded-xl p-6">
+            <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-2">Total Redeemed</p>
+            <p class="text-3xl font-bold text-slate-900">@Model.TotalRedeemed.ToString("N0")</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="bg-surface border border-slate-200 rounded-xl p-6">
+            <h3 class="text-sm font-bold text-slate-900 mb-4">Redeem for cashback</h3>
+
+            @if (Model.CanRedeem)
+            {
+                <form asp-controller="Home" asp-action="RedeemPoints" method="post" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Points to redeem</label>
+                        <input id="pointsInput" name="points" type="number"
+                               min="@Model.MinimumRedemptionPoints" max="@Model.AvailablePoints" step="1"
+                               value="@Model.AvailablePoints"
+                               class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary" />
+                        <div class="flex justify-between mt-1.5">
+                            <span class="text-[11px] text-on-surface-variant">Min @Model.MinimumRedemptionPoints.ToString("N0") pts</span>
+                            <button type="button" id="redeemAll" class="text-[11px] font-semibold text-primary hover:underline">Redeem all</button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 rounded-lg px-4 py-3 flex items-center justify-between">
+                        <span class="text-xs text-on-surface-variant">You'll receive</span>
+                        <span id="cashPreview" class="text-lg font-bold text-slate-900">₦@Model.MaxCashValue.ToString("N2")</span>
+                    </div>
+                    <button type="submit" class="w-full h-11 bg-primary text-white font-semibold rounded-lg hover:bg-primary-container transition-colors">
+                        Redeem now
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="text-center py-6">
+                    <span class="material-symbols-outlined text-[36px] text-slate-300">lock</span>
+                    <p class="text-sm text-on-surface-variant mt-2">
+                        You need at least <span class="font-semibold text-slate-700">@Model.MinimumRedemptionPoints.ToString("N0")</span> points to redeem.
+                        You have <span class="font-semibold text-slate-700">@Model.AvailablePoints.ToString("N0")</span>.
+                    </p>
+                </div>
+            }
+        </div>
+
+        <div class="bg-surface border border-slate-200 rounded-xl p-6">
+            <h3 class="text-sm font-bold text-slate-900 mb-4">How it works</h3>
+            <ul class="space-y-3 text-sm text-on-surface-variant">
+                <li class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-[20px] text-primary">savings</span>
+                    <span>Earn <span class="font-semibold text-slate-800">@Model.EarnRateBelowThousandPct.ToString("0.##")%</span> on payments under ₦1,000 and <span class="font-semibold text-slate-800">@Model.EarnRateAboveThousandPct.ToString("0.##")%</span> on ₦1,000 and above.</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-[20px] text-primary">redeem</span>
+                    <span>Each point is worth <span class="font-semibold text-slate-800">₦@Model.CashValuePerPoint.ToString("0.####")</span> when redeemed.</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-[20px] text-primary">verified</span>
+                    <span>Minimum redemption is <span class="font-semibold text-slate-800">@Model.MinimumRedemptionPoints.ToString("N0")</span> points.</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="bg-surface border border-slate-200 rounded-xl mt-6 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100">
+            <h3 class="text-sm font-bold text-slate-900">Points history</h3>
+        </div>
+        @if (!Model.History.Any())
+        {
+            <p class="px-6 py-10 text-center text-sm text-on-surface-variant">No points activity yet. Start paying bills to earn Legend Points.</p>
+        }
+        else
+        {
+            <table class="w-full text-sm">
+                <tbody class="divide-y divide-slate-100">
+                    @foreach (var h in Model.History)
+                    {
+                        var earned = h.Type == "Earned";
+                        <tr>
+                            <td class="px-6 py-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-[20px] @(earned ? "text-green-600" : "text-primary")">@(earned ? "add_circle" : "redeem")</span>
+                                    <div>
+                                        <p class="text-slate-800">@h.Description</p>
+                                        <p class="text-[11px] text-on-surface-variant">@h.CreatedAt.ToString("dd MMM yyyy, HH:mm")</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3 text-right font-semibold @(earned ? "text-green-600" : "text-slate-900")">
+                                @(earned ? "+" : "-")@h.Points.ToString("N0") pts
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var input = document.getElementById('pointsInput');
+            var preview = document.getElementById('cashPreview');
+            var all = document.getElementById('redeemAll');
+            if (!input) return;
+
+            var rate = @Model.CashValuePerPoint;
+            var max = @Model.AvailablePoints;
+
+            function render() {
+                var pts = parseInt(input.value, 10);
+                if (isNaN(pts) || pts < 0) pts = 0;
+                var cash = (pts * rate).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                preview.textContent = '₦' + cash;
+            }
+
+            input.addEventListener('input', render);
+            if (all) all.addEventListener('click', function () { input.value = max; render(); });
+            render();
+        })();
+    </script>
+}

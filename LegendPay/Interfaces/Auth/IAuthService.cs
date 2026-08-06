@@ -23,6 +23,9 @@ namespace LegendPay.Interfaces.Auth
         Task<Wallet?> GetWalletWithRecentTransactionsAsync(Guid userId, int recentCount = 10);
         Task<UserDashboardViewModel> GetUserDashboardAsync(UserAccount user);
         Task<SubscriptionsViewModel> GetSubscriptionsAsync(Guid userId);
+        Task<bool> SetAutoPayAsync(Guid subscriptionId, Guid userId, bool enabled);
+        Task<(bool Success, string Message)> UpdateProfileAsync(Guid userId, string firstName, string lastName, string phoneNumber);
+        Task<(bool Success, string Message)> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword);
         Task<BillHistoryViewModel> GetBillHistoryAsync(Guid userId, string? range, string? biller, string? amount, int page, int pageSize);
         Task<ReceiptViewModel?> GetBillReceiptAsync(Guid billId, Guid userId);
     }

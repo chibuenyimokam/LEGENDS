@@ -13,6 +13,8 @@ namespace LegendPay.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IWalletService _walletService;
+        private readonly ILegendPointService _legendPointService;
+        private readonly IScheduledPaymentService _scheduledPaymentService;
         private readonly ILogger<HomeController> _logger;
 
 
@@ -21,10 +23,14 @@ namespace LegendPay.Controllers
                 IOtpService otpService,
                 IAuthService authService,
                 IWalletService walletService,
+                ILegendPointService legendPointService,
+                IScheduledPaymentService scheduledPaymentService,
                 ILogger<HomeController> logger)
         {
             _authService = authService;
             _walletService = walletService;
+            _legendPointService = legendPointService;
+            _scheduledPaymentService = scheduledPaymentService;
             _logger = logger;
         }
         public IActionResult Index()
@@ -162,6 +168,173 @@ namespace LegendPay.Controllers
             var model = await _authService.GetSubscriptionsAsync(user.Id);
 
             return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> ToggleAutoPay(Guid id, bool enabled)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return Json(new { success = false });
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return Json(new { success = false });
+
+            var success = await _authService.SetAutoPayAsync(id, user.Id, enabled);
+            return Json(new { success });
+        }
+
+        [Authorize]
+        public async Task<IActionResult> LegendPoints()
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _legendPointService.GetUserPointsAsync(user.Id);
+            model.FirstName = user.FirstName;
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> RedeemPoints(int points)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _legendPointService.RedeemAsync(user.Id, points);
+            TempData[success ? "RedeemSuccess" : "RedeemError"] = message;
+
+            return RedirectToAction("LegendPoints");
+        }
+
+        [Authorize]
+        public async Task<IActionResult> ScheduledPayments()
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _scheduledPaymentService.GetUserSchedulesAsync(user.Id);
+            model.FirstName = user.FirstName;
+            model.AvailableBalance = await _authService.GetLedgerBalanceAsync(user);
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CreateSchedule(CreateScheduledPaymentViewModel form)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            if (ModelState.IsValid)
+            {
+                var (success, message) = await _scheduledPaymentService.CreateAsync(user.Id, form);
+                if (success)
+                {
+                    TempData["ScheduleSuccess"] = message;
+                    return RedirectToAction("ScheduledPayments");
+                }
+                ModelState.AddModelError(string.Empty, message);
+            }
+
+            var model = await _scheduledPaymentService.GetUserSchedulesAsync(user.Id);
+            model.FirstName = user.FirstName;
+            model.AvailableBalance = await _authService.GetLedgerBalanceAsync(user);
+            model.Form = form;
+
+            return View("ScheduledPayments", model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CancelSchedule(Guid id)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _scheduledPaymentService.CancelAsync(id, user.Id);
+            TempData[success ? "ScheduleSuccess" : "ScheduleError"] = message;
+
+            return RedirectToAction("ScheduledPayments");
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Profile()
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            return View(new UserProfileViewModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                AccountNumber = user.AccountNumber,
+                BankName = user.BankName,
+                CustomerId = user.CustomerId,
+                IsEmailVerified = user.IsEmailVerified,
+                MemberSince = user.CreatedAt
+            });
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> UpdateProfile(string firstName, string lastName, string phoneNumber)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _authService.UpdateProfileAsync(user.Id, firstName, lastName, phoneNumber);
+            TempData[success ? "ProfileSuccess" : "ProfileError"] = message;
+
+            return RedirectToAction("Profile");
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userEmail)) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByEmailAsync(userEmail);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            if (newPassword != confirmPassword)
+            {
+                TempData["PasswordError"] = "The new passwords don't match.";
+                return RedirectToAction("Profile");
+            }
+
+            var (success, message) = await _authService.ChangePasswordAsync(user.Id, currentPassword, newPassword);
+            TempData[success ? "PasswordSuccess" : "PasswordError"] = message;
+
+            return RedirectToAction("Profile");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

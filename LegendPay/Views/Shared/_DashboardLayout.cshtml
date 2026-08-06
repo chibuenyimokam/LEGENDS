@@ -210,13 +210,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 pl-5 border-l border-slate-200">
+                <a asp-controller="Home" asp-action="Profile" class="flex items-center gap-3 pl-5 border-l border-slate-200 hover:opacity-80 transition-opacity" title="My profile">
                     <div class="text-right">
                         <p class="text-sm font-semibold text-slate-900">@fullName</p>
                         <p class="text-[11px] text-on-surface-variant font-medium">@accountType</p>
                     </div>
                     <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600 uppercase">@initials</div>
-                </div>
+                </a>
             </div>
         </header>
 

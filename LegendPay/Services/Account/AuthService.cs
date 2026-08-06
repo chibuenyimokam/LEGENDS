@@ -346,6 +346,64 @@ namespace LegendPay.Services.Account
             };
         }
 
+        public async Task<bool> SetAutoPayAsync(Guid subscriptionId, Guid userId, bool enabled)
+        {
+            var subscription = await _context.Subscriptions
+                .FirstOrDefaultAsync(s => s.Id == subscriptionId && s.UserAccountId == userId);
+
+            if (subscription == null)
+                return false;
+
+            subscription.IsAutoPayEnabled = enabled;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<(bool Success, string Message)> UpdateProfileAsync(Guid userId, string firstName, string lastName, string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+                return (false, "First and last name are required.");
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                return (false, "Phone number is required.");
+
+            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+                return (false, "Account not found.");
+
+            user.FirstName = firstName.Trim();
+            user.LastName = lastName.Trim();
+            user.PhoneNumber = phoneNumber.Trim();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "That phone number is already in use by another account.");
+            }
+
+            return (true, "Your profile has been updated.");
+        }
+
+        public async Task<(bool Success, string Message)> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+                return (false, "Your new password must be at least 8 characters.");
+
+            var user = await _context.UserAccounts.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+                return (false, "Account not found.");
+
+            if (!VerifyPassword(currentPassword, user.Password))
+                return (false, "Your current password is incorrect.");
+
+            user.Password = HashPassword(newPassword);
+            await _context.SaveChangesAsync();
+
+            return (true, "Your password has been changed.");
+        }
+
         public async Task<BillHistoryViewModel> GetBillHistoryAsync(Guid userId, string? range, string? biller, string? amount, int page, int pageSize)
         {
             if (page < 1) page = 1;

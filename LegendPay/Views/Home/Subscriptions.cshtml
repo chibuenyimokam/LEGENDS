@@ -55,7 +55,7 @@
                             <div class="flex items-center justify-end gap-3">
                                 <span class="text-xs font-semibold text-on-surface-variant">Auto-renew</span>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" @(sub.IsAutoPayEnabled ? "checked" : "") />
+                                    <input type="checkbox" class="sr-only peer autopay-toggle" data-id="@sub.Id" @(sub.IsAutoPayEnabled ? "checked" : "") />
                                     <div class="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                                 </label>
                             </div>
@@ -96,3 +96,22 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.autopay-toggle').forEach(function (el) {
+            el.addEventListener('change', function () {
+                var enabled = this.checked;
+                var self = this;
+                fetch('/Home/ToggleAutoPay', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'id=' + encodeURIComponent(this.getAttribute('data-id')) + '&enabled=' + enabled
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (d) { if (!d.success) self.checked = !enabled; })
+                .catch(function () { self.checked = !enabled; });
+            });
+        });
+    </script>
+}

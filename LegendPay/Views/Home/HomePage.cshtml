@@ -65,7 +65,7 @@
                 <h2 class="text-3xl font-bold text-slate-900 tracking-tight">@Model.LegendPoints.ToString("N0") <span class="text-base font-medium text-on-surface-variant">pts</span></h2>
             </div>
             <div class="mt-8">
-                <a class="text-xs text-primary font-bold hover:underline flex items-center gap-1" href="#">Redeem points <span class="material-symbols-outlined text-[14px]">arrow_forward</span></a>
+                <a asp-controller="Home" asp-action="LegendPoints" class="text-xs text-primary font-bold hover:underline flex items-center gap-1">Redeem points <span class="material-symbols-outlined text-[14px]">arrow_forward</span></a>
             </div>
         </div>
 
@@ -92,7 +92,7 @@
         <div class="xl:col-span-2 space-y-6">
             <div class="flex justify-between items-baseline">
                 <h3 class="text-lg font-bold text-slate-900">Upcoming Bills</h3>
-                <a class="text-xs text-primary font-bold hover:underline" href="#">View all schedule</a>
+                <a asp-controller="Home" asp-action="ScheduledPayments" class="text-xs text-primary font-bold hover:underline">View all schedule</a>
             </div>
             <div class="bg-surface border border-slate-200 rounded-xl overflow-hidden">
                 <table class="w-full text-left">
