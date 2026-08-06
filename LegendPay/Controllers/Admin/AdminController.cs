@@ -16,6 +16,8 @@ namespace LegendPay.Controllers.Admin
         private readonly IAdminTransactionService _adminTransactionService;
         private readonly IAdminReportService _adminReportService;
         private readonly IAdminSettingsService _adminSettingsService;
+        private readonly IAdminSettlementService _adminSettlementService;
+        private readonly IAdminAuditService _adminAuditService;
 
         public AdminController(
             IAdminAuthService adminAuthService,
@@ -23,15 +25,76 @@ namespace LegendPay.Controllers.Admin
             IAdminUserService adminUserService,
             IAdminTransactionService adminTransactionService,
             IAdminReportService adminReportService,
-            IAdminSettingsService adminSettingsService)
+            IAdminSettingsService adminSettingsService,
+            IAdminSettlementService adminSettlementService,
+            IAdminAuditService adminAuditService)
         {
             _adminAuthService = adminAuthService;
             _adminDashboardService = adminDashboardService;
             _adminUserService = adminUserService;
             _adminTransactionService = adminTransactionService;
             _adminReportService = adminReportService;
+            _adminSettlementService = adminSettlementService;
+            _adminAuditService = adminAuditService;
             _adminSettingsService = adminSettingsService;
         }
+
+        private Guid? CurrentAdminId =>
+            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+
+        [HttpGet]
+        public async Task<IActionResult> Settlement()
+        {
+            var model = await _adminSettlementService.GetSettlementAsync();
+            return View("~/Views/Admin/Settlement.cshtml", model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AuditLogs()
+        {
+            var model = await _adminAuditService.GetAuditLogAsync();
+            return View("~/Views/Admin/AuditLogs.cshtml", model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Settings()
+        {
+            if (CurrentAdminId is not Guid adminId) return RedirectToAction("Login");
+
+            var admin = await _adminAuthService.GetAdminByIdAsync(adminId);
+            if (admin == null) return RedirectToAction("Login");
+
+            return View("~/Views/Admin/Settings.cshtml", admin);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateAdminProfile(string firstName, string lastName)
+        {
+            if (CurrentAdminId is not Guid adminId) return RedirectToAction("Login");
+
+            var response = await _adminAuthService.UpdateProfileAsync(adminId, firstName, lastName);
+            TempData[response.Success ? "AdminProfileSuccess" : "AdminProfileError"] = response.Message;
+
+            return RedirectToAction("Settings");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangeAdminPassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            if (CurrentAdminId is not Guid adminId) return RedirectToAction("Login");
+
+            if (newPassword != confirmPassword)
+            {
+                TempData["AdminPasswordError"] = "The new passwords don't match.";
+                return RedirectToAction("Settings");
+            }
+
+            var response = await _adminAuthService.ChangePasswordAsync(adminId, currentPassword, newPassword);
+            TempData[response.Success ? "AdminPasswordSuccess" : "AdminPasswordError"] = response.Message;
+
+            return RedirectToAction("Settings");
+        }
+
         [AllowAnonymous]
         [HttpGet("Admin/Login")]
         public IActionResult Login()

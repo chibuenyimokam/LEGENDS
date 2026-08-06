@@ -358,6 +358,48 @@ namespace LegendPay.Services.Account
             };
         }
 
+        public async Task<(bool Success, string Message)> CreateSubscriptionAsync(Guid userId, string billerCategory, string billerName, string accountReference, decimal amount, int intervalDays)
+        {
+            if (string.IsNullOrWhiteSpace(billerName))
+                return (false, "Enter the biller name.");
+            if (string.IsNullOrWhiteSpace(accountReference))
+                return (false, "Enter the account/meter/phone number.");
+            if (amount <= 0)
+                return (false, "Enter an amount greater than zero.");
+            if (intervalDays <= 0)
+                return (false, "Choose how often it renews.");
+
+            _context.Subscriptions.Add(new Subscription
+            {
+                UserAccountId = userId,
+                BillerCategory = string.IsNullOrWhiteSpace(billerCategory) ? "General" : billerCategory,
+                BillerName = billerName.Trim(),
+                AccountReference = accountReference.Trim(),
+                Amount = amount,
+                NextDueDate = DateTime.UtcNow.AddDays(intervalDays),
+                RenewalIntervalDays = intervalDays,
+                IsAutoPayEnabled = false,
+                Status = "Active",
+                PaymentMethod = "Wallet"
+            });
+
+            await _context.SaveChangesAsync();
+            return (true, $"Subscription to {billerName.Trim()} created.");
+        }
+
+        public async Task<bool> CancelSubscriptionAsync(Guid subscriptionId, Guid userId)
+        {
+            var subscription = await _context.Subscriptions
+                .FirstOrDefaultAsync(s => s.Id == subscriptionId && s.UserAccountId == userId);
+
+            if (subscription == null)
+                return false;
+
+            subscription.Status = "Cancelled";
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<BillHistoryViewModel> GetBillHistoryAsync(Guid userId, string? range, string? biller, string? amount, int page, int pageSize)
         {
             if (page < 1) page = 1;

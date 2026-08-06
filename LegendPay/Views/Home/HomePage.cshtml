@@ -30,18 +30,18 @@
             <p class="text-sm text-on-surface-variant mt-0.5">Welcome back, here's what's happening with your account.</p>
         </div>
         <div class="flex p-1 bg-slate-100 rounded-lg">
-            <button class="flex items-center gap-2 px-4 py-1.5 bg-surface shadow-sm rounded-md text-xs font-semibold text-slate-900">
+            <a asp-controller="Home" asp-action="PayBills" class="flex items-center gap-2 px-4 py-1.5 bg-surface shadow-sm rounded-md text-xs font-semibold text-slate-900">
                 <span class="material-symbols-outlined text-[16px]">receipt_long</span>
                 Pay a Bill
-            </button>
-            <button class="flex items-center gap-2 px-4 py-1.5 hover:text-slate-900 text-xs font-semibold text-on-surface-variant transition-colors">
+            </a>
+            <a asp-controller="Home" asp-action="ScheduledPayments" class="flex items-center gap-2 px-4 py-1.5 hover:text-slate-900 text-xs font-semibold text-on-surface-variant transition-colors">
                 <span class="material-symbols-outlined text-[16px]">calendar_month</span>
                 Schedule
-            </button>
-            <button class="flex items-center gap-2 px-4 py-1.5 hover:text-slate-900 text-xs font-semibold text-on-surface-variant transition-colors">
+            </a>
+            <a asp-controller="Home" asp-action="PayBills" class="flex items-center gap-2 px-4 py-1.5 hover:text-slate-900 text-xs font-semibold text-on-surface-variant transition-colors">
                 <span class="material-symbols-outlined text-[16px]">person_add</span>
                 Add Payee
-            </button>
+            </a>
         </div>
     </div>
 
@@ -65,7 +65,7 @@
                 <h2 class="text-3xl font-bold text-slate-900 tracking-tight">@Model.LegendPoints.ToString("N0") <span class="text-base font-medium text-on-surface-variant">pts</span></h2>
             </div>
             <div class="mt-8">
-                <a class="text-xs text-primary font-bold hover:underline flex items-center gap-1" href="#">Redeem points <span class="material-symbols-outlined text-[14px]">arrow_forward</span></a>
+                <a asp-controller="Home" asp-action="LegendPoints" class="text-xs text-primary font-bold hover:underline flex items-center gap-1">Redeem points <span class="material-symbols-outlined text-[14px]">arrow_forward</span></a>
             </div>
         </div>
 
@@ -92,7 +92,7 @@
         <div class="xl:col-span-2 space-y-6">
             <div class="flex justify-between items-baseline">
                 <h3 class="text-lg font-bold text-slate-900">Upcoming Bills</h3>
-                <a class="text-xs text-primary font-bold hover:underline" href="#">View all schedule</a>
+                <a asp-controller="Home" asp-action="ScheduledPayments" class="text-xs text-primary font-bold hover:underline">View all schedule</a>
             </div>
             <div class="bg-surface border border-slate-200 rounded-xl overflow-hidden">
                 <table class="w-full text-left">

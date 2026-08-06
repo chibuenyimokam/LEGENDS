@@ -2,6 +2,7 @@
 using LegendPay.Interfaces.Transaction;
 using LegendPay.Models;
 using LegendPay.Models.Data.Response_Table;
+using LegendPay.Models.Data.Tables;
 using LegendPay.Models.VAS.Request;
 using LegendPay.Models.ViewModels.UserDashboard;
 using LegendPay.Models.WalletStation.Request;
@@ -15,6 +16,7 @@ namespace LegendPay.Services.Transaction
         private readonly IAuthService _authService;
         private readonly IWalletService _walletService;
         private readonly IVasService _vasService;
+        private readonly ILegendPointService _legendPointService;
         private readonly AppDbContext _context;
         private readonly ILogger<BillPaymentHandler> _logger;
 
@@ -22,12 +24,14 @@ namespace LegendPay.Services.Transaction
             IAuthService authService,
             IWalletService walletService,
             IVasService vasService,
+            ILegendPointService legendPointService,
             AppDbContext context,
             ILogger<BillPaymentHandler> logger)
         {
             _authService = authService;
             _walletService = walletService;
             _vasService = vasService;
+            _legendPointService = legendPointService;
             _context = context;
             _logger = logger;
         }
@@ -210,6 +214,45 @@ namespace LegendPay.Services.Transaction
                 ? $"Paid to {model.BillerName}"
                 : vasResponse.ResponseData.CustomerMessage;
 
+            var bill = new Bill
+            {
+                UserAccountId = user.Id,
+                BillerCategory = model.Category ?? string.Empty,
+                BillerName = model.BillerName,
+                AccountReference = model.ReferenceNumber,
+                Amount = model.Amount,
+                PaymentMethod = "Wallet",
+                Status = "Success",
+                BilleroneRefrence = vasResponse.ResponseData?.TransactionId ?? paymentRef
+            };
+            _context.Bills.Add(bill);
+
+            var now = DateTime.UtcNow;
+            var spending = await _context.SpendingRecords.FirstOrDefaultAsync(s =>
+                s.UserAccountId == user.Id && s.BillerCategory == bill.BillerCategory && s.Month == now.Month && s.Year == now.Year);
+            if (spending == null)
+            {
+                _context.SpendingRecords.Add(new SpendingRecord
+                {
+                    UserAccountId = user.Id,
+                    BillerCategory = bill.BillerCategory,
+                    Month = now.Month,
+                    Year = now.Year,
+                    TotalSpent = model.Amount,
+                    TransactionCount = 1
+                });
+            }
+            else
+            {
+                spending.TotalSpent += model.Amount;
+                spending.TransactionCount += 1;
+                spending.UpdatedAt = now;
+            }
+
+            await _context.SaveChangesAsync();
+
+            var pointsEarned = await _legendPointService.AwardPointsAsync(user.Id, model.Amount, bill.Id);
+
             var successViewModel = new PaymentSuccessViewModel
             {
                 Category = model.Category ?? string.Empty,
@@ -222,7 +265,7 @@ namespace LegendPay.Services.Transaction
                 Amount = model.Amount,
                 PaidAt = DateTime.Now,
                 TransactionRef = vasResponse.ResponseData?.TransactionId ?? paymentRef,
-                PointsEarned = (int)(model.Amount * 0.02m),
+                PointsEarned = pointsEarned,
                 IsFourStep = model.IsFourStep,
                 ElectricityToken = token,
                 UnitValue = unitValue
