@@ -1,19 +1,18 @@
-﻿using System.Net.Http.Json;
-using System.Text.Json;
-using LegendPay.Models.VAS;
+﻿using LegendPay.Models.BillerOne.Response;
+using LegendPay.Interfaces.Transaction;
+using LegendPay.Models.VAS.Response;
+using LegendPay.Models.VAS.Request;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Json;
+using System.Text.Json;
+using LegendPay.Models.Vas;
 
-namespace LegendPay.Services.Transaction
+namespace LegendPay.Services.Vas
 {
-    /// <summary>
-    /// Client for CoralPay's VAS interface (biller-groups, billers, packages,
-    /// customer-lookup, process-payment, payment-lookup). Registered via
-    /// AddHttpClient("VasClient", ...) — see DI notes at the bottom of this file.
-    /// </summary>
+  
     public class VasService : IVasService
     {
         private readonly HttpClient _httpClient;
-        private readonly VasSignatureService _signatureService;
         private readonly ILogger<VasService> _logger;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -23,87 +22,76 @@ namespace LegendPay.Services.Transaction
 
         public VasService(
             IHttpClientFactory httpClientFactory,
-            VasSignatureService signatureService,
             ILogger<VasService> logger)
         {
             _httpClient = httpClientFactory.CreateClient("VasClient");
-            _signatureService = signatureService;
             _logger = logger;
         }
 
-        public async Task<VasApiResponse<List<BillerGroup>>> GetBillerGroupsAsync(CancellationToken ct = default)
+        public async Task<VasApiResponse<List<BillerGroupEnquiry>>> GetBillerGroupsAsync(CancellationToken ct = default)
         {
-            return await GetAsync<List<BillerGroup>>("/api/biller-groups", ct);
+            return await GetAsync<List<BillerGroupEnquiry>>("api/biller-groups", ct);
         }
 
         public async Task<VasApiResponse<List<Biller>>> GetBillersByGroupIdAsync(int billerGroupId, CancellationToken ct = default)
         {
-            return await GetAsync<List<Biller>>($"/api/billers/group/{billerGroupId}", ct);
+            return await GetAsync<List<Biller>>($"api/billers/group/{billerGroupId}", ct);
         }
 
-        public async Task<VasApiResponse<List<Biller>>> GetBillersByGroupSlugAsync(string billerGroupSlug, CancellationToken ct = default)
+        public async Task<VasApiResponse<List<BillerGroupSlugEnquiryResponse>>> GetBillersByGroupSlugAsync(string billerGroupSlug, CancellationToken ct = default)
         {
-            return await GetAsync<List<Biller>>($"/api/billers/group/slug/{billerGroupSlug}", ct);
+            return await GetAsync<List<BillerGroupSlugEnquiryResponse>>($"api/billers/group/slug/{billerGroupSlug}", ct);
         }
 
-        public async Task<VasApiResponse<List<VasPackage>>> GetPackagesByBillerIdAsync(int billerId, CancellationToken ct = default)
+        public async Task<VasApiResponse<List<PackagesEnquiryResponse>>> GetPackagesByBillerIdAsync(int billerId, CancellationToken ct = default)
         {
-            return await GetAsync<List<VasPackage>>($"/api/packages/biller/{billerId}", ct);
+            return await GetAsync<List<PackagesEnquiryResponse>>($"api/packages/biller/{billerId}", ct);
         }
 
-        public async Task<VasApiResponse<List<VasPackage>>> GetPackagesByBillerSlugAsync(string billerSlug, CancellationToken ct = default)
+        public async Task<VasApiResponse<List<PackagesEnquirySlugResponse>>> GetPackagesByBillerSlugAsync(string billerSlug, CancellationToken ct = default)
         {
-            return await GetAsync<List<VasPackage>>($"/api/packages/biller/slug/{billerSlug}", ct);
+            return await GetAsync<List<PackagesEnquirySlugResponse>>($"api/packages/biller/slug/{billerSlug}", ct);
         }
 
-        public async Task<VasApiResponse<CustomerLookupResponseData>> CustomerLookupAsync(
-            CustomerLookupRequest request, string billerId, CancellationToken ct = default)
+        public async Task<VasApiResponse<CustomerEnquiryResponse>> CustomerLookupAsync(
+            CustomerEnquiryRequest request, CancellationToken ct = default)
         {
-            var signature = _signatureService.GenerateCustomerLookupSignature(
-                request.CustomerId ?? string.Empty, billerId);
-
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/transactions/customer-lookup")
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/transactions/customer-lookup")
             {
                 Content = JsonContent.Create(request)
             };
-            httpRequest.Headers.Add("X-Signature", signature);
 
-            return await SendAsync<CustomerLookupResponseData>(httpRequest, ct);
+            return await SendAsync<CustomerEnquiryResponse>(httpRequest, ct);
         }
 
-        public async Task<VasApiResponse<VendValueResponseData>> VendValueAsync(
-            VendValueRequest request, string billerId, CancellationToken ct = default)
+        public async Task<VasApiResponse<VendValueResponse>> VendValueAsync(
+            VendValueRequest request, CancellationToken ct = default)
         {
-            var amountString = request.Amount?.ToString("F2") ?? string.Empty;
-            var signature = _signatureService.GenerateVendValueSignature(
-                request.PaymentReference, request.CustomerId ?? string.Empty, amountString, billerId);
-
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/transactions/process-payment")
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/transactions/process-payment")
             {
                 Content = JsonContent.Create(request)
             };
-            httpRequest.Headers.Add("X-Signature", signature);
 
-            return await SendAsync<VendValueResponseData>(httpRequest, ct);
+            return await SendAsync<VendValueResponse>(httpRequest, ct);
         }
 
-        public async Task<VasApiResponse<VendTransactionResponseData>> GetTransactionByPaymentReferenceAsync(
+        public async Task<VasApiResponse<VendTransactionEnquiryResponse>> GetTransactionByPaymentReferenceAsync(
             string paymentReference, CancellationToken ct = default)
         {
-            var path = $"/api/transactions/payment-lookup/?paymentReference={Uri.EscapeDataString(paymentReference)}";
+            var path = $"api/transactions/payment-lookup/?paymentReference={Uri.EscapeDataString(paymentReference)}";
             using var httpRequest = new HttpRequestMessage(HttpMethod.Post, path);
-            return await SendAsync<VendTransactionResponseData>(httpRequest, ct);
+            return await SendAsync<VendTransactionEnquiryResponse>(httpRequest, ct);
         }
 
-        public async Task<VasApiResponse<VendTransactionResponseData>> GetTransactionByTransactionIdAsync(
+        public async Task<VasApiResponse<VendTransactionEnquiryResponse>> GetTransactionByTransactionIdAsync(
             string transactionId, CancellationToken ct = default)
         {
-            var path = $"/api/transactions/payment-lookup/?transactionId={Uri.EscapeDataString(transactionId)}";
+            var path = $"api/transactions/payment-lookup/?transactionId={Uri.EscapeDataString(transactionId)}";
             using var httpRequest = new HttpRequestMessage(HttpMethod.Post, path);
-            return await SendAsync<VendTransactionResponseData>(httpRequest, ct);
+            return await SendAsync<VendTransactionEnquiryResponse>(httpRequest, ct);
         }
 
-        // ---------------- helpers ----------------
+        // helpers
 
         private async Task<VasApiResponse<T>> GetAsync<T>(string path, CancellationToken ct)
         {
@@ -147,35 +135,5 @@ namespace LegendPay.Services.Transaction
         }
     }
 
-    // ------------------------------------------------------------------
-    // DI registration — add to Program.cs (replaces your old BillerOne
-    // HttpClient registration):
-    //
-    //   builder.Services.Configure<VasSettings>(
-    //       builder.Configuration.GetSection(VasSettings.SectionName));
-    //
-    //   builder.Services.AddSingleton<VasSignatureService>();
-    //
-    //   builder.Services.AddHttpClient("VasClient", (sp, client) =>
-    //   {
-    //       var settings = sp.GetRequiredService<IOptions<VasSettings>>().Value;
-    //       client.BaseAddress = new Uri(settings.VasBaseUrl);
-    //
-    //       var basicAuth = Convert.ToBase64String(
-    //           Encoding.UTF8.GetBytes($"{settings.Username}:{settings.Password}"));
-    //       client.DefaultRequestHeaders.Authorization =
-    //           new AuthenticationHeaderValue("Basic", basicAuth);
-    //   });
-    //
-    //   builder.Services.AddScoped<IVasService, VasService>();
-    //
-    // appsettings.json:
-    //   "Vas": {
-    //     "VasBaseUrl": "https://sandbox1.coralpay.com/coralpay-vas",
-    //     "Username": "vfdmfb",
-    //     "Password": "<from secrets, not committed>",
-    //     "InstitutionId": "<confirm with CoralPay>",
-    //     "PrivateKeyPem": "<from secrets/Key Vault, not committed>"
-    //   }
-    // ------------------------------------------------------------------
+    
 }

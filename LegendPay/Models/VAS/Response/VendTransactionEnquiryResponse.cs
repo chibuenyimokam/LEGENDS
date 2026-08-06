@@ -4,12 +4,7 @@ using static LegendPay.Models.VAS.Response.VendValueResponse;
 
 namespace LegendPay.Models.VAS.Response
 {
-    public class VendTransactionEnquiryResponse
-    {
-        public VasResponseHeader? ResponseHeader { get; set; }
-        public ResponseData? ResponseData { get; set; }
-    }
-        public class ResponseData 
+        public class VendTransactionEnquiryResponse
         {
             [JsonPropertyName("billerName")]
             public string? BillerName { get; set; }

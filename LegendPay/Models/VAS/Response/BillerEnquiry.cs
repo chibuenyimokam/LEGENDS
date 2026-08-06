@@ -2,8 +2,8 @@
 
 namespace LegendPay.Models.VAS.Response
 {
-    public Vas
-    public class BillerEnquiry
+
+    public class BillerEnquiryResponse
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }

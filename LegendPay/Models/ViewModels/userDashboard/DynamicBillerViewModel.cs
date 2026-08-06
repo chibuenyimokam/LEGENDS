@@ -25,6 +25,7 @@
     {
         public string Category { get; set; } = string.Empty;
         public string CategoryDisplayName { get; set; } = string.Empty;
+        public string PackageSlug { get; set; } = string.Empty;
         public string BillerId { get; set; } = string.Empty;
         public string BillerName { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
@@ -48,6 +49,7 @@
         public string Category { get; set; } = string.Empty;
         public string CategoryDisplayName { get; set; } = string.Empty;
         public string CategoryIcon { get; set; } = string.Empty;
+        public string Mode { get; set; }
         public List<BillerItem> Billers { get; set; } = new();
         public string CustomerName { get; set; } = string.Empty;
     }
@@ -60,6 +62,7 @@
         public string CategoryIcon { get; set; } = string.Empty;
         public string BillerId { get; set; } = string.Empty;
         public string BillerName { get; set; } = string.Empty;
+        public string PackageSlug { get; set; } = string.Empty;
         public string ReferenceNumber { get; set; } = string.Empty;
         public string ReferenceLabel { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;

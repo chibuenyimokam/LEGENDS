@@ -4,12 +4,6 @@ namespace LegendPay.Models.VAS.Response
 {
     public class PackagesEnquirySlugResponse
     {
-        public VasResponseHeader? VasResponseHeader { get; set; }
-        public ResponseData? ResponseData { get; set; }
-    }
-
-        public class ResponseData
-        {
 
             [JsonPropertyName("id")]
             public int Id { get; set; }
@@ -28,6 +22,6 @@ namespace LegendPay.Models.VAS.Response
 
             [JsonPropertyName("sequenceNumber")]
             public int SequenceNumber { get; set; }
-        }
+    }
  
 }

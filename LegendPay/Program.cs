@@ -12,6 +12,11 @@ using Microsoft.AspNetCore.SignalR;
 using LegendPay.Hubs;
 using LegendPay.Interfaces;
 using LegendPay.Services;
+using LegendPay.Configuration;
+using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
+using System.Text;
+using LegendPay.Services.Vas;
 
 namespace LegendPay
 {
@@ -35,6 +40,7 @@ namespace LegendPay
             });
             builder.Services.AddSingleton<WalletTokenCache>();
             builder.Services.AddHttpClient<IBillerOneService, BillerOneService>();
+            builder.Services.AddHttpClient<IBillPaymentHandler, BillPaymentHandler>();
 
             builder.Services.AddHttpClient<IWalletService, WalletService>((serviceProvider, client) =>
             {
@@ -46,7 +52,7 @@ namespace LegendPay
                 }
             });
             builder.Services.Configure<VasSettings>(builder.Configuration.GetSection(VasSettings.SectionName));
-            builder.Services.AddSingleton<VasSignatureService>();
+            //builder.Services.AddSingleton<VasSignatureService>();
 
             builder.Services.AddHttpClient("VasClient", (sp, client) =>
             {
@@ -63,6 +69,7 @@ namespace LegendPay
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
+            builder.Services.AddScoped<IBillPaymentHandler, BillPaymentHandler>();
             builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
             builder.Services.AddScoped<IUserSupportChatService, UserSupportChatService>();
             builder.Services.AddScoped<IAdminSupportChatService, AdminSupportChatService>();

@@ -119,6 +119,20 @@ namespace LegendPay.Services.Transaction
 
             return result;
         }
+        public async Task <DebitReversalResponse?> DebitReversalAsync(DebitReversalRequest debitReversalRequest, CancellationToken cancellationToken = default)
+        {
+            var payload = new
+            {
+                CustomerId = debitReversalRequest.CustomerId,
+                Description = debitReversalRequest.Description,
+                TransactionId = debitReversalRequest.TransactionId
+        };
+            var result = await PostAsync<DebitReversalResponse>("api/DebitReversal", payload, cancellationToken);
+            if (result?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
+                return null;
+            return result;
+        }
+
 
 
         public async Task<decimal?> GetBalanceAsync(string customerId, CancellationToken cancellationToken = default)

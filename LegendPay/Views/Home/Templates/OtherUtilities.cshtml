@@ -4,13 +4,13 @@
 
     var categories = new[]
     {
-        new { Name = "Electricity",    Desc = "IKEDC, EKEDC, AEDC and more",      Icon = "bolt",            BgColor = "bg-yellow-50",  IconColor = "text-yellow-600",  Action = "SelectBiller",    RouteValues = new { category = "ELECTRICITY" } },
-        new { Name = "Airtime",        Desc = "MTN, Airtel, Glo, 9mobile",         Icon = "smartphone",      BgColor = "bg-red-50",     IconColor = "text-red-600",     Action = "PurchaseDetails", RouteValues = new { category = "AIRTIME" }     },
-        new { Name = "Internet / Data",Desc = "MTN, Airtel, Glo, 9mobile",         Icon = "wifi",            BgColor = "bg-blue-50",    IconColor = "text-blue-600",    Action = "PurchaseDetails", RouteValues = new { category = "DATA" }        },
-        new { Name = "Digital TV",     Desc = "DSTV, GOtv, Startimes",             Icon = "tv",              BgColor = "bg-purple-50",  IconColor = "text-purple-600",  Action = "SelectBiller",    RouteValues = new { category = "DIGITALTV" }   },
-        new { Name = "Education",      Desc = "JAMB, WAEC, NECO, Universities",    Icon = "school",          BgColor = "bg-green-50",   IconColor = "text-green-600",   Action = "SelectBiller",    RouteValues = new { category = "EDUCATION" }   },
-        new { Name = "Games & Betting",Desc = "SportyBet, Bet9ja, 1xBet and more", Icon = "sports_esports",  BgColor = "bg-violet-50",  IconColor = "text-violet-600",  Action = "PurchaseDetails", RouteValues = new { category = "GAMES" }       },
-        new { Name = "Transport",      Desc = "GIG Mobility, Chisco, Toll and more",Icon = "commute",         BgColor = "bg-orange-50",  IconColor = "text-orange-600",  Action = "PurchaseDetails", RouteValues = new { category = "TRANSPORT" }   },
+        new { Name = "Electricity",    Desc = "IKEDC, EKEDC, AEDC and more",      Icon = "bolt",            BgColor = "bg-yellow-50",  IconColor = "text-yellow-600",  Action = "SelectBiller",    RouteValues = new { category = "ELECTRIC_DISCO",             mode = "" }       },
+        new { Name = "Airtime",        Desc = "MTN, Airtel, Glo, 9mobile",        Icon = "smartphone",      BgColor = "bg-red-50",     IconColor = "text-red-600",     Action = "PurchaseDetails", RouteValues = new { category = "AIRTIME_AND_DATA",           mode = "AIRTIME" }},
+        new { Name = "Internet / Data",Desc = "MTN, Airtel, Glo, 9mobile",        Icon = "wifi",            BgColor = "bg-blue-50",    IconColor = "text-blue-600",    Action = "PurchaseDetails", RouteValues = new { category = "AIRTIME_AND_DATA",           mode = "DATA" }   },
+        new { Name = "Digital TV",     Desc = "DSTV, GOtv, Startimes",            Icon = "tv",              BgColor = "bg-purple-50",  IconColor = "text-purple-600",  Action = "SelectBiller",    RouteValues = new { category = "PAY_TV",                     mode = "" }       },
+        new { Name = "Education",      Desc = "JAMB, WAEC, NECO, Universities",   Icon = "school",          BgColor = "bg-green-50",   IconColor = "text-green-600",   Action = "SelectBiller",    RouteValues = new { category = "EDUCATION",                  mode = "" }       },
+        new { Name = "Games & Betting",Desc = "SportyBet, Bet9ja, 1xBet and more",Icon = "sports_esports",  BgColor = "bg-violet-50",  IconColor = "text-violet-600",  Action = "PurchaseDetails", RouteValues = new { category = "BETTING_AND_LOTTERY",        mode = "" }       },
+        new { Name = "Transport",      Desc = "GIG Mobility, Chisco, Toll and more",Icon = "commute",       BgColor = "bg-orange-50",  IconColor = "text-orange-600",  Action = "PurchaseDetails", RouteValues = new { category = "TRANSPORT_AND_TOLL_PAYMENT", mode = "" }       },
     };
 }
 

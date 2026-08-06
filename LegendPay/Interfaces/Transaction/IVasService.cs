@@ -1,34 +1,37 @@
-﻿using LegendPay.Models.VAS.Response;
+﻿using LegendPay.Models.BillerOne.Response;
+using LegendPay.Models.Vas;
 using LegendPay.Models.VAS.Request;
+using LegendPay.Models.VAS.Response;
 
 namespace LegendPay.Interfaces.Transaction
 {
     public interface IVasService
     {
-        Task<VasApiResponse<List<BillerGroup>>> GetBillerGroupsAsync(CancellationToken ct = default);
+        Task<VasApiResponse<List<BillerGroupEnquiry>>> GetBillerGroupsAsync(CancellationToken ct = default);
 
-        Task<VasApiResponse<List<Biller>>> GetBillersByGroupIdAsync(int billerGroupId, CancellationToken ct = default);
+        //Task<VasApiResponse<List<BillerGroupIdEnquiryResponse>>> GetBillersByGroupIdAsync(int billerGroupId, CancellationToken ct = default);
 
-        Task<VasApiResponse<List<Biller>>> GetBillersByGroupSlugAsync(string billerGroupSlug, CancellationToken ct = default);
+        Task<VasApiResponse<List<BillerGroupSlugEnquiryResponse>>> GetBillersByGroupSlugAsync(string billerGroupSlug, CancellationToken ct = default);
 
-        Task<VasApiResponse<List<VasPackage>>> GetPackagesByBillerIdAsync(int billerId, CancellationToken ct = default);
+        Task<VasApiResponse<List<PackagesEnquiryResponse>>> GetPackagesByBillerIdAsync(int billerId, CancellationToken ct = default);
 
-        Task<VasApiResponse<List<VasPackage>>> GetPackagesByBillerSlugAsync(string billerSlug, CancellationToken ct = default);
+        Task<VasApiResponse<List<PackagesEnquirySlugResponse>>> GetPackagesByBillerSlugAsync(string billerSlug, CancellationToken ct = default);
 
-        /// Must be called first in any vend flow. billerId is required separately from
-        /// request.BillerSlug because the X-Signature formula uses billerId.
-        
-        Task<VasApiResponse<CustomerLookupResponseData>> CustomerLookupAsync(
-            CustomerLookupRequest request, string billerId, CancellationToken ct = default);
+        Task<VasApiResponse<CustomerEnquiryResponse>> CustomerLookupAsync(
+            CustomerEnquiryRequest request, CancellationToken ct = default);
 
-       
-        Task<VasApiResponse<VendValueResponseData>> VendValueAsync(
-            VendValueRequest request, string billerId, CancellationToken ct = default);
+        /// Vends value after the customer's wallet/account has already been debited on my side
+        /// and i have a verifiable paymentReference. The response status code against
+        /// VasResponseCodes is checked before deciding whether to mark the local wallet transaction as failed;
+        /// codes 09/68/96 mean "keep polling", not "failed", and no code should trigger an
+        /// automatic wallet reversal.
+        Task<VasApiResponse<VendValueResponse>> VendValueAsync(
+            VendValueRequest request, CancellationToken ct = default);
 
-        Task<VasApiResponse<VendTransactionResponseData>> GetTransactionByPaymentReferenceAsync(
+        Task<VasApiResponse<VendTransactionEnquiryResponse>> GetTransactionByPaymentReferenceAsync(
             string paymentReference, CancellationToken ct = default);
 
-        Task<VasApiResponse<VendTransactionResponseData>> GetTransactionByTransactionIdAsync(
+        Task<VasApiResponse<VendTransactionEnquiryResponse>> GetTransactionByTransactionIdAsync(
             string transactionId, CancellationToken ct = default);
     }
 }
