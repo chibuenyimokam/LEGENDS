@@ -22,12 +22,14 @@ namespace LegendPay.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly AppDbContext _context;
         private readonly IBillerOneService _billerOneService;
+        private readonly IScheduledPaymentService _scheduledPaymentService;
 
 
         public HomeController(
                  IAuthService authService,
                  IWalletService walletService,
                  IBillerOneService billerOneService,
+                 IScheduledPaymentService scheduledPaymentService,
                  ILogger<HomeController> logger,
                  AppDbContext context)
         {
@@ -35,6 +37,7 @@ namespace LegendPay.Controllers
             _walletService = walletService;
             _logger = logger;
             _billerOneService = billerOneService;
+            _scheduledPaymentService = scheduledPaymentService;
             _context = context;
         }
 
@@ -222,6 +225,68 @@ namespace LegendPay.Controllers
 
             return View(model);
         }
+
+        [Authorize]
+        public async Task<IActionResult> ScheduledPayments()
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _scheduledPaymentService.GetUserSchedulesAsync(user.Id);
+            model.FirstName = user.FirstName;
+            model.AvailableBalance = await _authService.GetLedgerBalanceAsync(user);
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CreateSchedule(CreateScheduledPaymentViewModel form)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            if (ModelState.IsValid)
+            {
+                var (success, message) = await _scheduledPaymentService.CreateAsync(user.Id, form);
+                if (success)
+                {
+                    TempData["ScheduleSuccess"] = message;
+                    return RedirectToAction("ScheduledPayments");
+                }
+                ModelState.AddModelError(string.Empty, message);
+            }
+
+            var model = await _scheduledPaymentService.GetUserSchedulesAsync(user.Id);
+            model.FirstName = user.FirstName;
+            model.AvailableBalance = await _authService.GetLedgerBalanceAsync(user);
+            model.Form = form;
+
+            return View("ScheduledPayments", model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CancelSchedule(Guid id)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _scheduledPaymentService.CancelAsync(id, user.Id);
+            TempData[success ? "ScheduleSuccess" : "ScheduleError"] = message;
+
+            return RedirectToAction("ScheduledPayments");
+        }
+
         [Authorize]
         public async Task<IActionResult> Beneficiaries()
         {
