@@ -23,6 +23,7 @@ namespace LegendPay.Controllers
         private readonly AppDbContext _context;
         private readonly IBillerOneService _billerOneService;
         private readonly IScheduledPaymentService _scheduledPaymentService;
+        private readonly ILegendPointService _legendPointService;
 
 
         public HomeController(
@@ -30,6 +31,7 @@ namespace LegendPay.Controllers
                  IWalletService walletService,
                  IBillerOneService billerOneService,
                  IScheduledPaymentService scheduledPaymentService,
+                 ILegendPointService legendPointService,
                  ILogger<HomeController> logger,
                  AppDbContext context)
         {
@@ -38,6 +40,7 @@ namespace LegendPay.Controllers
             _logger = logger;
             _billerOneService = billerOneService;
             _scheduledPaymentService = scheduledPaymentService;
+            _legendPointService = legendPointService;
             _context = context;
         }
 
@@ -285,6 +288,37 @@ namespace LegendPay.Controllers
             TempData[success ? "ScheduleSuccess" : "ScheduleError"] = message;
 
             return RedirectToAction("ScheduledPayments");
+        }
+
+        [Authorize]
+        public async Task<IActionResult> LegendPoints()
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _legendPointService.GetUserPointsAsync(user.Id);
+            model.FirstName = user.FirstName;
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> RedeemPoints(int points)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _legendPointService.RedeemAsync(user.Id, points);
+            TempData[success ? "RedeemSuccess" : "RedeemError"] = message;
+
+            return RedirectToAction("LegendPoints");
         }
 
         [Authorize]

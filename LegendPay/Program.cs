@@ -54,6 +54,7 @@ namespace LegendPay
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IScheduledPaymentService, ScheduledPaymentService>();
+            builder.Services.AddScoped<ILegendPointService, LegendPointService>();
             //builder.Services.AddScoped<IWalletTransactionHistoryService, WalletTransactionHistoryService>();
             builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
             builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
