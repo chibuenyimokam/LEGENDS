@@ -3,46 +3,43 @@
     ViewData["Title"] = "Pay a Bill";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 
-    // Map API category names to routes
+    // Map API category slugs to routes. AIRTIME_AND_DATA is handled separately below
+    // since it's one CoralPay group that needs to become two tiles (Airtime / Data).
     string GetCategoryRoute(string category) => category?.ToUpper() switch
     {
-        "ELECTRICITY" => Url.Action("SelectBiller", "Home", new { category = "ELECTRICITY" }) ?? "#",
-        "AIRTIME" => Url.Action("PurchaseDetails", "Home", new { category = "AIRTIME" }) ?? "#",
-        "DATA" => Url.Action("PurchaseDetails", "Home", new { category = "DATA" }) ?? "#",
-        "DIGITALTV" => Url.Action("SelectBiller", "Home", new { category = "DIGITALTV" }) ?? "#",
+        "ELECTRIC_DISCO" => Url.Action("SelectBiller", "Home", new { category = "ELECTRIC_DISCO" }) ?? "#",
+        "PAY_TV" => Url.Action("SelectBiller", "Home", new { category = "PAY_TV" }) ?? "#",
         "EDUCATION" => Url.Action("SelectBiller", "Home", new { category = "EDUCATION" }) ?? "#",
-        "GAMES" => Url.Action("PurchaseDetails", "Home", new { category = "GAMES" }) ?? "#",
-        "TRANSPORT" => Url.Action("PurchaseDetails", "Home", new { category = "TRANSPORT" }) ?? "#",
-        "OTHER UTILITIES" => Url.Action("OtherUtilities", "Home") ?? "#",
-        _ => "#"
+        "BETTING_AND_LOTTERY" => Url.Action("PurchaseDetails", "Home", new { category = "BETTING_AND_LOTTERY" }) ?? "#",
+        "TRANSPORT_AND_TOLL_PAYMENT" => Url.Action("PurchaseDetails", "Home", new { category = "TRANSPORT_AND_TOLL_PAYMENT" }) ?? "#",
+        // Any other group CoralPay returns that we haven't built a dedicated flow for yet
+        // still gets a working link via the generic SelectBiller flow, instead of dead-ending at "#".
+        _ => Url.Action("SelectBiller", "Home", new { category = category }) ?? "#"
     };
 
-    // Map API category names to Material Symbol icons
+    // Map API category slugs to Material Symbol icons
     string GetCategoryIcon(string category) => category?.ToUpper() switch
     {
-        "ELECTRICITY" => "bolt",
-        "AIRTIME" => "smartphone",
-        "DATA" => "wifi",
-        "DIGITALTV" => "tv",
+        "ELECTRIC_DISCO" => "bolt",
+        "PAY_TV" => "tv",
         "EDUCATION" => "school",
-        "GAMES" => "sports_esports",
-        "TRANSPORT" => "commute",
-        "OTHER UTILITIES" => "receipt_long",
+        "BETTING_AND_LOTTERY" => "sports_esports",
+        "TRANSPORT_AND_TOLL_PAYMENT" => "commute",
         _ => "receipt_long"
     };
 
     // Friendly display names
     string GetDisplayName(string category) => category?.ToUpper() switch
     {
-        "ELECTRICITY" => "Electricity",
-        "AIRTIME" => "Airtime",
-        "DATA" => "Internet / Data",
-        "DIGITALTV" => "Digital TV",
+        "ELECTRIC_DISCO" => "Electricity",
+        "PAY_TV" => "Digital TV",
         "EDUCATION" => "Education",
-        "GAMES" => "Games",
-        "TRANSPORT" => "Transport",
-        "OTHER UTILITIES" => "Other Utilities",
-        _ => category
+        "BETTING_AND_LOTTERY" => "Betting & Games",
+        "TRANSPORT_AND_TOLL_PAYMENT" => "Transport",
+        // Fallback: turn any other real slug into a readable label, e.g. "GOVERNMENT_COLLECTIONS" -> "Government Collections"
+        _ => string.IsNullOrEmpty(category)
+            ? "Bills"
+            : System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(category.Replace("_", " ").ToLower())
     };
 }
 
@@ -104,48 +101,50 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 @foreach (var cat in Model.Categories)
                 {
-                    <a href="@GetCategoryRoute(cat.Category)"
-                       class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
-                        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                            @if (!string.IsNullOrEmpty(cat.LogoUrl))
-                            {
-                                <img src="@cat.LogoUrl" alt="@cat.Category"
-                                     class="w-7 h-7 object-contain"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" />
-                                <span class="material-symbols-outlined hidden">@GetCategoryIcon(cat.Category)</span>
-                            }
-                            else
-                            {
-                                <span class="material-symbols-outlined">@GetCategoryIcon(cat.Category)</span>
-                            }
-                        </div>
-                        <span class="text-sm font-semibold text-on-surface">@GetDisplayName(cat.Category)</span>
-                    </a>
+                    @if (string.Equals(cat.Category, "AIRTIME_AND_DATA", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <a href="@Url.Action("PurchaseDetails", "Home", new { category = "AIRTIME_AND_DATA", mode = "AIRTIME" })"
+                           class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
+                            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                <span class="material-symbols-outlined">smartphone</span>
+                            </div>
+                            <span class="text-sm font-semibold text-on-surface">Airtime</span>
+                        </a>
+                        <a href="@Url.Action("PurchaseDetails", "Home", new { category = "AIRTIME_AND_DATA", mode = "DATA" })"
+                           class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
+                            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                <span class="material-symbols-outlined">wifi</span>
+                            </div>
+                            <span class="text-sm font-semibold text-on-surface">Internet / Data</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="@GetCategoryRoute(cat.Category)"
+                           class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
+                            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                @if (!string.IsNullOrEmpty(cat.LogoUrl))
+                                {
+                                    <img src="@cat.LogoUrl" alt="@cat.Category"
+                                         class="w-7 h-7 object-contain"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" />
+                                    <span class="material-symbols-outlined hidden">@GetCategoryIcon(cat.Category)</span>
+                                }
+                                else
+                                {
+                                    <span class="material-symbols-outlined">@GetCategoryIcon(cat.Category)</span>
+                                }
+                            </div>
+                            <span class="text-sm font-semibold text-on-surface">@GetDisplayName(cat.Category)</span>
+                        </a>
+                    }
                 }
             </div>
         }
         else
         {
-            <!-- Fallback if API returns nothing -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                @foreach (var cat in new[] {
-                    new { Name = "Electricity",     Category = "ELECTRICITY",     Icon = "bolt"           },
-                    new { Name = "Airtime",         Category = "AIRTIME",         Icon = "smartphone"     },
-                    new { Name = "Internet / Data", Category = "DATA",            Icon = "wifi"           },
-                    new { Name = "Digital TV",      Category = "DIGITALTV",       Icon = "tv"             },
-                    new { Name = "Education",       Category = "EDUCATION",       Icon = "school"         },
-                    new { Name = "Games",           Category = "GAMES",           Icon = "sports_esports" },
-                    new { Name = "Transport",       Category = "TRANSPORT",       Icon = "commute"        },
-                })
-                {
-                    <a href="@GetCategoryRoute(cat.Category)"
-                       class="bg-surface border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:border-primary hover:shadow-md transition-all group">
-                        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                            <span class="material-symbols-outlined">@cat.Icon</span>
-                        </div>
-                        <span class="text-sm font-semibold text-on-surface">@cat.Name</span>
-                    </a>
-                }
+            <div class="bg-surface border border-slate-200 rounded-xl p-8 text-center text-sm text-on-surface-variant">
+                Couldn't load bill categories right now. Please refresh the page or try again shortly.
             </div>
         }
     </div>

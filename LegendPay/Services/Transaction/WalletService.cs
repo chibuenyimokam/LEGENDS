@@ -2,9 +2,11 @@
 using LegendPay.Models.Data.Response_Table;
 using LegendPay.Models.WalletStation.Request;
 using LegendPay.Models.WalletStation.Response;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
+using static LegendPay.Models.WalletStation.Request.GetTransactionListRequest;
 
 namespace LegendPay.Services.Transaction
 {
@@ -12,13 +14,15 @@ namespace LegendPay.Services.Transaction
     {
         private readonly HttpClient _httpClient;
         private readonly WalletTokenCache _tokenCache;
+        private readonly ILogger<WalletService> _logger;
         private readonly string _username;
         private readonly string _password;
 
-        public WalletService(HttpClient httpClient, IConfiguration config, WalletTokenCache tokenCache)
+        public WalletService(HttpClient httpClient, IConfiguration config, WalletTokenCache tokenCache, ILogger<WalletService> logger)
         {
             _httpClient = httpClient;
             _tokenCache = tokenCache;
+            _logger = logger;
             _username = config["WalletStation:Username"]!;
             _password = config["WalletStation:Password"]!;
         }
@@ -144,6 +148,34 @@ namespace LegendPay.Services.Transaction
                 return null;
 
             return result.Balance;
+        }
+
+        public async Task<GetTransactionListResponse?> GetTransactionHistoryAsync(string customerId, int page = 1, int itemsPerPage = 10, CancellationToken cancellationToken = default)
+        {
+            var requestPayload = new GetTransactionListRequest
+            {
+                CustomerId = customerId,
+                SearchDetails = new SearchDetails
+                {
+                    Page = page,
+                    ItemsPerPage = itemsPerPage,
+                    DateRange = new DateRange
+                    {
+                        Start = DateTime.UtcNow.AddDays(-30),
+                        End = DateTime.UtcNow
+                    }
+                }
+            };
+
+            var response = await PostAsync<GetTransactionListResponse>("api/GetTransactionList", requestPayload);
+
+            if (response?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
+            {
+                _logger.LogError("Failed to fetch wallet history for CustomerId {CustomerId}. Status: {Status}", customerId);
+                return null;
+            }
+
+            return response;
         }
     }
 }

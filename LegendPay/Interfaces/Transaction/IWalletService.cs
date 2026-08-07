@@ -10,5 +10,8 @@ namespace LegendPay.Interfaces.Transaction
         Task<DebitResponse?> DebitWalletAsync(DebitRequest debitRequest, CancellationToken cancellationToken = default);
         Task<DebitReversalResponse?> DebitReversalAsync(DebitReversalRequest debitReversalRequest, CancellationToken cancellationToken = default);
         Task<decimal?> GetBalanceAsync(string customerId, CancellationToken cancellationToken = default);
+        Task<GetTransactionListResponse?> GetTransactionHistoryAsync(string customerId, int page = 1, int itemsPerPage = 10, CancellationToken cancellationToken = default);
+
+
     }
 }

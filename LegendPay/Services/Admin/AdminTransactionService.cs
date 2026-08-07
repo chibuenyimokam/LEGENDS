@@ -14,12 +14,22 @@ namespace LegendPay.Services.Admin
             _context = context;
         }
 
+        
+        private static readonly TimeSpan NigeriaOffset = TimeSpan.FromHours(1);
+
+        private static DateTime GetTodayStartUtc()
+        {
+            var nowInNigeria = DateTime.UtcNow + NigeriaOffset;
+            var todayStartNigeria = nowInNigeria.Date;
+            return todayStartNigeria - NigeriaOffset;
+        }
+
         public async Task<AdminTransactionsViewModel> GetTransactionsAsync(string? status, string? biller, string? method, int page, int pageSize)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 15;
 
-            var today = DateTime.UtcNow.Date;
+            var today = GetTodayStartUtc();
             var todayVolume = await _context.Bills
                 .Where(b => b.CreatedAt >= today && b.Status == "Success")
                 .SumAsync(b => (decimal?)b.Amount) ?? 0m;

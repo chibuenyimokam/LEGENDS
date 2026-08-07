@@ -1,4 +1,6 @@
-﻿namespace LegendPay.Models.WalletStation.Response
+﻿using Newtonsoft.Json;
+
+namespace LegendPay.Models.WalletStation.Response
 {
     public class GetTransactionListResponse
     {
@@ -22,5 +24,8 @@
             public required decimal Amount { get; set; }
             public required decimal Balance { get; set; }
             public required string Description { get; set; }
-        }
+        public required string TranType { get; set; }
+        [JsonProperty("date")]
+        public DateTime Date { get; internal set; }
+    }
 }

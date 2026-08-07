@@ -14,16 +14,19 @@ namespace LegendPay.Controllers
         private readonly IAuthService _authService;
         private readonly IBillPaymentHandler _paymentHandler;
         private readonly IScheduledPaymentService _scheduledPaymentService;
+        private readonly IWalletService _walletService;
         private readonly ILegendPointService _legendPointService;
 
         public HomeController(
                 IAuthService authService,
                 IBillPaymentHandler paymentHandler,
                 IScheduledPaymentService scheduledPaymentService,
+                IWalletService walletService,
                 ILegendPointService legendPointService)
         {
             _authService = authService;
             _paymentHandler = paymentHandler;
+            _walletService = walletService;
             _scheduledPaymentService = scheduledPaymentService;
             _legendPointService = legendPointService;
         }
@@ -52,7 +55,7 @@ namespace LegendPay.Controllers
             return View(model);
         }
         [Authorize]
-        public async Task<IActionResult> FundWallet()
+        public async Task<IActionResult> FundWallet(int Page = 1)
         {
             var userId = User.GetUserId();
             if (!userId.HasValue) return RedirectToAction("Login", "Auth");
@@ -64,9 +67,25 @@ namespace LegendPay.Controllers
             {
                 await _authService.TryProvisionWalletAsync(user);
             }
+            const int itemsPerPage = 5;
+            var historyResponse = await _walletService.GetTransactionHistoryAsync(
+                user.CustomerId ?? string.Empty,
+                page: Page,
+                itemsPerPage: itemsPerPage);
+            var transactions = historyResponse?.TransactionDetailsList?
+                .Select(t => new RecentTransactionViewModel
+                {
+                    TransactionId = t.TransactionId,
+                    Description = t.Description,
+                    Amount = t.Amount,
+                    Type = t.TranType, // "Credit" or "Debit"
+                    Date = t.Date,
+                    Status = "Successful"
+                })
+                .ToList() ?? new List<RecentTransactionViewModel>();
 
             var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 10);
-            var ledgerBalance = await _authService.GetLedgerBalanceAsync(user);
+            //var ledgerBalance = await _authService.GetLedgerBalanceAsync(user);
 
             var model = new WalletDashboardViewModel
             {
@@ -76,17 +95,10 @@ namespace LegendPay.Controllers
                 AccountNumber = wallet?.AccountNumber ?? user.AccountNumber ?? string.Empty,
                 BankName = wallet?.BankName ?? user.BankName ?? string.Empty,
                 WalletBalance = user.Balance,
-                RecentTransactions = wallet?.WalletTransactions?
-                    .Select(t => new RecentTransactionViewModel
-                    {
-                        TransactionId = t.ExternalReference ?? t.Id.ToString(),
-                        Description = t.Description ?? t.Source ?? t.Type,
-                        Amount = t.Amount,
-                        Type = t.Type,
-                        Date = t.CreatedAt,
-                        Status = t.Status
-                    })
-                    .ToList() ?? new List<RecentTransactionViewModel>()
+                RecentTransactions = transactions,
+                CurrentPage = historyResponse?.Pagination?.CurrentPage ?? Page,
+                TotalPages = historyResponse?.Pagination?.TotalPages ?? 1
+
             };
 
             ViewData["KycTier"] = model.KycTier;
@@ -177,8 +189,7 @@ namespace LegendPay.Controllers
             return View("~/Views/Home/Templates/ReviewAndPay.cshtml", model);
         }
 
-        // Called via fetch() from PurchaseDetails.cshtml once a provider is selected,
-        // so Airtime/Data can show real packages from coralpay instead of hardcoded values.
+        
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetPackagesForBiller(int billerId)

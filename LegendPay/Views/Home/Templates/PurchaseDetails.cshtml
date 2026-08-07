@@ -38,23 +38,50 @@
         <div class="space-y-3">
             <label class="text-sm font-semibold text-on-surface">Select Provider</label>
 
-            @if (Model.Category == "AIRTIME" || Model.Category == "DATA")
+            @if (Model.Category == "AIRTIME_AND_DATA")
             {
                 <!-- Network provider cards for Airtime & Data  pulled from CoralPay's biller list -->
                 <div class="grid grid-cols-4 gap-3">
-                    @foreach (var biller in Model.Billers ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>())
+                    @{
+                        var mainBillers = Model.Billers?.Take(5).ToList() ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>();
+                        var moreBillers = Model.Billers?.Skip(5).ToList() ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>();
+                    }
+                    
+                    @foreach (var biller in mainBillers)
                     {
-                        <button type="button" onclick="selectProvider('@biller.BillerName', '@biller.BillerId')" id="provider-@biller.BillerId"
-                                class="provider-btn flex flex-col items-center gap-2 border-2 border-slate-200 rounded-xl p-4 hover:border-primary transition-all">
-                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary">
-                                @(biller.BillerName.Length >= 2 ? biller.BillerName.Substring(0, 2).ToUpper() : biller.BillerName.ToUpper())
+                     <button type="button" onclick="selectProvider('@biller.BillerName', '@biller.BillerId')"
+                                id="provider-@biller.BillerId"
+                                class="provider-btn flex flex-col items-center gap-2 border-2 border-slate-200 rounded-xl p-3 hover:border-primary transition-all">
+                            @if (!string.IsNullOrEmpty(biller.LogoUrl))
+                            {
+                                <img src="@biller.LogoUrl" alt="@biller.BillerName" class="w-10 h-10 rounded-full object-contain"
+                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+                                <div class="w-10 h-10 rounded-full bg-slate-200 items-center justify-center text-xs font-black text-slate-700 hidden">
+                                    @(biller.BillerName.Length >= 2 ? biller.BillerName.Substring(0, 2).ToUpper() : biller.BillerName.ToUpper())
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary">
+                                    @(biller.BillerName.Length >= 2 ? biller.BillerName.Substring(0, 2).ToUpper() : biller.BillerName.ToUpper())
+                                </div>
+                            }
+                            <span class="text-xs font-semibold text-on-surface text-center leading-tight">@biller.BillerName</span>
+                        </button>
+                    }
+                    @if (moreBillers.Any())
+                    {
+                        <button type="button" onclick="document.getElementById('moreModal').classList.remove('hidden')"
+                                class="flex flex-col items-center gap-2 border-2 border-slate-200 rounded-xl p-3 hover:border-primary transition-all">
+                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-on-surface-variant">more_horiz</span>
                             </div>
-                            <span class="text-xs font-semibold text-on-surface">@biller.BillerName</span>
+                            <span class="text-xs font-semibold text-on-surface">More</span>
                         </button>
                     }
                 </div>
             }
-            else if (Model.Category == "GAMES" || Model.Category == "TRANSPORT")
+            else if (Model.Category == "BETTING_AND_LOTTERY" || Model.Category == "TRANSPORT_AND_TOLL_PAYMENT")
             {
                 <!-- Biller cards with More popup for Games & Transport -->
                 <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
@@ -125,8 +152,8 @@
 
         <div class="border-t border-slate-100"></div>
 
-        <!-- Data plans (only for DATA category) -->
-        @if (Model.Category == "DATA")
+        <!-- Data plans (only for Airtime & Data group, Data mode) -->
+        @if (Model.Category == "AIRTIME_AND_DATA" && Model.Mode == "DATA")
         {
             <div id="plansSection" class="hidden space-y-3">
                 <label class="text-sm font-semibold text-on-surface">Select Data Plan</label>
@@ -136,7 +163,7 @@
         }
 
         <!-- Phone number (for Airtime & Data) or User ID (for Games) or reference (for Transport) -->
-        @if (Model.Category == "AIRTIME" || Model.Category == "DATA")
+        @if (Model.Category == "AIRTIME_AND_DATA")
         {
             <div class="space-y-2">
                 <label class="text-sm font-semibold text-on-surface">Phone Number</label>
@@ -144,7 +171,7 @@
                        class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none" />
             </div>
         }
-        else if (Model.Category == "GAMES")
+        else if (Model.Category == "BETTING_AND_LOTTERY")
         {
             <div class="space-y-2">
                 <label class="text-sm font-semibold text-on-surface">User ID / Account Number</label>
@@ -152,7 +179,7 @@
                        class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none" />
             </div>
         }
-        else if (Model.Category == "TRANSPORT")
+        else if (Model.Category == "TRANSPORT_AND_TOLL_PAYMENT")
         {
             <div class="space-y-2">
                 <label class="text-sm font-semibold text-on-surface">Account / Reference Number</label>
@@ -161,8 +188,8 @@
             </div>
         }
 
-        <!-- Amount (hidden for DATA since plan sets the amount) -->
-        @if (Model.Category != "DATA")
+        <!-- Amount (hidden for Data mode since the plan sets the amount) -->
+        @if (!(Model.Category == "AIRTIME_AND_DATA" && Model.Mode == "DATA"))
         {
             <div class="space-y-3">
                 <label class="text-sm font-semibold text-on-surface">Amount (₦)</label>
@@ -172,7 +199,7 @@
                            class="flex-1 outline-none text-sm text-on-surface bg-transparent" />
                 </div>
                 <div class="flex gap-2 flex-wrap">
-                    @if (Model.Category == "AIRTIME")
+                    @if (Model.Category == "AIRTIME_AND_DATA" && Model.Mode == "AIRTIME")
                     {
                         @foreach (var amt in new[] { "100", "200", "500", "1,000", "2,000", "5,000" })
                         {
@@ -226,11 +253,17 @@
         </div>
 
     </div>
+    <!-- Back link -->
+    <a href="javascript:history.back()"
+       class="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        Back
+    </a>
 
 </div>
 
 <!-- More providers modal (for Games & Transport) -->
-@if ((Model.Category == "GAMES" || Model.Category == "TRANSPORT") && (Model.Billers?.Count > 5))
+@if ((Model.Category == "BETTING_AND_LOTTERY" || Model.Category == "TRANSPORT_AND_TOLL_PAYMENT") && (Model.Billers?.Count > 5))
 {
     <div id="moreModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
         <div class="bg-surface w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl p-6 max-h-[80vh] flex flex-col">
@@ -255,12 +288,14 @@
                 }
             </div>
         </div>
+
     </div>
 }
 
 @section Scripts {
     <script>
         const category = '@Model.Category';
+        const mode     = '@Model.Mode';
         let selectedProvider   = '';
         let selectedProviderId = '';
         let selectedPlan       = null;   // { slug, label, amount } from CoralPay, for DATA
@@ -290,9 +325,9 @@
 
             if (!id) return; // Games/Transport "More" modal items already carry an id; nothing further needed here
 
-            if (category === 'DATA') {
+            if (category === 'AIRTIME_AND_DATA' && mode === 'DATA') {
                 await renderPlans(id);
-            } else if (category === 'AIRTIME') {
+            } else if (category === 'AIRTIME_AND_DATA' && mode === 'AIRTIME') {
                 // Find this biller's top-up package (amount is null/0 - customer enters their own amount)
                 const packages = await fetchPackages(id);
                 airtimePackage = packages.find(p => !p.amount || p.amount === 0) || null;
@@ -356,24 +391,24 @@
 
             if (!selectedProvider) { alert('Please select a provider.'); return; }
 
-            if (category === 'AIRTIME') {
+            if (category === 'AIRTIME_AND_DATA' && mode === 'AIRTIME') {
                 if (!ref) { alert('Please enter the required details.'); return; }
                 amount = document.getElementById('amountInput')?.value.trim();
                 if (!amount || parseFloat(amount) < 50) { alert('Please enter a valid amount.'); return; }
                 if (!airtimePackage) { alert('Could not find a top-up package for this provider. Please try again.'); return; }
                 packageSlug = airtimePackage.slug;
                 planLabel   = airtimePackage.label;
-            } else if (category === 'TRANSPORT') {
+            } else if (category === 'TRANSPORT_AND_TOLL_PAYMENT') {
                 if (!ref) { alert('Please enter the required details.'); return; }
                 amount = document.getElementById('amountInput')?.value.trim();
                 if (!amount || parseFloat(amount) < 50) { alert('Please enter a valid amount.'); return; }
-            } else if (category === 'DATA') {
+            } else if (category === 'AIRTIME_AND_DATA' && mode === 'DATA') {
                 if (!ref || ref.length !== 11) { alert('Please enter a valid 11-digit phone number.'); return; }
                 if (!selectedPlan) { alert('Please select a data plan.'); return; }
                 amount      = selectedPlan.amount;
                 planLabel   = selectedPlan.label;
                 packageSlug = selectedPlan.slug;
-            } else if (category === 'GAMES') {
+            } else if (category === 'BETTING_AND_LOTTERY') {
                 if (!ref) { alert('Please enter your User ID.'); return; }
                 amount = document.getElementById('amountInput')?.value.trim();
                 if (!amount || parseFloat(amount) < 100) { alert('Please enter a valid amount.'); return; }

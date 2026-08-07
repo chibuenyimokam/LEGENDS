@@ -46,7 +46,6 @@ namespace LegendPay.Services.Transaction
                 AvailableBalance = wallet?.Balance ?? 0m,
                 RecentFavorites = new List<RecentBillerViewModel>(),
                 Categories = groupsResponse?.ResponseData?
-                    .Where(g => g.IsActive)
                     .Select(g => new BillerCategoryViewModel
                     {
                         Category = g.Slug,
@@ -61,8 +60,6 @@ namespace LegendPay.Services.Transaction
         {
             string targetGroupSlug = MapToVasGroupSlug(category);
             var billersResponse = await _vasService.GetBillersByGroupSlugAsync(targetGroupSlug);
-            //var billersResponse = await _vasService.GetBillersByGroupSlugAsync(category);
-
             var billers = billersResponse?.ResponseData?
                 .Select(b => new BillerItem
                 {
@@ -189,11 +186,7 @@ namespace LegendPay.Services.Transaction
                         localUserForReversal.Balance = reversalBalance;
                         await _context.SaveChangesAsync();
                     }
-                    //if (localUserForReversal != null)
-                    //{
-                    //    localUserForReversal.Balance = reversalResponse.Balance;
-                    //    await _context.SaveChangesAsync();
-                    //}
+                    
                 }
                 else
                 {
@@ -281,14 +274,7 @@ namespace LegendPay.Services.Transaction
 
             List<BillerItem> billers = new();
 
-            // Determine target group slug for CoralPay VAS
-            // Airtime and Data share the AIRTIME_AND_DATA CoralPay group
-            //string targetGroupSlug = category;
-            //if (category.Equals("AIRTIME", StringComparison.OrdinalIgnoreCase) ||
-            //    category.Equals("DATA", StringComparison.OrdinalIgnoreCase))
-            //{
-            //    targetGroupSlug = "AIRTIME_AND_DATA";
-            //}
+            
             string targetGroupSlug = MapToVasGroupSlug(category);
 
             // Fetch billers from CoralPay VAS using the category/group slug
@@ -297,11 +283,7 @@ namespace LegendPay.Services.Transaction
                 var billersResponse = await _vasService.GetBillersByGroupSlugAsync(targetGroupSlug);
                 _logger.LogInformation("Billers for group '{TargetGroup}': {Count} results",
                     targetGroupSlug, billersResponse?.ResponseData?.Count ?? 0);
-                //if (!string.IsNullOrWhiteSpace(category))
-                //{
-                //var billersResponse = await _vasService.GetBillersByGroupSlugAsync(category);
-                //_logger.LogInformation("Billers for category '{Category}': {Count} results, raw: {Json}",
-                //    category, billersResponse?.ResponseData?.Count ?? -1, JsonConvert.SerializeObject(billersResponse));
+                
                 billers = billersResponse?.ResponseData?
                     .Select(b => new BillerItem
                     {
@@ -318,7 +300,7 @@ namespace LegendPay.Services.Transaction
             return new PurchaseDetailsViewModel
             {
                 Category = category ?? string.Empty,
-                Mode = string.IsNullOrWhiteSpace(mode) ? category : mode, // recently added
+                Mode = string.IsNullOrWhiteSpace(mode) ? category : mode, 
                 CategoryDisplayName = GetCategoryDisplayName(category ?? string.Empty),
                 CategoryIcon = MapCategoryToIcon(category ?? string.Empty),
                 Billers = billers,

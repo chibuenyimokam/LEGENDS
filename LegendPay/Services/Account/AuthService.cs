@@ -100,7 +100,7 @@ namespace LegendPay.Services.Account
 
                     _logger.LogInformation("Sending wallet request: {@WalletRequest}", walletRequest);
                     var wallet = await _walletService.CreateWalletAsync(walletRequest);
-                    
+
                     //_logger.LogInformation("Wallet response: {@WalletResponse}", wallet);
 
                     if (wallet?.AccountDetails != null)
@@ -260,6 +260,11 @@ namespace LegendPay.Services.Account
                 .OrderBy(b => b.CreatedAt)
                 .ToListAsync();
 
+            var pendingSchedules = await _context.ScheduledPayments.AsNoTracking()
+                .Where(s => s.UserAccountId == userId && s.Status == "Pending")
+                .OrderBy(s => s.ScheduledDate)
+                .ToListAsync();
+
             var spending = await _context.SpendingRecords.AsNoTracking()
                 .Where(s => s.UserAccountId == userId && s.Year == now.Year && s.Month == now.Month)
                 .ToListAsync();
@@ -274,25 +279,48 @@ namespace LegendPay.Services.Account
 
             var ledgerBalance = await GetLedgerBalanceAsync(user);
 
-            return new UserDashboardViewModel
-            {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Balance = user.Balance,
-                LegendPoints = legendPoint == null ? 0 : legendPoint.TotalPoints - legendPoint.RedeemedPoints,
-                PendingBillsCount = pendingBills.Count,
-                PendingBillsTotal = pendingBills.Sum(b => b.Amount),
-                TotalSpending = totalSpending,
-                UpcomingBills = pendingBills
-                    .Take(5)
-                    .Select(b => new DashboardBillViewModel
+            // Combine actual pending bills with pending scheduled payments so the dashboard
+            // reflects both sources, ordered by whichever date is soonest.
+            var upcomingBillItems = pendingBills
+                .Select(b => new
+                {
+                    SortDate = b.CreatedAt,
+                    Item = new DashboardBillViewModel
                     {
                         Id = b.Id,
                         BillerName = b.BillerName,
                         Nickname = b.AccountReference,
                         Amount = b.Amount,
                         Status = b.Status
-                    })
+                    }
+                })
+                .Concat(pendingSchedules.Select(s => new
+                {
+                    SortDate = s.ScheduledDate,
+                    Item = new DashboardBillViewModel
+                    {
+                        Id = s.Id,
+                        BillerName = s.BillerName,
+                        Nickname = s.BillerCategory,
+                        Amount = s.Amount,
+                        Status = s.Status
+                    }
+                }))
+                .OrderBy(x => x.SortDate)
+                .Select(x => x.Item)
+                .ToList();
+
+            return new UserDashboardViewModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Balance = user.Balance,
+                LegendPoints = legendPoint == null ? 0 : legendPoint.TotalPoints - legendPoint.RedeemedPoints,
+                PendingBillsCount = pendingBills.Count + pendingSchedules.Count,
+                PendingBillsTotal = pendingBills.Sum(b => b.Amount) + pendingSchedules.Sum(s => s.Amount),
+                TotalSpending = totalSpending,
+                UpcomingBills = upcomingBillItems
+                    .Take(5)
                     .ToList(),
                 SpendingBreakdown = spending
                     .GroupBy(s => s.BillerCategory)
