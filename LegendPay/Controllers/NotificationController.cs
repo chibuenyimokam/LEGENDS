@@ -14,10 +14,7 @@ namespace LegendPay.Controllers
             _context = context;
         }
 
-        /// <summary>
-        /// GET /Notification/GetUnreadCount
-        /// Returns unread notification count for the logged-in user.
-        /// </summary>
+     
         [HttpGet]
         public async Task<IActionResult> GetUnreadCount()
         {
@@ -33,10 +30,7 @@ namespace LegendPay.Controllers
             return Json(new { count });
         }
 
-        /// <summary>
-        /// GET /Notification/GetAll
-        /// Returns all unread notifications for the logged-in user.
-        /// </summary>
+        
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -67,10 +61,7 @@ namespace LegendPay.Controllers
             return Json(new { notifications });
         }
 
-        /// <summary>
-        /// POST /Notification/MarkAllRead
-        /// Marks all notifications as read for the logged-in user.
-        /// </summary>
+        
         [HttpPost]
         public async Task<IActionResult> MarkAllRead()
         {
@@ -90,10 +81,7 @@ namespace LegendPay.Controllers
             return Json(new { success = true });
         }
 
-        /// <summary>
-        /// POST /Notification/MarkRead/{id}
-        /// Marks a single notification as read.
-        /// </summary>
+        
         [HttpPost]
         public async Task<IActionResult> MarkRead(Guid id)
         {

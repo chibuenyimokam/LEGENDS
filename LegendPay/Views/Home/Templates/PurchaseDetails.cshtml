@@ -1,4 +1,5 @@
-﻿@model LegendPay.Models.ViewModels.UserDashboard.PurchaseDetailsViewModel
+﻿@* ﻿@model LegendPay.Models.ViewModels.UserDashboard.PurchaseDetailsViewModel *@
+@model LegendPay.Models.ViewModels.UserDashboard.PurchaseDetailsViewModel
 @{
     ViewData["Title"] = Model.CategoryDisplayName + " – Purchase Details";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
@@ -38,7 +39,7 @@
         <div class="space-y-3">
             <label class="text-sm font-semibold text-on-surface">Select Provider</label>
 
-            @if (Model.Category == "AIRTIME" || Model.Category == "DATA")
+            @if (Model.Category == "AIRTIME_AND_DATA")
             {
                 <!-- Network provider cards for Airtime & Data  pulled from CoralPay's biller list -->
                 <div class="grid grid-cols-4 gap-3">
@@ -46,10 +47,10 @@
                         var mainBillers = Model.Billers?.Take(5).ToList() ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>();
                         var moreBillers = Model.Billers?.Skip(5).ToList() ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>();
                     }
-                    
+
                     @foreach (var biller in mainBillers)
                     {
-                     <button type="button" onclick="selectProvider('@biller.BillerName', '@biller.BillerId')"
+                        <button type="button" onclick="selectProvider('@biller.BillerName', '@biller.BillerId')"
                                 id="provider-@biller.BillerId"
                                 class="provider-btn flex flex-col items-center gap-2 border-2 border-slate-200 rounded-xl p-3 hover:border-primary transition-all">
                             @if (!string.IsNullOrEmpty(biller.LogoUrl))
@@ -81,7 +82,7 @@
                     }
                 </div>
             }
-            else if (Model.Category == "GAMES" || Model.Category == "TRANSPORT")
+            else if (Model.Category == "BETTING_AND_LOTTERY" || Model.Category == "TRANSPORT_AND_TOLL_PAYMENT")
             {
                 <!-- Biller cards with More popup for Games & Transport -->
                 <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
@@ -152,8 +153,8 @@
 
         <div class="border-t border-slate-100"></div>
 
-        <!-- Data plans (only for DATA category) -->
-        @if (Model.Category == "DATA")
+        <!-- Data plans (only for Airtime & Data group, Data mode) -->
+        @if (Model.Category == "AIRTIME_AND_DATA" && Model.Mode == "DATA")
         {
             <div id="plansSection" class="hidden space-y-3">
                 <label class="text-sm font-semibold text-on-surface">Select Data Plan</label>
@@ -163,7 +164,7 @@
         }
 
         <!-- Phone number (for Airtime & Data) or User ID (for Games) or reference (for Transport) -->
-        @if (Model.Category == "AIRTIME" || Model.Category == "DATA")
+        @if (Model.Category == "AIRTIME_AND_DATA")
         {
             <div class="space-y-2">
                 <label class="text-sm font-semibold text-on-surface">Phone Number</label>
@@ -171,7 +172,7 @@
                        class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none" />
             </div>
         }
-        else if (Model.Category == "GAMES")
+        else if (Model.Category == "BETTING_AND_LOTTERY")
         {
             <div class="space-y-2">
                 <label class="text-sm font-semibold text-on-surface">User ID / Account Number</label>
@@ -179,7 +180,7 @@
                        class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none" />
             </div>
         }
-        else if (Model.Category == "TRANSPORT")
+        else if (Model.Category == "TRANSPORT_AND_TOLL_PAYMENT")
         {
             <div class="space-y-2">
                 <label class="text-sm font-semibold text-on-surface">Account / Reference Number</label>
@@ -188,8 +189,8 @@
             </div>
         }
 
-        <!-- Amount (hidden for DATA since plan sets the amount) -->
-        @if (Model.Category != "DATA")
+        <!-- Amount (hidden for Data mode since the plan sets the amount) -->
+        @if (!(Model.Category == "AIRTIME_AND_DATA" && Model.Mode == "DATA"))
         {
             <div class="space-y-3">
                 <label class="text-sm font-semibold text-on-surface">Amount (₦)</label>
@@ -199,7 +200,7 @@
                            class="flex-1 outline-none text-sm text-on-surface bg-transparent" />
                 </div>
                 <div class="flex gap-2 flex-wrap">
-                    @if (Model.Category == "AIRTIME")
+                    @if (Model.Category == "AIRTIME_AND_DATA" && Model.Mode == "AIRTIME")
                     {
                         @foreach (var amt in new[] { "100", "200", "500", "1,000", "2,000", "5,000" })
                         {
@@ -253,11 +254,17 @@
         </div>
 
     </div>
+    <!-- Back link -->
+    <a href="javascript:history.back()"
+       class="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        Back
+    </a>
 
 </div>
 
 <!-- More providers modal (for Games & Transport) -->
-@if ((Model.Category == "GAMES" || Model.Category == "TRANSPORT") && (Model.Billers?.Count > 5))
+@if ((Model.Category == "AIRTIME_AND_DATA" || Model.Category == "BETTING_AND_LOTTERY" || Model.Category == "TRANSPORT_AND_TOLL_PAYMENT") && (Model.Billers?.Count > 5))
 {
     <div id="moreModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
         <div class="bg-surface w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl p-6 max-h-[80vh] flex flex-col">
@@ -282,16 +289,18 @@
                 }
             </div>
         </div>
+
     </div>
 }
 
 @section Scripts {
     <script>
         const category = '@Model.Category';
-        let selectedProvider   = '';
+        const mode = '@Model.Mode';
+        let selectedProvider = '';
         let selectedProviderId = '';
-        let selectedPlan       = null;   // { slug, label, amount } from CoralPay, for DATA
-        let airtimePackage     = null;   // { slug, label } for AIRTIME - the *_AIRTIME package, custom amount
+        let selectedPlan = null;   // { slug, label, amount } from CoralPay, for DATA
+        let airtimePackage = null;   // { slug, label } for AIRTIME - the *_AIRTIME package, custom amount
 
         async function fetchPackages(billerId) {
             const res = await fetch('/Home/GetPackagesForBiller?billerId=' + encodeURIComponent(billerId));
@@ -300,10 +309,10 @@
         }
 
         async function selectProvider(name, id = '') {
-            selectedProvider   = name;
+            selectedProvider = name;
             selectedProviderId = id;
-            selectedPlan       = null;
-            airtimePackage     = null;
+            selectedPlan = null;
+            airtimePackage = null;
 
             document.querySelectorAll('.provider-btn').forEach(btn => {
                 btn.classList.remove('border-primary', 'bg-primary/5');
@@ -315,12 +324,12 @@
             document.getElementById('selectedProviderName').textContent = name;
             document.getElementById('selectedProviderDisplay').classList.remove('hidden');
 
-            if (!id) return; // Games/Transport "More" modal items already carry an id; nothing further needed here
+            if (!id) return; // Games/Transport "More" modal items already have ids
 
-            if (category === 'DATA') {
+            if (category === 'AIRTIME_AND_DATA' && mode === 'DATA') {
                 await renderPlans(id);
-            } else if (category === 'AIRTIME') {
-                // Find this biller's top-up package (amount is null/0 - customer enters their own amount)
+            } else if (category === 'AIRTIME_AND_DATA' && mode === 'AIRTIME') {
+                // Find this biller's top-up package 
                 const packages = await fetchPackages(id);
                 airtimePackage = packages.find(p => !p.amount || p.amount === 0) || null;
                 if (!airtimePackage) {
@@ -336,20 +345,20 @@
 
         async function renderPlans(billerId) {
             const packages = await fetchPackages(billerId);
-            // Data bundles are the packages with a real fixed price; the *_AIRTIME entry (amount null) is excluded
-            const plans   = packages.filter(p => p.amount && p.amount > 0);
-            const grid    = document.getElementById('plansGrid');
+            // Data bundles are the packages with a real fixed price so the *_AIRTIME entry (amount null) is excluded
+            const plans = packages.filter(p => p.amount && p.amount > 0);
+            const grid = document.getElementById('plansGrid');
             const section = document.getElementById('plansSection');
             const divider = document.getElementById('plansDivider');
             if (!grid) return;
 
             grid.innerHTML = plans.map((p, i) => `
-                <button type="button" id="plan-${i}"
-                        class="plan-btn border-2 border-slate-200 rounded-xl p-4 text-left hover:border-primary transition-all">
-                    <p class="text-sm font-bold text-on-surface">${p.label}</p>
-                    <p class="text-sm font-semibold text-primary mt-2">₦${p.amount.toLocaleString()}</p>
-                </button>
-            `).join('');
+                        <button type="button" id="plan-${i}"
+                                class="plan-btn border-2 border-slate-200 rounded-xl p-4 text-left hover:border-primary transition-all">
+                            <p class="text-sm font-bold text-on-surface">${p.label}</p>
+                            <p class="text-sm font-semibold text-primary mt-2">₦${p.amount.toLocaleString()}</p>
+                        </button>
+                    `).join('');
 
             grid.querySelectorAll('.plan-btn').forEach((el, i) => {
                 el.onclick = () => selectPlan(i, plans);
@@ -375,46 +384,46 @@
         }
 
         function continueToReview() {
-            const ref  = document.getElementById('refInput')?.value.trim();
+            const ref = document.getElementById('refInput')?.value.trim();
             const save = document.getElementById('saveBeneficiary').checked;
-            let amount      = '';
-            let planLabel   = '';
+            let amount = '';
+            let planLabel = '';
             let packageSlug = '';
 
             if (!selectedProvider) { alert('Please select a provider.'); return; }
 
-            if (category === 'AIRTIME') {
+            if (category === 'AIRTIME_AND_DATA' && mode === 'AIRTIME') {
                 if (!ref) { alert('Please enter the required details.'); return; }
                 amount = document.getElementById('amountInput')?.value.trim();
                 if (!amount || parseFloat(amount) < 50) { alert('Please enter a valid amount.'); return; }
                 if (!airtimePackage) { alert('Could not find a top-up package for this provider. Please try again.'); return; }
                 packageSlug = airtimePackage.slug;
-                planLabel   = airtimePackage.label;
-            } else if (category === 'TRANSPORT') {
+                planLabel = airtimePackage.label;
+            } else if (category === 'TRANSPORT_AND_TOLL_PAYMENT') {
                 if (!ref) { alert('Please enter the required details.'); return; }
                 amount = document.getElementById('amountInput')?.value.trim();
                 if (!amount || parseFloat(amount) < 50) { alert('Please enter a valid amount.'); return; }
-            } else if (category === 'DATA') {
+            } else if (category === 'AIRTIME_AND_DATA' && mode === 'DATA') {
                 if (!ref || ref.length !== 11) { alert('Please enter a valid 11-digit phone number.'); return; }
                 if (!selectedPlan) { alert('Please select a data plan.'); return; }
-                amount      = selectedPlan.amount;
-                planLabel   = selectedPlan.label;
+                amount = selectedPlan.amount;
+                planLabel = selectedPlan.label;
                 packageSlug = selectedPlan.slug;
-            } else if (category === 'GAMES') {
+            } else if (category === 'BETTING_AND_LOTTERY') {
                 if (!ref) { alert('Please enter your User ID.'); return; }
                 amount = document.getElementById('amountInput')?.value.trim();
                 if (!amount || parseFloat(amount) < 100) { alert('Please enter a valid amount.'); return; }
             }
 
             const params = new URLSearchParams({
-                category:        category,
-                billerId:        selectedProviderId,
-                billerName:      selectedProvider,
-                packageSlug:     packageSlug,
+                category: category,
+                billerId: selectedProviderId,
+                billerName: selectedProvider,
+                packageSlug: packageSlug,
                 referenceNumber: ref,
-                planLabel:       planLabel,
-                planDuration:    '',
-                amount:          amount,
+                planLabel: planLabel,
+                planDuration: '',
+                amount: amount,
                 saveBeneficiary: save
             });
             window.location.href = '/Home/ReviewAndPay?' + params.toString();

@@ -14,12 +14,22 @@ namespace LegendPay.Controllers
         private readonly IAuthService _authService;
         private readonly IWalletService _walletService;
         private readonly IBillPaymentHandler _paymentHandler;
+        private readonly IScheduledPaymentService _scheduledPaymentService;
+        private readonly ILegendPointService _legendPointService;
 
-        public HomeController(IAuthService authService, IBillPaymentHandler paymentHandler, IWalletService walletService)
+        public HomeController(
+                IAuthService authService,
+                IBillPaymentHandler paymentHandler,
+                IScheduledPaymentService scheduledPaymentService,
+                IWalletService walletService,
+                ILegendPointService legendPointService)
         {
             _authService = authService;
             _paymentHandler = paymentHandler;
             _walletService = walletService;
+
+            _scheduledPaymentService = scheduledPaymentService;
+            _legendPointService = legendPointService;
         }
 
         public IActionResult Index() => View();
@@ -69,7 +79,7 @@ namespace LegendPay.Controllers
                     TransactionId = t.TransactionId,
                     Description = t.Description,
                     Amount = t.Amount,
-                    Type = t.TranType, // "Credit" or "Debit"
+                    Type = t.TranType, 
                     Date = t.Date,
                     Status = "Successful"
                 })
@@ -194,7 +204,7 @@ namespace LegendPay.Controllers
             return View("~/Views/Home/Templates/ReviewAndPay.cshtml", model);
         }
 
-        
+
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetPackagesForBiller(int billerId)
@@ -249,6 +259,177 @@ namespace LegendPay.Controllers
             var model = await _authService.GetSubscriptionsAsync(user.Id);
 
             return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CreateSubscription(string billerCategory, string billerName, string accountReference, decimal amount, int intervalDays)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _authService.CreateSubscriptionAsync(user.Id, billerCategory, billerName, accountReference, amount, intervalDays);
+            TempData[success ? "SubSuccess" : "SubError"] = message;
+
+            return RedirectToAction("Subscriptions");
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CancelSubscription(Guid id)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var success = await _authService.CancelSubscriptionAsync(id, user.Id);
+            TempData[success ? "SubSuccess" : "SubError"] = success ? "Subscription cancelled." : "Could not cancel subscription.";
+
+            return RedirectToAction("Subscriptions");
+        }
+
+        [Authorize]
+        public async Task<IActionResult> ScheduledPayments(int page = 1)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _scheduledPaymentService.GetUserSchedulesAsync(user.Id);
+            model.FirstName = user.FirstName;
+            model.AvailableBalance = await _authService.GetLedgerBalanceAsync(user);
+            model.Categories = (await _paymentHandler.PreparePayBillsViewModelAsync(user.Id)).Categories;
+
+            int pageSize = 5;
+            int totalItems = model.Payments.Count;
+
+            model.CurrentPage = Math.Max(1, page);
+            model.TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            model.Payments = model.Payments
+                .Skip((model.CurrentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CreateSchedule(CreateScheduledPaymentViewModel form)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            if (ModelState.IsValid)
+            {
+                var (success, message) = await _scheduledPaymentService.CreateAsync(user.Id, form);
+                if (success)
+                {
+                    TempData["ScheduleSuccess"] = message;
+                    return RedirectToAction("ScheduledPayments");
+                }
+                ModelState.AddModelError(string.Empty, message);
+            }
+
+            var model = await _scheduledPaymentService.GetUserSchedulesAsync(user.Id);
+            model.FirstName = user.FirstName;
+            model.AvailableBalance = await _authService.GetLedgerBalanceAsync(user);
+            model.Categories = (await _paymentHandler.PreparePayBillsViewModelAsync(user.Id)).Categories;
+            model.Form = form;
+
+            return View("ScheduledPayments", model);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ScheduleBillers(string category)
+        {
+            if (string.IsNullOrWhiteSpace(category))
+                return Json(new List<object>());
+
+            var vm = await _paymentHandler.PrepareSelectBillerViewModelAsync(category);
+            var billers = vm.Billers.Select(b => new { id = b.BillerId, name = b.BillerName }).ToList();
+            return Json(billers);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CancelSchedule(Guid id)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _scheduledPaymentService.CancelAsync(id, user.Id);
+            TempData[success ? "ScheduleSuccess" : "ScheduleError"] = message;
+
+            return RedirectToAction("ScheduledPayments");
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> PayScheduleNow(Guid id, string? returnUrl = null)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _scheduledPaymentService.ExecuteAsync(id, user.Id);
+            TempData[success ? "ScheduleSuccess" : "ScheduleError"] = message;
+
+            // If request came from the homepage, redirect back to HomePage else redirect back to schedule payment page
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            return RedirectToAction("ScheduledPayments");
+        }
+
+        [Authorize]
+        public async Task<IActionResult> LegendPoints()
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var model = await _legendPointService.GetUserPointsAsync(user.Id);
+            model.FirstName = user.FirstName;
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> RedeemPoints(int points)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _legendPointService.RedeemAsync(user.Id, points);
+            TempData[success ? "RedeemSuccess" : "RedeemError"] = message;
+
+            return RedirectToAction("LegendPoints");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

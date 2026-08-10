@@ -20,11 +20,7 @@ namespace LegendPay.Interfaces.Transaction
         Task<VasApiResponse<CustomerEnquiryResponse>> CustomerLookupAsync(
             CustomerEnquiryRequest request, CancellationToken ct = default);
 
-        /// Vends value after the customer's wallet/account has already been debited on my side
-        /// and i have a verifiable paymentReference. The response status code against
-        /// VasResponseCodes is checked before deciding whether to mark the local wallet transaction as failed;
-        /// codes 09/68/96 mean "keep polling", not "failed", and no code should trigger an
-        /// automatic wallet reversal.
+        
         Task<VasApiResponse<VendValueResponse>> VendValueAsync(
             VendValueRequest request, CancellationToken ct = default);
 

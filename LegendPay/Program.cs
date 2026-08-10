@@ -17,6 +17,8 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text;
 using LegendPay.Services.Vas;
+using LegendPay.Services.Background;
+using LegendPay.Services.Configuration;
 
 namespace LegendPay
 {
@@ -62,12 +64,16 @@ namespace LegendPay
                 var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{settings.Username}:{settings.Password}"));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);
             });
+            builder.Services.AddHostedService<ScheduledPaymentWorker>();
 
             builder.Services.AddScoped<IVasService, VasService>();
 
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IScheduledPaymentService, ScheduledPaymentService>();
+            builder.Services.AddScoped<ILegendPointService, LegendPointService>();
+            //builder.Services.AddScoped<IWalletTransactionHistoryService, WalletTransactionHistoryService>();
             builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
             builder.Services.AddScoped<IBillPaymentHandler, BillPaymentHandler>();
             builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
@@ -78,6 +84,8 @@ namespace LegendPay
             builder.Services.AddScoped<IAdminTransactionService, AdminTransactionService>();
             builder.Services.AddScoped<IAdminReportService, AdminReportService>();
             builder.Services.AddScoped<IAdminSettingsService, AdminSettingsService>();
+            builder.Services.AddScoped<IAdminSettlementService, AdminSettlementService>();
+            builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
             builder.Services.AddSignalR();
 
             //using scheme now cause we have admin and users on the same server and we want to avoid cookie breaking due to too many redirects cause it identifies admin and user as the same cookie and it will break the login flow for both parties
@@ -138,7 +146,7 @@ namespace LegendPay
 
             if (app.Environment.IsDevelopment())
             {
-                LegendPay.Data.AdminSeeder.SeedAsync(app.Services, app.Configuration).GetAwaiter().GetResult();
+                AdminSeeder.SeedAsync(app.Services, app.Configuration).GetAwaiter().GetResult();
             }
 
             app.Run();

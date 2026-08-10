@@ -58,7 +58,6 @@ namespace LegendPay.Controllers
                 return RedirectToAction("UserSupport");
             }
 
-            // loads ALL chats for the sidebar
             var allChatsResponse = await _supportChatService.GetUserChatsAsync(userId);
 
             var viewModel = new UserSupportChatViewModel

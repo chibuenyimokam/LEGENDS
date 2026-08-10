@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
 {
+
+    // this is for admin portal
     public class Bill
     {
         [Key]

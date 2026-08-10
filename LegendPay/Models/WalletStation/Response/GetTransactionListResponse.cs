@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System.Globalization;
 
 namespace LegendPay.Models.WalletStation.Response
 {
@@ -7,7 +6,7 @@ namespace LegendPay.Models.WalletStation.Response
     {
         public ResponseHeader ResponseHeader { get; set; }
         public Pagination Pagination { get; set; }
-        public List<TransactionDetailsList> TransactionDetailsList { get; set; } = new();
+        public List<TransactionDetailsList> TransactionDetailsList { get; set; }
     }
         public class Pagination
         {
@@ -29,6 +28,4 @@ namespace LegendPay.Models.WalletStation.Response
         [JsonProperty("date")]
         public DateTime Date { get; internal set; }
     }
-    
-    
 }

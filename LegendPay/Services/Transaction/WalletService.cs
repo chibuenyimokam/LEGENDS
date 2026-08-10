@@ -2,10 +2,12 @@
 using LegendPay.Models.Data.Response_Table;
 using LegendPay.Models.WalletStation.Request;
 using LegendPay.Models.WalletStation.Response;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
+using static LegendPay.Models.WalletStation.Request.GetTransactionListRequest;
 
 namespace LegendPay.Services.Transaction
 {
@@ -168,16 +170,13 @@ namespace LegendPay.Services.Transaction
 
             var response = await PostAsync<GetTransactionListResponse>("api/GetTransactionList", requestPayload);
 
-            if (response?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
-            {
-                _logger.LogError("Failed to fetch wallet history for CustomerId {CustomerId}. Status: {Status}", customerId);
-                return null;
-            }
+            //if (response?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
+            //{
+            //    _logger.LogError("Failed to fetch wallet history for CustomerId {CustomerId}. Status: {Status}", customerId);
+            //    return null;
+            //}
 
             return response;
         }
     }
-
-
-
 }

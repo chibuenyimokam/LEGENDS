@@ -33,7 +33,6 @@ namespace LegendPay.Controllers
                 return BadRequest("Invalid credit request data.");
             }
 
-            //Sends credit to CoralPay
             var creditResponse = await _walletService.CreditWalletAsync(request);
 
             if (creditResponse?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
