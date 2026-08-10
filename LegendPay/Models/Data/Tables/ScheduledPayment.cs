@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LegendPay.Models.Data.Tables
 {
+
+    // this is for user dashboard
     public class ScheduledPayment
     {
         [Key]
@@ -17,6 +19,8 @@ namespace LegendPay.Models.Data.Tables
         [Required(ErrorMessage = "Biller category is required.")]
         [MaxLength(50, ErrorMessage = "Biller category cannot exceed 50 characters.")]
         public string BillerCategory { get; set; }
+        public string PackageSlug { get; set; }
+        public string BillerId { get; set; }
 
         [Required(ErrorMessage = "Biller name is required.")]
         [MaxLength(100, ErrorMessage = "Biller name cannot exceed 100 characters.")]

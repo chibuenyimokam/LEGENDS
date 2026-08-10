@@ -78,7 +78,7 @@ namespace LegendPay.Controllers
                     TransactionId = t.TransactionId,
                     Description = t.Description,
                     Amount = t.Amount,
-                    Type = t.TranType, // "Credit" or "Debit"
+                    Type = t.TranType, 
                     Date = t.Date,
                     Status = "Successful"
                 })
@@ -189,7 +189,7 @@ namespace LegendPay.Controllers
             return View("~/Views/Home/Templates/ReviewAndPay.cshtml", model);
         }
 
-        
+
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetPackagesForBiller(int billerId)
@@ -292,7 +292,7 @@ namespace LegendPay.Controllers
         }
 
         [Authorize]
-        public async Task<IActionResult> ScheduledPayments()
+        public async Task<IActionResult> ScheduledPayments(int page = 1)
         {
             var userId = User.GetUserId();
             if (!userId.HasValue) return RedirectToAction("Login", "Auth");
@@ -304,6 +304,17 @@ namespace LegendPay.Controllers
             model.FirstName = user.FirstName;
             model.AvailableBalance = await _authService.GetLedgerBalanceAsync(user);
             model.Categories = (await _paymentHandler.PreparePayBillsViewModelAsync(user.Id)).Categories;
+
+            int pageSize = 5;
+            int totalItems = model.Payments.Count;
+
+            model.CurrentPage = Math.Max(1, page);
+            model.TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            model.Payments = model.Payments
+                .Skip((model.CurrentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
             return View(model);
         }
@@ -346,7 +357,7 @@ namespace LegendPay.Controllers
                 return Json(new List<object>());
 
             var vm = await _paymentHandler.PrepareSelectBillerViewModelAsync(category);
-            var billers = vm.Billers.Select(b => new { name = b.BillerName }).ToList();
+            var billers = vm.Billers.Select(b => new { id = b.BillerId, name = b.BillerName }).ToList();
             return Json(billers);
         }
 
@@ -362,6 +373,28 @@ namespace LegendPay.Controllers
 
             var (success, message) = await _scheduledPaymentService.CancelAsync(id, user.Id);
             TempData[success ? "ScheduleSuccess" : "ScheduleError"] = message;
+
+            return RedirectToAction("ScheduledPayments");
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> PayScheduleNow(Guid id, string? returnUrl = null)
+        {
+            var userId = User.GetUserId();
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+
+            var user = await _authService.GetUserByIdAsync(userId.Value);
+            if (user == null) return RedirectToAction("Login", "Auth");
+
+            var (success, message) = await _scheduledPaymentService.ExecuteAsync(id, user.Id);
+            TempData[success ? "ScheduleSuccess" : "ScheduleError"] = message;
+
+            // If request came from the homepage, redirect back to HomePage else redirect back to schedule payment page
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
 
             return RedirectToAction("ScheduledPayments");
         }

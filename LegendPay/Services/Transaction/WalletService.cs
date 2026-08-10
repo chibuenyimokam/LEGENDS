@@ -169,11 +169,11 @@ namespace LegendPay.Services.Transaction
 
             var response = await PostAsync<GetTransactionListResponse>("api/GetTransactionList", requestPayload);
 
-            if (response?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
-            {
-                _logger.LogError("Failed to fetch wallet history for CustomerId {CustomerId}. Status: {Status}", customerId);
-                return null;
-            }
+            //if (response?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
+            //{
+            //    _logger.LogError("Failed to fetch wallet history for CustomerId {CustomerId}. Status: {Status}", customerId);
+            //    return null;
+            //}
 
             return response;
         }

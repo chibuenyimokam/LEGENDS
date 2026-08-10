@@ -46,10 +46,10 @@
                         var mainBillers = Model.Billers?.Take(5).ToList() ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>();
                         var moreBillers = Model.Billers?.Skip(5).ToList() ?? new List<LegendPay.Models.ViewModels.UserDashboard.BillerItem>();
                     }
-                    
+
                     @foreach (var biller in mainBillers)
                     {
-                     <button type="button" onclick="selectProvider('@biller.BillerName', '@biller.BillerId')"
+                        <button type="button" onclick="selectProvider('@biller.BillerName', '@biller.BillerId')"
                                 id="provider-@biller.BillerId"
                                 class="provider-btn flex flex-col items-center gap-2 border-2 border-slate-200 rounded-xl p-3 hover:border-primary transition-all">
                             @if (!string.IsNullOrEmpty(biller.LogoUrl))
@@ -263,7 +263,7 @@
 </div>
 
 <!-- More providers modal (for Games & Transport) -->
-@if ((Model.Category == "BETTING_AND_LOTTERY" || Model.Category == "TRANSPORT_AND_TOLL_PAYMENT") && (Model.Billers?.Count > 5))
+@if ((Model.Category == "AIRTIME_AND_DATA" || Model.Category == "BETTING_AND_LOTTERY" || Model.Category == "TRANSPORT_AND_TOLL_PAYMENT") && (Model.Billers?.Count > 5))
 {
     <div id="moreModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
         <div class="bg-surface w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl p-6 max-h-[80vh] flex flex-col">
@@ -295,11 +295,11 @@
 @section Scripts {
     <script>
         const category = '@Model.Category';
-        const mode     = '@Model.Mode';
-        let selectedProvider   = '';
+        const mode = '@Model.Mode';
+        let selectedProvider = '';
         let selectedProviderId = '';
-        let selectedPlan       = null;   // { slug, label, amount } from CoralPay, for DATA
-        let airtimePackage     = null;   // { slug, label } for AIRTIME - the *_AIRTIME package, custom amount
+        let selectedPlan = null;   // { slug, label, amount } from CoralPay, for DATA
+        let airtimePackage = null;   // { slug, label } for AIRTIME - the *_AIRTIME package, custom amount
 
         async function fetchPackages(billerId) {
             const res = await fetch('/Home/GetPackagesForBiller?billerId=' + encodeURIComponent(billerId));
@@ -308,10 +308,10 @@
         }
 
         async function selectProvider(name, id = '') {
-            selectedProvider   = name;
+            selectedProvider = name;
             selectedProviderId = id;
-            selectedPlan       = null;
-            airtimePackage     = null;
+            selectedPlan = null;
+            airtimePackage = null;
 
             document.querySelectorAll('.provider-btn').forEach(btn => {
                 btn.classList.remove('border-primary', 'bg-primary/5');
@@ -323,12 +323,12 @@
             document.getElementById('selectedProviderName').textContent = name;
             document.getElementById('selectedProviderDisplay').classList.remove('hidden');
 
-            if (!id) return; // Games/Transport "More" modal items already carry an id; nothing further needed here
+            if (!id) return; // Games/Transport "More" modal items already have ids
 
             if (category === 'AIRTIME_AND_DATA' && mode === 'DATA') {
                 await renderPlans(id);
             } else if (category === 'AIRTIME_AND_DATA' && mode === 'AIRTIME') {
-                // Find this biller's top-up package (amount is null/0 - customer enters their own amount)
+                // Find this biller's top-up package 
                 const packages = await fetchPackages(id);
                 airtimePackage = packages.find(p => !p.amount || p.amount === 0) || null;
                 if (!airtimePackage) {
@@ -344,20 +344,20 @@
 
         async function renderPlans(billerId) {
             const packages = await fetchPackages(billerId);
-            // Data bundles are the packages with a real fixed price; the *_AIRTIME entry (amount null) is excluded
-            const plans   = packages.filter(p => p.amount && p.amount > 0);
-            const grid    = document.getElementById('plansGrid');
+            // Data bundles are the packages with a real fixed price so the *_AIRTIME entry (amount null) is excluded
+            const plans = packages.filter(p => p.amount && p.amount > 0);
+            const grid = document.getElementById('plansGrid');
             const section = document.getElementById('plansSection');
             const divider = document.getElementById('plansDivider');
             if (!grid) return;
 
             grid.innerHTML = plans.map((p, i) => `
-                <button type="button" id="plan-${i}"
-                        class="plan-btn border-2 border-slate-200 rounded-xl p-4 text-left hover:border-primary transition-all">
-                    <p class="text-sm font-bold text-on-surface">${p.label}</p>
-                    <p class="text-sm font-semibold text-primary mt-2">₦${p.amount.toLocaleString()}</p>
-                </button>
-            `).join('');
+                        <button type="button" id="plan-${i}"
+                                class="plan-btn border-2 border-slate-200 rounded-xl p-4 text-left hover:border-primary transition-all">
+                            <p class="text-sm font-bold text-on-surface">${p.label}</p>
+                            <p class="text-sm font-semibold text-primary mt-2">₦${p.amount.toLocaleString()}</p>
+                        </button>
+                    `).join('');
 
             grid.querySelectorAll('.plan-btn').forEach((el, i) => {
                 el.onclick = () => selectPlan(i, plans);
@@ -383,10 +383,10 @@
         }
 
         function continueToReview() {
-            const ref  = document.getElementById('refInput')?.value.trim();
+            const ref = document.getElementById('refInput')?.value.trim();
             const save = document.getElementById('saveBeneficiary').checked;
-            let amount      = '';
-            let planLabel   = '';
+            let amount = '';
+            let planLabel = '';
             let packageSlug = '';
 
             if (!selectedProvider) { alert('Please select a provider.'); return; }
@@ -397,7 +397,7 @@
                 if (!amount || parseFloat(amount) < 50) { alert('Please enter a valid amount.'); return; }
                 if (!airtimePackage) { alert('Could not find a top-up package for this provider. Please try again.'); return; }
                 packageSlug = airtimePackage.slug;
-                planLabel   = airtimePackage.label;
+                planLabel = airtimePackage.label;
             } else if (category === 'TRANSPORT_AND_TOLL_PAYMENT') {
                 if (!ref) { alert('Please enter the required details.'); return; }
                 amount = document.getElementById('amountInput')?.value.trim();
@@ -405,8 +405,8 @@
             } else if (category === 'AIRTIME_AND_DATA' && mode === 'DATA') {
                 if (!ref || ref.length !== 11) { alert('Please enter a valid 11-digit phone number.'); return; }
                 if (!selectedPlan) { alert('Please select a data plan.'); return; }
-                amount      = selectedPlan.amount;
-                planLabel   = selectedPlan.label;
+                amount = selectedPlan.amount;
+                planLabel = selectedPlan.label;
                 packageSlug = selectedPlan.slug;
             } else if (category === 'BETTING_AND_LOTTERY') {
                 if (!ref) { alert('Please enter your User ID.'); return; }
@@ -415,14 +415,14 @@
             }
 
             const params = new URLSearchParams({
-                category:        category,
-                billerId:        selectedProviderId,
-                billerName:      selectedProvider,
-                packageSlug:     packageSlug,
+                category: category,
+                billerId: selectedProviderId,
+                billerName: selectedProvider,
+                packageSlug: packageSlug,
                 referenceNumber: ref,
-                planLabel:       planLabel,
-                planDuration:    '',
-                amount:          amount,
+                planLabel: planLabel,
+                planDuration: '',
+                amount: amount,
                 saveBeneficiary: save
             });
             window.location.href = '/Home/ReviewAndPay?' + params.toString();

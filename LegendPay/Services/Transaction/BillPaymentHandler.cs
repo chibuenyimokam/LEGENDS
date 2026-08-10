@@ -89,7 +89,7 @@ namespace LegendPay.Services.Transaction
             if (user == null) return null;
             if (!int.TryParse(billerId, out var billerIdInt))
             {
-                return null; 
+                return null;
             }
             var packagesResponse = await _vasService.GetPackagesByBillerIdAsync(billerIdInt);
             var packages = packagesResponse?.ResponseData?
@@ -120,26 +120,84 @@ namespace LegendPay.Services.Transaction
             var user = await _authService.GetUserByEmailAsync(userEmail);
             if (user == null) return new PaymentResult { IsSuccess = false, ErrorMessage = "User not found." };
 
-            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
-            if ((wallet?.Balance ?? 0m) < model.Amount)
+            var result = await ExecuteVendAsync(user, model.Category ?? string.Empty, model.BillerName, model.PackageSlug, model.ReferenceNumber, model.Amount);
+            if (!result.Success)
             {
-                return new PaymentResult { IsSuccess = false, ErrorMessage = "Your wallet balance is not sufficient for this transaction. Please fund your wallet and try again." };
+                return new PaymentResult { IsSuccess = false, ErrorMessage = result.ErrorMessage };
+            }
+
+            var successViewModel = new PaymentSuccessViewModel
+            {
+                Category = model.Category ?? string.Empty,
+                BillerName = model.BillerName,
+                ReferenceNumber = model.ReferenceNumber,
+                ReferenceLabel = GetReferenceLabel(model.Category ?? string.Empty, model.BillerName),
+                PlanLabel = model.PlanLabel,
+                PlanDuration = model.PlanDuration,
+                SuccessDescription = result.CustomerMessage ?? $"Paid to {model.BillerName}",
+                Amount = model.Amount,
+                PaidAt = DateTime.Now,
+                TransactionRef = result.TransactionRef ?? string.Empty,
+                PointsEarned = result.PointsEarned,
+                IsFourStep = model.IsFourStep,
+                ElectricityToken = result.Token,
+                UnitValue = result.UnitValue
+            };
+
+            return new PaymentResult { IsSuccess = true, SuccessViewModel = successViewModel, BillId = result.Bill?.Id };
+        }
+
+        // Used by Scheduled Payments (both the background worker and the "Pay Now" button) 
+        public async Task<PaymentResult> ExecuteScheduledPaymentAsync(Guid userId, string category, string billerName, string packageSlug, string accountReference, decimal amount)
+        {
+            var user = await _authService.GetUserByIdAsync(userId);
+            if (user == null) return new PaymentResult { IsSuccess = false, ErrorMessage = "User not found." };
+
+            var result = await ExecuteVendAsync(user, category, billerName, packageSlug, accountReference, amount);
+            return new PaymentResult
+            {
+                IsSuccess = result.Success,
+                ErrorMessage = result.ErrorMessage,
+                BillId = result.Bill?.Id
+            };
+        }
+
+        private class VendExecutionResult
+        {
+            public bool Success { get; set; }
+            public string? ErrorMessage { get; set; }
+            public Bill? Bill { get; set; }
+            public string? Token { get; set; }
+            public decimal UnitValue { get; set; }
+            public string? TransactionRef { get; set; }
+            public string? CustomerMessage { get; set; }
+            public int PointsEarned { get; set; }
+        }
+
+        private async Task<VendExecutionResult> ExecuteVendAsync(
+            LegendPay.Models.Data.Tables.UserAccount user, string category, string billerName,
+            string packageSlug, string accountReference, decimal amount)
+        {
+            var wallet = await _authService.GetWalletWithRecentTransactionsAsync(user.Id, 0);
+            if ((wallet?.Balance ?? 0m) < amount)
+            {
+                return new VendExecutionResult { Success = false, ErrorMessage = "Your wallet balance is not sufficient for this transaction. Please fund your wallet and try again." };
             }
 
             var paymentRef = $"LP-{Guid.NewGuid():N}"[..18].ToUpper();
 
             var debitRequest = new DebitRequest
             {
-                Amount = model.Amount,
+                Amount = amount,
                 CustomerId = user.CustomerId ?? string.Empty,
-                Description = $"Bill payment - {model.BillerName} - {model.Category}",
+                Description = $"Bill payment - {billerName} - {category}",
                 TraceId = paymentRef
             };
 
             var debitResponse = await _walletService.DebitWalletAsync(debitRequest);
             if (debitResponse?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
             {
-                return new PaymentResult { IsSuccess = false, ErrorMessage = "Payment could not be processed at this time. Please try again." };
+                return new VendExecutionResult { Success = false, ErrorMessage = "Payment could not be processed at this time. Please try again." };
             }
 
             var localUser = await _context.UserAccounts.FirstOrDefaultAsync(u => u.CustomerId == user.CustomerId);
@@ -152,10 +210,10 @@ namespace LegendPay.Services.Transaction
             var vendRequest = new VendValueRequest
             {
                 PaymentReference = paymentRef,
-                CustomerId = model.ReferenceNumber,
-                PackageSlug = model.PackageSlug, 
+                CustomerId = accountReference,
+                PackageSlug = packageSlug,
                 Channel = "WEB",
-                Amount = model.Amount,
+                Amount = amount,
                 CustomerName = $"{user.FirstName} {user.LastName}",
                 PhoneNumber = user.PhoneNumber ?? string.Empty,
                 Email = user.Email ?? string.Empty,
@@ -168,7 +226,7 @@ namespace LegendPay.Services.Transaction
                 _logger.LogError("VAS Vend Failed. Code: {Code}, Message: {Msg}", vasResponse?.ResponseCode, vasResponse?.Message);
 
                 // Vend failed after the wallet was already debited, reverse the debit so the
-                // customer isn't charged for a service that was never delivered.
+                // customer isn't charged for a service that was never delivered (jo said the money is deducted from our wallet then we charge the customer so i believe this flow is correct)
                 var reversalRequest = new DebitReversalRequest
                 {
                     CustomerId = user.CustomerId ?? string.Empty,
@@ -180,40 +238,39 @@ namespace LegendPay.Services.Transaction
                 if (reversalResponse?.ResponseHeader?.ResponseCode == ResponseCode.Successful)
                 {
                     var localUserForReversal = await _context.UserAccounts.FirstOrDefaultAsync(u => u.CustomerId == user.CustomerId);
-                    // Convert Balance string to decimal safely for reversal
+                    // Convert Balance string to decimal safely for reversal cause the resposne is a string
                     if (localUserForReversal != null && decimal.TryParse(reversalResponse.Balance, out var reversalBalance))
                     {
                         localUserForReversal.Balance = reversalBalance;
                         await _context.SaveChangesAsync();
                     }
-                    
+
                 }
                 else
                 {
-                    // Debit succeeded, vend failed, AND the reversal failed - this needs
-                    // manual reconciliation. Log loudly so it isn't missed.
+                    // if debit succeeded, vend failed, and the reversal failed this will need manual reconciliation so we should log this externally too i believe
                     _logger.LogCritical(
                         "REVERSAL FAILED for {PaymentRef}. User {CustomerId} was debited {Amount} but vend and reversal both failed.",
-                        paymentRef, user.CustomerId, model.Amount);
+                        paymentRef, user.CustomerId, amount);
                 }
 
-                return new PaymentResult { IsSuccess = false, ErrorMessage = vasResponse?.Message ?? "Bill vending failed. Please contact support." };
+                return new VendExecutionResult { Success = false, ErrorMessage = vasResponse?.Message ?? "Bill vending failed. Please contact support." };
             }
 
             string? token = vasResponse.ResponseData?.TokenData?.StdToken?.Value;
             decimal.TryParse(vasResponse.ResponseData?.TokenData?.StdToken?.Units, out var unitValue);
 
             var successDesc = string.IsNullOrWhiteSpace(vasResponse.ResponseData?.CustomerMessage)
-                ? $"Paid to {model.BillerName}"
+                ? $"Paid to {billerName}"
                 : vasResponse.ResponseData.CustomerMessage;
 
             var bill = new Bill
             {
                 UserAccountId = user.Id,
-                BillerCategory = model.Category ?? string.Empty,
-                BillerName = model.BillerName,
-                AccountReference = model.ReferenceNumber,
-                Amount = model.Amount,
+                BillerCategory = category ?? string.Empty,
+                BillerName = billerName,
+                AccountReference = accountReference,
+                Amount = amount,
                 PaymentMethod = "Wallet",
                 Status = "Success",
                 BilleroneRefrence = vasResponse.ResponseData?.TransactionId ?? paymentRef
@@ -231,40 +288,31 @@ namespace LegendPay.Services.Transaction
                     BillerCategory = bill.BillerCategory,
                     Month = now.Month,
                     Year = now.Year,
-                    TotalSpent = model.Amount,
+                    TotalSpent = amount,
                     TransactionCount = 1
                 });
             }
             else
             {
-                spending.TotalSpent += model.Amount;
+                spending.TotalSpent += amount;
                 spending.TransactionCount += 1;
                 spending.UpdatedAt = now;
             }
 
             await _context.SaveChangesAsync();
 
-            var pointsEarned = await _legendPointService.AwardPointsAsync(user.Id, model.Amount, bill.Id);
+            var pointsEarned = await _legendPointService.AwardPointsAsync(user.Id, amount, bill.Id);
 
-            var successViewModel = new PaymentSuccessViewModel
+            return new VendExecutionResult
             {
-                Category = model.Category ?? string.Empty,
-                BillerName = model.BillerName,
-                ReferenceNumber = model.ReferenceNumber,
-                ReferenceLabel = GetReferenceLabel(model.Category ?? string.Empty, model.BillerName),
-                PlanLabel = model.PlanLabel,
-                PlanDuration = model.PlanDuration,
-                SuccessDescription = successDesc,
-                Amount = model.Amount,
-                PaidAt = DateTime.Now,
+                Success = true,
+                Bill = bill,
+                Token = token,
+                UnitValue = unitValue,
                 TransactionRef = vasResponse.ResponseData?.TransactionId ?? paymentRef,
-                PointsEarned = pointsEarned,
-                IsFourStep = model.IsFourStep,
-                ElectricityToken = token,
-                UnitValue = unitValue
+                CustomerMessage = successDesc,
+                PointsEarned = pointsEarned
             };
-
-            return new PaymentResult { IsSuccess = true, SuccessViewModel = successViewModel };
         }
 
         public async Task<PurchaseDetailsViewModel?> PreparePurchaseDetailsViewModelAsync(string email, string category, string mode)
@@ -274,16 +322,15 @@ namespace LegendPay.Services.Transaction
 
             List<BillerItem> billers = new();
 
-            
+
             string targetGroupSlug = MapToVasGroupSlug(category);
 
-            // Fetch billers from CoralPay VAS using the category/group slug
             if (!string.IsNullOrWhiteSpace(targetGroupSlug))
             {
                 var billersResponse = await _vasService.GetBillersByGroupSlugAsync(targetGroupSlug);
                 _logger.LogInformation("Billers for group '{TargetGroup}': {Count} results",
                     targetGroupSlug, billersResponse?.ResponseData?.Count ?? 0);
-                
+
                 billers = billersResponse?.ResponseData?
                     .Select(b => new BillerItem
                     {
@@ -300,7 +347,7 @@ namespace LegendPay.Services.Transaction
             return new PurchaseDetailsViewModel
             {
                 Category = category ?? string.Empty,
-                Mode = string.IsNullOrWhiteSpace(mode) ? category : mode, 
+                Mode = string.IsNullOrWhiteSpace(mode) ? category : mode,
                 CategoryDisplayName = GetCategoryDisplayName(category ?? string.Empty),
                 CategoryIcon = MapCategoryToIcon(category ?? string.Empty),
                 Billers = billers,

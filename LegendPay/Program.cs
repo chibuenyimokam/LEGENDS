@@ -17,6 +17,8 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text;
 using LegendPay.Services.Vas;
+using LegendPay.Services.Background;
+using LegendPay.Services.Configuration;
 
 namespace LegendPay
 {
@@ -62,6 +64,7 @@ namespace LegendPay
                 var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{settings.Username}:{settings.Password}"));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);
             });
+            builder.Services.AddHostedService<ScheduledPaymentWorker>();
 
             builder.Services.AddScoped<IVasService, VasService>();
 
@@ -143,7 +146,7 @@ namespace LegendPay
 
             if (app.Environment.IsDevelopment())
             {
-                LegendPay.Data.AdminSeeder.SeedAsync(app.Services, app.Configuration).GetAwaiter().GetResult();
+                AdminSeeder.SeedAsync(app.Services, app.Configuration).GetAwaiter().GetResult();
             }
 
             app.Run();

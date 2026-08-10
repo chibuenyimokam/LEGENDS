@@ -4,7 +4,7 @@
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 
     // Map API category slugs to routes. AIRTIME_AND_DATA is handled separately below
-    // since it's one CoralPay group that needs to become two tiles (Airtime / Data).
+    // since it's one group that needs to become two tiles (Airtime / Data).
     string GetCategoryRoute(string category) => category?.ToUpper() switch
     {
         "ELECTRIC_DISCO" => Url.Action("SelectBiller", "Home", new { category = "ELECTRIC_DISCO" }) ?? "#",
@@ -12,8 +12,8 @@
         "EDUCATION" => Url.Action("SelectBiller", "Home", new { category = "EDUCATION" }) ?? "#",
         "BETTING_AND_LOTTERY" => Url.Action("PurchaseDetails", "Home", new { category = "BETTING_AND_LOTTERY" }) ?? "#",
         "TRANSPORT_AND_TOLL_PAYMENT" => Url.Action("PurchaseDetails", "Home", new { category = "TRANSPORT_AND_TOLL_PAYMENT" }) ?? "#",
-        // Any other group CoralPay returns that we haven't built a dedicated flow for yet
-        // still gets a working link via the generic SelectBiller flow, instead of dead-ending at "#".
+        // Any other group returned that a dedicated flow hasn't been built for yet
+        // still gets a working link via the generic SelectBiller flow, instead of dead ending at "#".
         _ => Url.Action("SelectBiller", "Home", new { category = category }) ?? "#"
     };
 
@@ -28,7 +28,7 @@
         _ => "receipt_long"
     };
 
-    // Friendly display names
+    // display names
     string GetDisplayName(string category) => category?.ToUpper() switch
     {
         "ELECTRIC_DISCO" => "Electricity",
@@ -36,7 +36,7 @@
         "EDUCATION" => "Education",
         "BETTING_AND_LOTTERY" => "Betting & Games",
         "TRANSPORT_AND_TOLL_PAYMENT" => "Transport",
-        // Fallback: turn any other real slug into a readable label, e.g. "GOVERNMENT_COLLECTIONS" -> "Government Collections"
+        // Fallback to turn any other real slug into a readable label, e.g. "GOVERNMENT_COLLECTIONS" -> "Government Collections"
         _ => string.IsNullOrEmpty(category)
             ? "Bills"
             : System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(category.Replace("_", " ").ToLower())
