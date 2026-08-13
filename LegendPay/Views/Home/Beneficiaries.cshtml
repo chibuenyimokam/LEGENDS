@@ -1,0 +1,99 @@
+﻿@model LegendPay.Models.ViewModels.userDashboard.BeneficiariesViewModel
+@{
+    ViewData["Title"] = "Beneficiaries";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="p-10 space-y-8 max-w-4xl">
+
+    <div>
+        <h2 class="text-2xl font-bold text-on-surface tracking-tight">Beneficiaries</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Manage the billers you've saved for quick, repeat payments.</p>
+    </div>
+
+    @if (TempData["DeleteError"] != null)
+    {
+        <div class="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">@TempData["DeleteError"]</div>
+    }
+
+    <form method="get" asp-action="Beneficiaries" class="flex items-center gap-3">
+        <div class="relative flex-1 max-w-sm">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+            <input type="text" name="search" value="@Model.Search" placeholder="Search by name or number"
+                   class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+        </div>
+        <button type="submit" class="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold">Search</button>
+        @if (!string.IsNullOrWhiteSpace(Model.Search))
+        {
+            <a asp-action="Beneficiaries" class="text-sm text-on-surface-variant hover:text-on-surface">Clear</a>
+        }
+    </form>
+
+    @if (!Model.Beneficiaries.Any())
+    {
+        <div class="bg-surface border border-slate-200 rounded-2xl p-10 text-center space-y-3">
+            <span class="material-symbols-outlined text-4xl text-on-surface-variant">bookmark_border</span>
+            @if (!string.IsNullOrWhiteSpace(Model.Search))
+            {
+                <p class="text-sm font-semibold text-on-surface">No beneficiaries match "@Model.Search"</p>
+            }
+            else
+            {
+                <p class="text-sm font-semibold text-on-surface">No saved beneficiaries yet</p>
+                <p class="text-xs text-on-surface-variant">Toggle "Save as beneficiary" during a bill payment to see it here.</p>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="bg-surface border border-slate-200 rounded-2xl divide-y divide-slate-100">
+            @foreach (var b in Model.Beneficiaries)
+            {
+                <div class="flex items-center justify-between gap-4 p-5">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                            <span class="material-symbols-outlined">@b.CategoryIcon</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-on-surface truncate">@b.BenefName</p>
+                            <p class="text-xs text-on-surface-variant truncate">@b.Biller &middot; @b.BenefRefId</p>
+                        </div>
+                    </div>
+                    <form method="post" action="@Url.Action("DeleteBeneficiary", "Home")"
+                          onsubmit="return confirm('Remove @b.BenefName as a beneficiary?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="benefId" value="@b.BenefId" />
+                        <button type="submit"
+                                class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="flex items-center justify-between text-sm text-on-surface-variant">
+                <span>Page @Model.CurrentPage of @Model.TotalPages &middot; @Model.TotalCount total</span>
+                <div class="flex items-center gap-2">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a asp-action="Beneficiaries" asp-route-search="@Model.Search" asp-route-page="@(Model.CurrentPage - 1)"
+                           class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">Previous</a>
+                    }
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <a asp-action="Beneficiaries" asp-route-search="@Model.Search" asp-route-page="@i"
+                           class="px-3 py-1.5 rounded-lg @(i == Model.CurrentPage ? "bg-primary text-white" : "border border-slate-200 hover:bg-slate-50")">@i</a>
+                    }
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <a asp-action="Beneficiaries" asp-route-search="@Model.Search" asp-route-page="@(Model.CurrentPage + 1)"
+                           class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">Next</a>
+                    }
+                </div>
+            </div>
+        }
+    }
+    </div>

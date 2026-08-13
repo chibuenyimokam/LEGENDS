@@ -1,0 +1,41 @@
+@model LegendPay.Models.ViewModels.AdminAuditViewModel
+@{
+    ViewData["Title"] = "Audit Logs";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="flex-1 px-10 py-8 max-w-4xl w-full">
+
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-slate-900">Audit Logs</h2>
+        <p class="text-sm text-on-surface-variant mt-1">A live activity trail across the platform.</p>
+    </div>
+
+    <div class="bg-surface border border-slate-200 rounded-xl overflow-hidden">
+        @if (!Model.Entries.Any())
+        {
+            <p class="px-6 py-16 text-center text-sm text-on-surface-variant">No activity recorded yet.</p>
+        }
+        else
+        {
+            <ul class="divide-y divide-slate-100">
+                @foreach (var e in Model.Entries)
+                {
+                    <li class="flex items-start gap-4 px-6 py-4">
+                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[18px] text-primary">@e.Icon</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-slate-800"><span class="font-semibold">@e.Actor</span> — @e.Action</p>
+                            @if (!string.IsNullOrEmpty(e.Detail))
+                            {
+                                <p class="text-xs text-on-surface-variant truncate">@e.Detail</p>
+                            }
+                        </div>
+                        <p class="text-[11px] text-on-surface-variant whitespace-nowrap">@e.Timestamp.ToString("dd MMM, HH:mm")</p>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>

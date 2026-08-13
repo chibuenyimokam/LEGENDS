@@ -145,5 +145,112 @@ namespace LegendPay.Services.Transaction
                 return null;
             }
         }
+
+        public async Task<GetBillerPackagesResponse?> GetBillerPackagesAsync(string billerId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var token = await GetBillerApiTokenAsync();
+
+                var request = new HttpRequestMessage(HttpMethod.Get, $"{_billerUrl}/api/GetBillerPackages?Billerid={billerId}")
+                {
+                    Content = new StringContent(
+                    JsonConvert.SerializeObject(new { }),
+                    Encoding.UTF8,
+                    "application/json")
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var response = await _httpClient.SendAsync(request, cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    throw new HttpRequestException(
+                        $"Biller API call to '{_billerUrl}/api/GetBillerPackages' failed ({response.StatusCode}): {errorContent}");
+                }
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                //_logger.LogInformation("BillerOne GetBillerPackages response: {Response}", json);
+                return JsonConvert.DeserializeObject<GetBillerPackagesResponse>(json);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch Biller packages for {BillerId}", billerId);
+                return null;
+            }
+        }
+        public async Task<GetBeneficiaryResponse?> GetBeneficiariesAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var token = await GetBillerApiTokenAsync();
+
+                var request = new HttpRequestMessage(HttpMethod.Get, $"{_billerUrl}/api/GetBeneficiary")
+                {
+                    Content = new StringContent(
+                        JsonConvert.SerializeObject(new { }),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var response = await _httpClient.SendAsync(request, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    throw new HttpRequestException(
+                        $"Biller API call to '{_billerUrl}/api/GetBeneficiary' failed ({response.StatusCode}): {errorContent}");
+                }
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonConvert.DeserializeObject<GetBeneficiaryResponse>(json);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch beneficiaries");
+                return null;
+            }
+        }
+
+        public async Task<CreateBeneficiaryResponse?> CreateBeneficiaryAsync(CreateBeneficiaryRequest request, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await PostAsync<CreateBeneficiaryResponse>($"{_billerUrl}/api/CreateBeneficiary", request, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create beneficiary for {Biller}", request.Biller);
+                return null;
+            }
+        }
+
+        public async Task<DeleteBeneficiaryResponse?> DeleteBeneficiaryAsync(string benefId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var token = await GetBillerApiTokenAsync();
+
+                var request = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"{_billerUrl}/api/DeleteBeneficiary?BenefId={Uri.EscapeDataString(benefId)}");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.SendAsync(request, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    throw new HttpRequestException(
+                        $"Biller API call to '{_billerUrl}/api/DeleteBeneficiary' failed ({response.StatusCode}): {errorContent}");
+                }
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonConvert.DeserializeObject<DeleteBeneficiaryResponse>(json);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete beneficiary {BenefId}", benefId);
+                return null;
+            }
+        }
     }
 }

@@ -1,8 +1,13 @@
-﻿namespace LegendPay.Models.WalletStation.Response
+﻿using Newtonsoft.Json;
+
+namespace LegendPay.Models.WalletStation.Response
 {
     public class GetTransactionListResponse
     {
         public ResponseHeader ResponseHeader { get; set; }
+        public Pagination Pagination { get; set; }
+        public List<TransactionDetailsList> TransactionDetailsList { get; set; }
+    }
         public class Pagination
         {
             public required int CurrentPage { get; set; }
@@ -19,7 +24,8 @@
             public required decimal Amount { get; set; }
             public required decimal Balance { get; set; }
             public required string Description { get; set; }
-        }
-    
+        public required string TranType { get; set; }
+        [JsonProperty("date")]
+        public DateTime Date { get; internal set; }
     }
 }

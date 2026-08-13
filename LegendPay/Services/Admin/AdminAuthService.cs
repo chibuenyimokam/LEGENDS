@@ -42,7 +42,13 @@ namespace LegendPay.Services.Admin
                 admin.TwoFactorExpiration = DateTime.UtcNow.AddMinutes(10);
                 await _context.SaveChangesAsync();
 
-                await _emailService.SendTwoFactorCodeAsync(admin.Email, twoFactorCode);
+                var emailResult = await _emailService.SendTwoFactorCodeAsync(admin.Email, twoFactorCode);
+                if(!emailResult.Success)
+                {
+                    return ServiceResponse<string>.FailureResponse("Failed to send 2FA code. Please try again later.");
+                }
+
+                //await _emailService.SendTwoFactorCodeAsync(admin.Email, twoFactorCode);
 
                 return ServiceResponse<string>.SuccessResponse(admin.Email, "2FA code sent to your email.");
             }
@@ -77,8 +83,8 @@ namespace LegendPay.Services.Admin
                     new Claim(ClaimTypes.Role, admin.Role)
                 };
 
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+                var claimsIdentity = new ClaimsIdentity(claims, "AdminScheme");
+                await httpContext.SignInAsync("AdminScheme", new ClaimsPrincipal(claimsIdentity));
 
                 return ServiceResponse<string>.SuccessResponse("", "Login successful.");
             }
@@ -101,7 +107,11 @@ namespace LegendPay.Services.Admin
                     admin.TwoFactorExpiration = DateTime.UtcNow.AddMinutes(10);
                     await _context.SaveChangesAsync();
 
-                    await _emailService.SendTwoFactorCodeAsync(admin.Email, code);
+                    var emailResult = await _emailService.SendTwoFactorCodeAsync(admin.Email, code);
+                    if (!emailResult.Success)
+                    {
+                        return ServiceResponse<string>.FailureResponse("Failed to send reset code. Please try again later.");
+                    }
                 }
 
                 return ServiceResponse<string>.SuccessResponse(email, "If an account exists for that email, a reset code has been sent.");
@@ -138,13 +148,50 @@ namespace LegendPay.Services.Admin
         {
             try
             {
-                await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                await httpContext.SignOutAsync("AdminScheme");
                 return ServiceResponse<string>.SuccessResponse("", "Logged out successfully.");
             }
             catch (Exception ex)
             {
                 return ServiceResponse<string>.FailureResponse($"An error occurred: {ex.Message}");
             }
+        }
+
+        public async Task<LegendPay.Models.Data.Tables.AdminAccount?> GetAdminByIdAsync(Guid adminId) =>
+            await _context.AdminAccounts.FirstOrDefaultAsync(a => a.Id == adminId);
+
+        public async Task<ServiceResponse<string>> UpdateProfileAsync(Guid adminId, string firstName, string lastName)
+        {
+            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+                return ServiceResponse<string>.FailureResponse("First and last name are required.");
+
+            var admin = await _context.AdminAccounts.FirstOrDefaultAsync(a => a.Id == adminId);
+            if (admin == null)
+                return ServiceResponse<string>.FailureResponse("Admin not found.");
+
+            admin.FirstName = firstName.Trim();
+            admin.LastName = lastName.Trim();
+            await _context.SaveChangesAsync();
+
+            return ServiceResponse<string>.SuccessResponse("", "Your profile has been updated.");
+        }
+
+        public async Task<ServiceResponse<string>> ChangePasswordAsync(Guid adminId, string currentPassword, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+                return ServiceResponse<string>.FailureResponse("Your new password must be at least 8 characters.");
+
+            var admin = await _context.AdminAccounts.FirstOrDefaultAsync(a => a.Id == adminId);
+            if (admin == null)
+                return ServiceResponse<string>.FailureResponse("Admin not found.");
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, admin.Password))
+                return ServiceResponse<string>.FailureResponse("Your current password is incorrect.");
+
+            admin.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _context.SaveChangesAsync();
+
+            return ServiceResponse<string>.SuccessResponse("", "Your password has been changed.");
         }
     }
 }

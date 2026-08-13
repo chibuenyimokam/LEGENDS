@@ -245,7 +245,7 @@ namespace LegendPay.Controllers
 
                     await _authService.SignInUserAsync(HttpContext, user);
 
-                    return RedirectToAction("HomePage", "Home"); 
+                    return RedirectToAction("HomePage", "Home");
                 }
                 else
                 {
@@ -263,6 +263,8 @@ namespace LegendPay.Controllers
             await _authService.SignOutUserAsync(HttpContext); 
             return RedirectToAction("Login"); 
         }
+
+
 
     }
 }

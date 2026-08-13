@@ -12,6 +12,13 @@ using Microsoft.AspNetCore.SignalR;
 using LegendPay.Hubs;
 using LegendPay.Interfaces;
 using LegendPay.Services;
+using LegendPay.Configuration;
+using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
+using System.Text;
+using LegendPay.Services.Vas;
+using LegendPay.Services.Background;
+using LegendPay.Services.Configuration;
 
 namespace LegendPay
 {
@@ -35,6 +42,7 @@ namespace LegendPay
             });
             builder.Services.AddSingleton<WalletTokenCache>();
             builder.Services.AddHttpClient<IBillerOneService, BillerOneService>();
+            builder.Services.AddHttpClient<IBillPaymentHandler, BillPaymentHandler>();
 
             builder.Services.AddHttpClient<IWalletService, WalletService>((serviceProvider, client) =>
             {
@@ -45,11 +53,29 @@ namespace LegendPay
                     client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
                 }
             });
+            builder.Services.Configure<VasSettings>(builder.Configuration.GetSection(VasSettings.SectionName));
+            //builder.Services.AddSingleton<VasSignatureService>();
+
+            builder.Services.AddHttpClient("VasClient", (sp, client) =>
+            {
+                var settings = sp.GetRequiredService<IOptions<VasSettings>>().Value;
+                client.BaseAddress = new Uri(settings.VasBaseUrl);
+
+                var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{settings.Username}:{settings.Password}"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basicAuth);
+            });
+            builder.Services.AddHostedService<ScheduledPaymentWorker>();
+
+            builder.Services.AddScoped<IVasService, VasService>();
 
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IOtpService, OtpService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IScheduledPaymentService, ScheduledPaymentService>();
+            builder.Services.AddScoped<ILegendPointService, LegendPointService>();
+            //builder.Services.AddScoped<IWalletTransactionHistoryService, WalletTransactionHistoryService>();
             builder.Services.AddScoped<IAdminEmailService, AdminEmailService>();
+            builder.Services.AddScoped<IBillPaymentHandler, BillPaymentHandler>();
             builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
             builder.Services.AddScoped<IUserSupportChatService, UserSupportChatService>();
             builder.Services.AddScoped<IAdminSupportChatService, AdminSupportChatService>();
@@ -58,17 +84,35 @@ namespace LegendPay
             builder.Services.AddScoped<IAdminTransactionService, AdminTransactionService>();
             builder.Services.AddScoped<IAdminReportService, AdminReportService>();
             builder.Services.AddScoped<IAdminSettingsService, AdminSettingsService>();
+            builder.Services.AddScoped<IAdminSettlementService, AdminSettlementService>();
+            builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
             builder.Services.AddSignalR();
 
+            //using scheme now cause we have admin and users on the same server and we want to avoid cookie breaking due to too many redirects cause it identifies admin and user as the same cookie and it will break the login flow for both parties
 
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddCookie(options =>
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = "UserScheme";
+            })
+            .AddCookie("UserScheme", options =>
             {
                 options.LoginPath = "/Auth/Login";
                 options.LogoutPath = "/Auth/Logout";
                 options.AccessDeniedPath = "/Auth/Login";
-                options.Cookie.Name = ".LegendPayAuth";
+                options.Cookie.Name = ".LegendPay.UserAuth";
                 options.ExpireTimeSpan = TimeSpan.FromDays(1); //time user stays logged in
+                options.SlidingExpiration = true; //instructs the server to re-issue a
+                //new authentication cookie with a fresh expiration date whenever
+                //a user makes a request while past the halfway point of the set ExpireTimeSpan
+            })
+            .AddCookie("AdminScheme", options =>
+            {
+                options.LoginPath = "/Admin/Login";
+                options.LogoutPath = "/Admin/Logout";
+                options.AccessDeniedPath = "/Admin/Login";
+                options.Cookie.Name = ".LegendPay.AdminAuth";
+                options.ExpireTimeSpan = TimeSpan.FromHours(2); //time user stays logged in
                 options.SlidingExpiration = true; //instructs the server to re-issue a
                 //new authentication cookie with a fresh expiration date whenever
                 //a user makes a request while past the halfway point of the set ExpireTimeSpan
@@ -92,13 +136,17 @@ namespace LegendPay
             app.MapStaticAssets();
             app.MapHub<SupportChatHub>("/supportChatHub");
             app.MapControllerRoute(
+                name: "areas",
+                pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+            app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Onboarding}/{id?}")
                 .WithStaticAssets();
 
             if (app.Environment.IsDevelopment())
             {
-                LegendPay.Data.AdminSeeder.SeedAsync(app.Services, app.Configuration).GetAwaiter().GetResult();
+                AdminSeeder.SeedAsync(app.Services, app.Configuration).GetAwaiter().GetResult();
             }
 
             app.Run();

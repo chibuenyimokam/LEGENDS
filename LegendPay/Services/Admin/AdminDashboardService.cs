@@ -14,9 +14,19 @@ namespace LegendPay.Services.Admin
             _context = context;
         }
 
+        
+        private static readonly TimeSpan NigeriaOffset = TimeSpan.FromHours(1);
+
+        private static DateTime GetTodayStartUtc()
+        {
+            var nowInNigeria = DateTime.UtcNow + NigeriaOffset;
+            var todayStartNigeria = nowInNigeria.Date;
+            return todayStartNigeria - NigeriaOffset;
+        }
+
         public async Task<AdminDashboardViewModel> GetDashboardAsync()
         {
-            var today = DateTime.UtcNow.Date;
+            var today = GetTodayStartUtc();
 
             var totalUsers = await _context.UserAccounts.CountAsync();
             var verifiedUsers = await _context.UserAccounts.CountAsync(u => u.IsEmailVerified);

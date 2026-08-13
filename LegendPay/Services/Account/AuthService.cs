@@ -100,7 +100,7 @@ namespace LegendPay.Services.Account
 
                     _logger.LogInformation("Sending wallet request: {@WalletRequest}", walletRequest);
                     var wallet = await _walletService.CreateWalletAsync(walletRequest);
-                    
+
                     //_logger.LogInformation("Wallet response: {@WalletResponse}", wallet);
 
                     if (wallet?.AccountDetails != null)
@@ -229,10 +229,10 @@ namespace LegendPay.Services.Account
             };
 
             var claimsIdentity = new ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                claims, "UserScheme");
 
             await httpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
+                "UserScheme",
                 new ClaimsPrincipal(claimsIdentity));
         }
 
@@ -260,6 +260,11 @@ namespace LegendPay.Services.Account
                 .OrderBy(b => b.CreatedAt)
                 .ToListAsync();
 
+            var pendingSchedules = await _context.ScheduledPayments.AsNoTracking()
+                .Where(s => s.UserAccountId == userId && s.Status == "Pending")
+                .OrderBy(s => s.ScheduledDate)
+                .ToListAsync();
+
             var spending = await _context.SpendingRecords.AsNoTracking()
                 .Where(s => s.UserAccountId == userId && s.Year == now.Year && s.Month == now.Month)
                 .ToListAsync();
@@ -274,25 +279,48 @@ namespace LegendPay.Services.Account
 
             var ledgerBalance = await GetLedgerBalanceAsync(user);
 
-            return new UserDashboardViewModel
-            {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Balance = user.Balance,
-                LegendPoints = legendPoint == null ? 0 : legendPoint.TotalPoints - legendPoint.RedeemedPoints,
-                PendingBillsCount = pendingBills.Count,
-                PendingBillsTotal = pendingBills.Sum(b => b.Amount),
-                TotalSpending = totalSpending,
-                UpcomingBills = pendingBills
-                    .Take(5)
-                    .Select(b => new DashboardBillViewModel
+            // Combine actual pending bills with pending scheduled payments so the dashboard
+            // reflects both sources, ordered by whichever date is soonest.
+            var upcomingBillItems = pendingBills
+                .Select(b => new
+                {
+                    SortDate = b.CreatedAt,
+                    Item = new DashboardBillViewModel
                     {
                         Id = b.Id,
                         BillerName = b.BillerName,
                         Nickname = b.AccountReference,
                         Amount = b.Amount,
                         Status = b.Status
-                    })
+                    }
+                })
+                .Concat(pendingSchedules.Select(s => new
+                {
+                    SortDate = s.ScheduledDate,
+                    Item = new DashboardBillViewModel
+                    {
+                        Id = s.Id,
+                        BillerName = s.BillerName,
+                        Nickname = s.BillerCategory,
+                        Amount = s.Amount,
+                        Status = s.Status
+                    }
+                }))
+                .OrderBy(x => x.SortDate)
+                .Select(x => x.Item)
+                .ToList();
+
+            return new UserDashboardViewModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Balance = user.Balance,
+                LegendPoints = legendPoint == null ? 0 : legendPoint.TotalPoints - legendPoint.RedeemedPoints,
+                PendingBillsCount = pendingBills.Count + pendingSchedules.Count,
+                PendingBillsTotal = pendingBills.Sum(b => b.Amount) + pendingSchedules.Sum(s => s.Amount),
+                TotalSpending = totalSpending,
+                UpcomingBills = upcomingBillItems
+                    .Take(5)
                     .ToList(),
                 SpendingBreakdown = spending
                     .GroupBy(s => s.BillerCategory)
@@ -356,6 +384,48 @@ namespace LegendPay.Services.Account
                 NextBillDue = nextDue,
                 OverlapCount = overlap
             };
+        }
+
+        public async Task<(bool Success, string Message)> CreateSubscriptionAsync(Guid userId, string billerCategory, string billerName, string accountReference, decimal amount, int intervalDays)
+        {
+            if (string.IsNullOrWhiteSpace(billerName))
+                return (false, "Enter the biller name.");
+            if (string.IsNullOrWhiteSpace(accountReference))
+                return (false, "Enter the account/meter/phone number.");
+            if (amount <= 0)
+                return (false, "Enter an amount greater than zero.");
+            if (intervalDays <= 0)
+                return (false, "Choose how often it renews.");
+
+            _context.Subscriptions.Add(new Subscription
+            {
+                UserAccountId = userId,
+                BillerCategory = string.IsNullOrWhiteSpace(billerCategory) ? "General" : billerCategory,
+                BillerName = billerName.Trim(),
+                AccountReference = accountReference.Trim(),
+                Amount = amount,
+                NextDueDate = DateTime.UtcNow.AddDays(intervalDays),
+                RenewalIntervalDays = intervalDays,
+                IsAutoPayEnabled = false,
+                Status = "Active",
+                PaymentMethod = "Wallet"
+            });
+
+            await _context.SaveChangesAsync();
+            return (true, $"Subscription to {billerName.Trim()} created.");
+        }
+
+        public async Task<bool> CancelSubscriptionAsync(Guid subscriptionId, Guid userId)
+        {
+            var subscription = await _context.Subscriptions
+                .FirstOrDefaultAsync(s => s.Id == subscriptionId && s.UserAccountId == userId);
+
+            if (subscription == null)
+                return false;
+
+            subscription.Status = "Cancelled";
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<BillHistoryViewModel> GetBillHistoryAsync(Guid userId, string? range, string? biller, string? amount, int page, int pageSize)
@@ -496,6 +566,6 @@ namespace LegendPay.Services.Account
         }
 
         public async Task SignOutUserAsync(HttpContext httpContext) =>
-            await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await httpContext.SignOutAsync("UserScheme", new AuthenticationProperties());
     }
 }

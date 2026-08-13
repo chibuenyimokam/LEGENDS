@@ -42,7 +42,7 @@ namespace LegendPay.Services.Admin
             };
 
             if (minBalance.HasValue)
-                query = query.Where(u => u.Wallet != null && u.Wallet.Balance >= minBalance.Value);
+                query = query.Where(u => u.Balance != null && u.Balance >= minBalance.Value); //changed, we use balance field in the user accounts table not the wallet table!
 
             var total = await query.CountAsync();
 
@@ -57,7 +57,7 @@ namespace LegendPay.Services.Admin
                     LastName = u.LastName,
                     Email = u.Email,
                     PhoneNumber = u.PhoneNumber,
-                    Balance = u.Wallet != null ? u.Wallet.Balance : 0m,
+                    Balance = u.Balance != null ? u.Balance : 0m, //changed, we use balance field in the user accounts table not the wallet table!
                     IsVerified = u.IsEmailVerified,
                     CreatedAt = u.CreatedAt
                 })

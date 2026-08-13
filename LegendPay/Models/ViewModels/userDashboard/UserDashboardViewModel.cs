@@ -1,3 +1,4 @@
+
 ﻿namespace LegendPay.Models.ViewModels.UserDashboard
 {
     public class UserDashboardViewModel

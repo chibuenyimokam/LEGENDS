@@ -1,0 +1,88 @@
+@model LegendPay.Models.ViewModels.AdminSettlementViewModel
+@{
+    ViewData["Title"] = "Settlements";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="flex-1 px-10 py-8">
+
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-slate-900">Settlements</h2>
+        <p class="text-sm text-on-surface-variant mt-1">Customer float held across virtual accounts and recent wallet movement.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-surface border border-slate-200 rounded-xl p-6">
+            <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-2">Total Customer Float</p>
+            <p class="text-3xl font-bold text-slate-900">₦@Model.TotalFloat.ToString("N2")</p>
+        </div>
+        <div class="bg-surface border border-slate-200 rounded-xl p-6">
+            <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-2">Funded Accounts</p>
+            <p class="text-3xl font-bold text-slate-900">@Model.FundedAccounts.ToString("N0")</p>
+        </div>
+        <div class="bg-surface border border-slate-200 rounded-xl p-6">
+            <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-2">Total Customers</p>
+            <p class="text-3xl font-bold text-slate-900">@Model.TotalCustomers.ToString("N0")</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-surface border border-slate-200 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100"><h3 class="text-sm font-bold text-slate-900">Float by bank</h3></div>
+            @if (!Model.BankBreakdown.Any())
+            {
+                <p class="px-6 py-10 text-center text-sm text-on-surface-variant">No funded accounts yet.</p>
+            }
+            else
+            {
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-[11px] uppercase tracking-wider text-on-surface-variant bg-slate-50 border-b border-slate-200">
+                            <th class="px-6 py-3 font-semibold">Bank</th>
+                            <th class="px-6 py-3 font-semibold text-center">Accounts</th>
+                            <th class="px-6 py-3 font-semibold text-right">Float</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach (var b in Model.BankBreakdown)
+                        {
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-800">@b.BankName</td>
+                                <td class="px-6 py-3 text-center text-on-surface-variant">@b.Accounts</td>
+                                <td class="px-6 py-3 text-right font-semibold text-slate-900">₦@b.Float.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="bg-surface border border-slate-200 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100"><h3 class="text-sm font-bold text-slate-900">Recent wallet transactions</h3></div>
+            @if (!Model.RecentTransactions.Any())
+            {
+                <p class="px-6 py-10 text-center text-sm text-on-surface-variant">No wallet transactions recorded yet.</p>
+            }
+            else
+            {
+                <table class="w-full text-sm">
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach (var t in Model.RecentTransactions)
+                        {
+                            <tr>
+                                <td class="px-6 py-3">
+                                    <div class="font-medium text-slate-800">@t.Reference</div>
+                                    <div class="text-[11px] text-on-surface-variant">@t.CreatedAt.ToString("dd MMM yyyy, HH:mm")</div>
+                                </td>
+                                <td class="px-6 py-3 text-right">
+                                    <div class="font-semibold @(t.Type == "Credit" ? "text-green-600" : "text-slate-900")">@(t.Type == "Credit" ? "+" : "-")₦@t.Amount.ToString("N2")</div>
+                                    <div class="text-[11px] text-on-surface-variant">@t.Status</div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

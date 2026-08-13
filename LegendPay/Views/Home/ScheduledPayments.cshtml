@@ -1,0 +1,317 @@
+@model LegendPay.Models.ViewModels.UserDashboard.ScheduledPaymentsViewModel
+@{
+    ViewData["Title"] = "Scheduled Payments";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    string BadgeClass(string status) => status switch
+    {
+        "Pending" => "bg-amber-50 text-amber-700 ring-amber-600/20",
+        "Processed" => "bg-green-50 text-green-700 ring-green-600/20",
+        "Cancelled" => "bg-slate-100 text-slate-600 ring-slate-500/20",
+        "Failed" => "bg-red-50 text-red-700 ring-red-600/20",
+        _ => "bg-slate-100 text-slate-600 ring-slate-500/20"
+    };
+}
+
+<div class="flex-1 px-10 py-8 max-w-5xl w-full">
+
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900">Scheduled Payments</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Set up payments to run automatically on a future date.</p>
+        </div>
+        <div class="text-right">
+            <p class="text-xs text-on-surface-variant uppercase tracking-widest">Wallet Balance</p>
+            <p class="text-xl font-bold text-slate-900">₦@Model.AvailableBalance.ToString("N2")</p>
+        </div>
+    </div>
+
+    @if (TempData["ScheduleSuccess"] != null)
+    {
+        <div class="mb-4 rounded-lg bg-green-50 border border-green-200 text-green-800 px-4 py-3 text-sm">@TempData["ScheduleSuccess"]</div>
+    }
+    @if (TempData["ScheduleError"] != null)
+    {
+        <div class="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-800 px-4 py-3 text-sm">@TempData["ScheduleError"]</div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+        <div class="lg:col-span-2 bg-surface border border-slate-200 rounded-xl p-6 h-fit">
+            <h3 class="text-sm font-bold text-slate-900 mb-4">Schedule a payment</h3>
+
+            <div asp-validation-summary="ModelOnly" class="mb-3 text-xs font-medium text-red-600"></div>
+
+            <form asp-controller="Home" asp-action="CreateSchedule" method="post" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Category</label>
+                    <select asp-for="Form.BillerCategory" id="scheduleCategory" class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm bg-white focus:ring-1 focus:ring-primary focus:border-primary">
+                        <option value="">Select a category</option>
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c.Category">@(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.Category.Replace("_", " ").ToLower()))</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Form.BillerCategory" class="text-[11px] text-red-600"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Biller</label>
+                    <select asp-for="Form.BillerName" id="scheduleBiller" data-current="@Model.Form.BillerName" disabled
+                            class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm bg-white focus:ring-1 focus:ring-primary focus:border-primary disabled:bg-slate-50 disabled:text-on-surface-variant">
+                        <option value="">Select a category first</option>
+                    </select>
+                    <span asp-validation-for="Form.BillerName" class="text-[11px] text-red-600"></span>
+                    <input type="hidden" asp-for="Form.BillerId" id="scheduleBillerId" />
+                </div>
+
+                <div id="schedulePackageWrap" class="hidden">
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Package</label>
+                    <select asp-for="Form.PackageSlug" id="schedulePackage" disabled
+                            class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm bg-white focus:ring-1 focus:ring-primary focus:border-primary disabled:bg-slate-50 disabled:text-on-surface-variant">
+                        <option value="">Select a biller first</option>
+                    </select>
+                    <span asp-validation-for="Form.PackageSlug" class="text-[11px] text-red-600"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Account / meter / phone</label>
+                    <input asp-for="Form.AccountReference" placeholder="Number to pay"
+                           class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary" />
+                    <span asp-validation-for="Form.AccountReference" class="text-[11px] text-red-600"></span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Amount (₦)</label>
+                        <input asp-for="Form.Amount" type="number" step="0.01" min="50" placeholder="0.00"
+                               class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary" />
+                        <span asp-validation-for="Form.Amount" class="text-[11px] text-red-600"></span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Date</label>
+                        <input asp-for="Form.ScheduledDate" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               class="w-full h-11 px-3 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary" />
+                        <span asp-validation-for="Form.ScheduledDate" class="text-[11px] text-red-600"></span>
+                    </div>
+                </div>
+
+                <button type="submit" id="scheduleSubmit" class="w-full h-11 bg-primary text-white font-semibold rounded-lg hover:bg-primary-container transition-colors">
+                    Schedule payment
+                </button>
+            </form>
+        </div>
+
+        <div class="lg:col-span-3 bg-surface border border-slate-200 rounded-xl overflow-hidden h-fit flex flex-col justify-between">
+            <div>
+                <div class="px-6 py-4 border-b border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-900">Upcoming &amp; past</h3>
+                </div>
+                @if (!Model.Payments.Any())
+                {
+                    <div class="px-6 py-16 text-center">
+                        <span class="material-symbols-outlined text-[40px] text-slate-300">event_upcoming</span>
+                        <p class="text-sm text-on-surface-variant mt-2">No scheduled payments yet.</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="w-full text-sm">
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach (var p in Model.Payments)
+                            {
+                                <tr class="hover:bg-slate-50/60 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="font-medium text-slate-800">@p.BillerName</div>
+                                        <div class="text-xs text-on-surface-variant">@p.BillerCategory • @p.AccountReference</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-semibold text-slate-900">₦@p.Amount.ToString("N2")</div>
+                                        <div class="text-xs text-on-surface-variant">@p.ScheduledDate.ToString("dd MMM yyyy")</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset @BadgeClass(p.Status)">@p.Status</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        @if (p.Status == "Pending")
+                                        {
+                                            <div class="flex items-center justify-end gap-3">
+                                                <form asp-controller="Home" asp-action="PayScheduleNow" method="post"
+                                                      onsubmit="return confirm('Pay this bill now instead of waiting for the scheduled date?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@p.Id" />
+                                                    <button type="submit"
+                                                            onclick="this.disabled=true; this.innerText='Processing...'; this.form.submit();"
+                                                            class="text-xs font-semibold text-primary hover:text-primary-container transition-colors">
+                                                        Pay Now
+                                                    </button>
+                                                </form>
+                                                <form asp-controller="Home" asp-action="CancelSchedule" method="post"
+                                                      onsubmit="return confirm('Cancel this scheduled payment?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@p.Id" />
+                                                    <button type="submit" class="text-xs font-semibold text-on-surface-variant hover:text-red-600 transition-colors">
+                                                        Cancel
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+            @if (Model.TotalPages > 1)
+            {
+                <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-on-surface-variant">
+                    <span>Page @Model.CurrentPage of @Model.TotalPages</span>
+                    <div class="flex items-center gap-2">
+                        @if (Model.HasPreviousPage)
+                        {
+                            <a asp-controller="Home" asp-action="ScheduledPayments" asp-route-page="@(Model.CurrentPage - 1)"
+                               class="px-3 py-1.5 border border-slate-200 rounded-md bg-white font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                                Previous
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="px-3 py-1.5 border border-slate-200 rounded-md bg-slate-100 text-slate-400 font-semibold cursor-not-allowed">
+                                Previous
+                            </span>
+                        }
+
+                        @if (Model.HasNextPage)
+                        {
+                            <a asp-controller="Home" asp-action="ScheduledPayments" asp-route-page="@(Model.CurrentPage + 1)"
+                               class="px-3 py-1.5 border border-slate-200 rounded-md bg-white font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                                Next
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="px-3 py-1.5 border border-slate-200 rounded-md bg-slate-100 text-slate-400 font-semibold cursor-not-allowed">
+                                Next
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        (function() {
+            var form = document.querySelector('form[action$="CreateSchedule"]');
+            var btn = document.getElementById('scheduleSubmit');
+            if (form && btn) {
+                form.addEventListener('submit', function() {
+                    btn.disabled = true;
+                    btn.textContent = 'Scheduling…';
+                });
+            }
+
+            var cat = document.getElementById('scheduleCategory');
+            var billerSel = document.getElementById('scheduleBiller');
+            var billerIdInput = document.getElementById('scheduleBillerId');
+            var pkgWrap = document.getElementById('schedulePackageWrap');
+            var pkgSel = document.getElementById('schedulePackage');
+            if (!cat || !billerSel) return;
+
+            var preselect = billerSel.getAttribute('data-current') || '';
+
+            function loadBillers(category, keep) {
+                if (!category) {
+                    billerSel.innerHTML = '<option value="">Select a category first</option>';
+                    billerSel.disabled = true;
+                    resetPackages();
+                    return;
+                }
+                billerSel.disabled = true;
+                billerSel.innerHTML = '<option value="">Loading…</option>';
+                fetch('/Home/ScheduleBillers?category=' + encodeURIComponent(category))
+                    .then(function(r) { return r.json(); })
+                    .then(function(billers) {
+                        if (!billers || !billers.length) {
+                            billerSel.innerHTML = '<option value="">No billers found</option>';
+                            billerSel.disabled = true;
+                            return;
+                        }
+                        billerSel.innerHTML = '<option value="">Select a biller</option>' +
+                            billers.map(function(b) {
+                                var sel = (keep && b.name === keep) ? ' selected' : '';
+                                return '<option value="' + b.name + '" data-id="' + b.id + '"' + sel + '>' + b.name + '</option>';
+                            }).join('');
+                        billerSel.disabled = false;
+
+                        if (keep) {
+                            var opt = billerSel.querySelector('option[value="' + keep.replace(/"/g, '') + '"]');
+                            if (opt) {
+                                billerIdInput.value = opt.getAttribute('data-id') || '';
+                                if (billerIdInput.value) loadPackages(billerIdInput.value, '@Model.Form.PackageSlug');
+                            }
+                        }
+                    })
+                    .catch(function() {
+                        billerSel.innerHTML = '<option value="">Could not load billers</option>';
+                        billerSel.disabled = true;
+                    });
+            }
+
+            function resetPackages() {
+                billerIdInput.value = '';
+                pkgWrap.classList.add('hidden');
+                pkgSel.disabled = true;
+                pkgSel.innerHTML = '<option value="">Select a biller first</option>';
+            }
+
+            function loadPackages(billerId, keep) {
+                if (!billerId) { resetPackages(); return; }
+                pkgWrap.classList.remove('hidden');
+                pkgSel.disabled = true;
+                pkgSel.innerHTML = '<option value="">Loading…</option>';
+                fetch('/Home/GetPackagesForBiller?billerId=' + encodeURIComponent(billerId))
+                    .then(function(r) { return r.json(); })
+                    .then(function(packages) {
+                        if (!packages || !packages.length) {
+                            pkgWrap.classList.add('hidden');
+                            pkgSel.innerHTML = '';
+                            return;
+                        }
+                        pkgSel.innerHTML = '<option value="">Select a package</option>' +
+                            packages.map(function(p) {
+                                var sel = (keep && p.slug === keep) ? ' selected' : '';
+                                var label = p.amount ? (p.label + ' - ₦' + Number(p.amount).toLocaleString()) : p.label;
+                                return '<option value="' + p.slug + '"' + sel + '>' + label + '</option>';
+                            }).join('');
+                        pkgSel.disabled = false;
+                    })
+                    .catch(function() {
+                        pkgSel.innerHTML = '<option value="">Could not load packages</option>';
+                        pkgSel.disabled = true;
+                    });
+            }
+
+            cat.addEventListener('change', function() {
+                loadBillers(this.value, null);
+                resetPackages();
+            });
+
+            billerSel.addEventListener('change', function() {
+                var opt = this.options[this.selectedIndex];
+                var id = opt ? (opt.getAttribute('data-id') || '') : '';
+                billerIdInput.value = id;
+                loadPackages(id, null);
+            });
+
+            if (cat.value) loadBillers(cat.value, preselect);
+        })();
+    </script>
+}

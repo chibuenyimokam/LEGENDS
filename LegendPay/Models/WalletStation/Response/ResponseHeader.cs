@@ -8,6 +8,6 @@ namespace LegendPay.Models.WalletStation.Response
         public required string ResponseCode { get; set; }
         public required string ResponseMessage { get; set; }
 
-        public bool IsSuccessful => ResponseCode == "00";
+        //public bool IsSuccessful => ResponseCode == "00";
     }
 }

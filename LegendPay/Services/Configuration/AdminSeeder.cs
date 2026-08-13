@@ -2,7 +2,7 @@ using LegendPay.Models;
 using LegendPay.Models.Data.Tables;
 using Microsoft.EntityFrameworkCore;
 
-namespace LegendPay.Data
+namespace LegendPay.Services.Configuration
 {
     public static class AdminSeeder
     {

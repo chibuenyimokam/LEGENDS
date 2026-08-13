@@ -2,6 +2,7 @@
 using LegendPay.Models;
 using LegendPay.Models.Data.Response_Table;
 using LegendPay.Models.WalletStation.Request;
+using LegendPay.Models.WalletStation.Response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LegendPay.Controllers
@@ -32,7 +33,6 @@ namespace LegendPay.Controllers
                 return BadRequest("Invalid credit request data.");
             }
 
-            //Sends credit to CoralPay
             var creditResponse = await _walletService.CreditWalletAsync(request);
 
             if (creditResponse?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
@@ -63,6 +63,40 @@ namespace LegendPay.Controllers
                 message = "Credit successful",
                 newBalance = creditResponse.Balance,
                 coralPayResponse = creditResponse
+            });
+        }
+
+
+        [HttpPost("debit")]
+        
+        public async Task<IActionResult> DebitWallet([FromBody] DebitRequest request)
+        {
+            if (request == null || request.Amount <= 0 || string.IsNullOrEmpty(request.CustomerId))
+            {
+                return BadRequest("Invalid Debit request data.");
+            }
+            //Sends debit to CoralPay
+            var debitResponse = await _walletService.DebitWalletAsync(request);
+
+            if (debitResponse?.ResponseHeader?.ResponseCode != ResponseCode.Successful)
+            {
+                return BadRequest("Debit operation failed at CoralPay: " + debitResponse?.ResponseHeader?.ResponseCode);
+            }
+
+            var localUser = _context.UserAccounts.FirstOrDefault(u => u.CustomerId == request.CustomerId);
+
+            if (localUser != null)
+            {
+                localUser.Balance = debitResponse.Balance;
+                await _context.SaveChangesAsync();
+            }
+
+
+            return Ok(new
+            {
+                message = "Debit successful",
+                newBalance = debitResponse.Balance,
+                coralPayResponse = debitResponse
             });
         }
     }
