@@ -8,7 +8,7 @@ namespace LegendPay.Interfaces.Transaction
         Task<(bool Success, string Message)> CreateAsync(Guid userId, CreateScheduledPaymentViewModel model);
         Task<(bool Success, string Message)> CancelAsync(Guid scheduleId, Guid userId);
 
-        // Runs a single pending schedule immediately, used by our "Pay Now" button.
+        // Runs a single pending schedule immediately, used by our "Pay Now" button on both the home page adn schedule payment page
         Task<(bool Success, string Message)> ExecuteAsync(Guid scheduleId, Guid userId);
 
         // Used by the background worker to process scheduled payments.
